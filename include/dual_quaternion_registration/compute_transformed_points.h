@@ -7,12 +7,16 @@
 #ifndef COMPUTE_TRANSFORMED_POINTS
 #define COMPUTE_TRANSFORMED_POINTS
 
-using namespace arma;
+#include <Eigen/Dense>
+using namespace Eigen;
+using namespace std;
 
-mat eul2rotm(mat eul);
+typedef Matrix<float, 3, Dynamic> pointCloud;
 
-mat reg_params_to_transformation_matrix(rowvec params);
+Matrix4f eul2rotm(ArrayXf eul);
 
-mat compute_transformed_points(mat ptcldMoving, rowvec Xreg);
+Matrix4f reg_params_to_transformation_matrix(ArrayXf params);
+
+pointCloud compute_transformed_points(pointCloud ptcldMoving, ArrayXf Xreg);
 
 #endif
