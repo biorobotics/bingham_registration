@@ -1,7 +1,9 @@
 #include <iostream>
 #include <math.h>
 #include <compute_transformed_points.h>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
 
 int main() {
 	cout << "REGISTRATION TEST FUNCTIONS" << ".\n\n";
@@ -23,7 +25,7 @@ int main() {
 	cout <<  reg_params_to_transformation_matrix(regParams) << "\n\n";
 
 	cout << "Testing point cloud transforms" << ".\n";
-	pointCloud testPointCloud(3,5);
+	PointCloud testPointCloud(3,5);
 	testPointCloud.row(0) << 1, 0,   0,  .5, -10;
 	testPointCloud.row(1) << 0, 1,   0,   0,   0;
 	testPointCloud.row(2) << 0, 0, 150, -.1,   0;
@@ -31,4 +33,22 @@ int main() {
 	cout << testPointCloud << "\n";
 	cout << "   =====================" << "\n";
 	cout << compute_transformed_points(testPointCloud,regParams) << "\n\n";
+	/*
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    for(int idx = 0; idx<50000; idx++) compute_transformed_points(testPointCloud,regParams);
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+
+    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+    cout << duration << "\n";
+
+    t1 = high_resolution_clock::now();
+    for(int idx = 0; idx<50000; idx++) compute_transformed_points2(testPointCloud,regParams);
+    t2 = high_resolution_clock::now();
+
+    duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+    cout << duration << "\n";
+	*/
+    return 0;
 }

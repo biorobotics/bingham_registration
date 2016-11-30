@@ -59,20 +59,16 @@ Matrix4f reg_params_to_transformation_matrix(ArrayXf params) {
 	return T;
 }
 
-pointCloud compute_transformed_points(pointCloud ptcldMoving, ArrayXf Xreg) {
+PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXf Xreg) {
 	Vector3f point;
 	Matrix4f testimated = reg_params_to_transformation_matrix (Xreg.segment(0,5));
 	Affine3f t;
 	t.matrix() = testimated;
-	
-	pointCloud ptcldMovingTransformed = ptcldMoving;
-	
 	int numPoints = ptcldMoving.size() / 3;
-
+	PointCloud ptcldMovingTransformed(3,numPoints);
 	for (int r = 0; r < numPoints; r++) {
-		Vector3f point = ptcldMoving.col(r);
+		point = ptcldMoving.col(r);
 		ptcldMovingTransformed.col(r) = t*point;
 	}
-	
 	return ptcldMovingTransformed;
 }

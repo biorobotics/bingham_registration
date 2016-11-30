@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dual_quaternion_registration)
+add_definitions(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -143,7 +144,7 @@ target_link_libraries(dual_quaternion_registration
 )
 
 ## Declare a C++ executable
-add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp)
+add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp src/KDTree.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
