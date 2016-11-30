@@ -136,18 +136,21 @@ add_library(dual_quaternion_registration
 ## either from message generation or dynamic reconfigure
 add_dependencies(dual_quaternion_registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Declare a C++ executable
-# add_executable(dual_quaternion_registration_node src/dual_quaternion_registration_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(dual_quaternion_registration_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(dual_quaternion_registration
   	${catkin_LIBRARIES}
 	${Eigen_LIBRARIES}
 )
+
+## Declare a C++ executable
+add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(unit_tests ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Specify libraries to link a library or executable target against
+target_link_libraries(unit_tests ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
+
 
 #############
 ## Install ##

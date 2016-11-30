@@ -13,7 +13,7 @@ using namespace std;
 
 typedef Matrix<float, 3, Dynamic> pointCloud;
 
-Matrix4f eul2rotm(ArrayXf eul);
+Matrix4f eul2rotm(Array3f eul);
 
 Matrix4f reg_params_to_transformation_matrix(ArrayXf params);
 

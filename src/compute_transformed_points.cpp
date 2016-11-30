@@ -4,10 +4,10 @@
  * Return transformed sensed points 
  * 		
  */
-#include <compute_transformed_points.h> 
+#include <compute_transformed_points.h>
 
-Matrix4f eul2rotm(ArrayXf eul) {
-	Matrix4f R = Matrix4f(3, 3);	// Since n_slices is just 1, make Matrix4f instead
+Matrix4f eul2rotm(Array3f eul) {
+	Matrix4f R = Matrix4f::Identity(4, 4);	// Since n_slices is just 1, make Matrix4f instead
 	Array3f ct = cos(eul);
 	Array3f st = sin(eul);
 
@@ -60,15 +60,18 @@ Matrix4f reg_params_to_transformation_matrix(ArrayXf params) {
 }
 
 pointCloud compute_transformed_points(pointCloud ptcldMoving, ArrayXf Xreg) {
+	Vector3f point;
 	Matrix4f testimated = reg_params_to_transformation_matrix (Xreg.segment(0,5));
 	Affine3f t;
-	t = testimated;
+	t.matrix() = testimated;
+	
 	pointCloud ptcldMovingTransformed = ptcldMoving;
 	
-	int numPoints = ptcldMovingTransformed.ColsAtCompileTime;
+	int numPoints = ptcldMoving.size() / 3;
 
 	for (int r = 0; r < numPoints; r++) {
-		ptcldMovingTransformed.col(r) = t*ptcldMoving.col(r);
+		Vector3f point = ptcldMoving.col(r);
+		ptcldMovingTransformed.col(r) = t*point;
 	}
 	
 	return ptcldMovingTransformed;
