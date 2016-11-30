@@ -3,13 +3,8 @@
  * This file contains functions for performing KDTree Search.
  */
 #include <iostream>
-#include <cstdlib>
-#include <cmath>
-//#include <armadillo>
-#include <limits>
-#include <Eigen/Dense>
 #include <vector>
-#include <compute_transformed_points.h>
+#include <KDTree.h>
 
 using namespace Eigen;
 using namespace std;
@@ -18,7 +13,7 @@ struct KDNode;
 typedef struct KDNode *KDTree;
 
 struct KDNode{
-	Vector3f value;
+	Vector3d value;
 	KDTree left;
 	KDTree right;
 };
@@ -37,12 +32,12 @@ void call_error(string msg) {
 }
 
 // find_distance returns the distance between two points
-double find_distance(Vector3f point1, Vector3f point2) {
+double find_distance(Vector3d point1, Vector3d point2) {
 	return (point1 - point2).norm();
 }
 
 // Insert is a function that inserts a point into the KDTree
-KDTree insert_helper(Vector3f point, KDTree T, int level) {
+KDTree insert_helper(Vector3d point, KDTree T, int level) {
 	// If creating a new tree 
 	if (level < 0 || level > 2)
 		call_error("Invalid component access");
@@ -64,12 +59,12 @@ KDTree insert_helper(Vector3f point, KDTree T, int level) {
 	return T;
 }
 
-KDTree insert(Vector3f point, KDTree T) {
+KDTree insert(Vector3d point, KDTree T) {
 	return insert_helper(point, T, 0);
 }
 
 // find_nearest is a function that finds the point in the cloud that is nearest to the target point
-void find_nearest_helper(KDTree T, Vector3f target, int level, KDTree *best, double *bestDistance) {
+void find_nearest_helper(KDTree T, Vector3d target, int level, KDTree *best, double *bestDistance) {
 	double distance, diff, diffSq;
 
 	// If reaches the leaf of the tree, end search
@@ -99,7 +94,7 @@ void find_nearest_helper(KDTree T, Vector3f target, int level, KDTree *best, dou
     find_nearest_helper(diff > 0 ? T->right : T->left, target, level, best, bestDistance);
 }
 
-struct KDNode find_nearest(Vector3f target, KDTree T, int size) {
+struct KDNode find_nearest(Vector3d target, KDTree T, int size) {
 	KDTree temp = NULL;
 	KDTree *bestResult = &temp;
 	double *distanceResult = (double*)malloc(sizeof(double));
@@ -128,13 +123,13 @@ vector<size_t> sort_indexes(const vector<T> &v) {
  * pr = set of all target points in corresponding order with pc
  * res = mean of all the distances calculated
  */
-struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size, float inlierRatio, ArrayXf Xreg) {
+struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size, double inlierRatio, ArrayXd Xreg) {
 
 	int inlierSize = trunc(numtargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numtargets);
-	MatrixXf resultMatches = MatrixXf(4, numtargets);	// First 3 rows = point, 4th row = distance 
+	MatrixXd resultMatches = MatrixXd(4, numtargets);	// First 3 rows = point, 4th row = distance 
 	PointCloud filtered_resultTargets = PointCloud(3, inlierSize);
-	MatrixXf filtered_resultMatches = MatrixXf(4, inlierSize);
+	MatrixXd filtered_resultMatches = MatrixXd(4, inlierSize);
 	double totalDistance;
 	PointCloud targetsNew = PointCloud(3, numtargets);
 	
@@ -154,10 +149,10 @@ struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size,
 		}
 	
 	// Get distance row and turn into vector for sorting
-	VectorXf distances = resultMatches.row(3);
-	vector<float> distancesVector;
+	VectorXd distances = resultMatches.row(3);
+	vector<double> distancesVector;
 	distancesVector.resize(distances.size());
-	VectorXf::Map(&distancesVector[0], distances.size()) = distances;
+	VectorXd::Map(&distancesVector[0], distances.size()) = distances;
 	// Get indexes sorted by distance
 	vector<long unsigned int> sortIndex = sort_indexes(distancesVector);
 	

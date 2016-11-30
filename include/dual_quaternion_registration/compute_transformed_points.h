@@ -11,12 +11,12 @@
 using namespace Eigen;
 using namespace std;
 
-typedef Matrix<float, 3, Dynamic> PointCloud;
+typedef Matrix<double, 3, Dynamic> PointCloud;
 
-Matrix4f eul2rotm(Array3f eul);
+Matrix4d eul2rotm(Array3d eul);
 
-Matrix4f reg_params_to_transformation_matrix(ArrayXf params);
+Matrix4d reg_params_to_transformation_matrix(ArrayXd params);
 
-PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXf Xreg);
+PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXd Xreg);
 
 #endif

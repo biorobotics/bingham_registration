@@ -6,10 +6,10 @@
  */
 #include <compute_transformed_points.h>
 
-Matrix4f eul2rotm(Array3f eul) {
-	Matrix4f R = Matrix4f::Identity(4, 4);	// Since n_slices is just 1, make Matrix4f instead
-	Array3f ct = cos(eul);
-	Array3f st = sin(eul);
+Matrix4d eul2rotm(Array3d eul) {
+	Matrix4d R = Matrix4d::Identity(4, 4);	// Since n_slices is just 1, make Matrix4d instead
+	Array3d ct = cos(eul);
+	Array3d st = sin(eul);
 
 	/*
 	 *     The rotation matrix R can be construted (as follows by
@@ -32,22 +32,22 @@ Matrix4f eul2rotm(Array3f eul) {
 	return R;
 }
 
-Matrix4f reg_params_to_transformation_matrix(ArrayXf params) {
-	Matrix4f R, U, V;
-	Matrix4f T = Matrix4f::Identity(4, 4);
+Matrix4d reg_params_to_transformation_matrix(ArrayXd params) {
+	Matrix4d R, U, V;
+	Matrix4d T = Matrix4d::Identity(4, 4);
 
 	for (int r = 0; r < 3; r++) {
 		T(r, 3) = params(r);
 	}
 
-	Array3f temp;
+	Array3d temp;
 	temp(0) = params(3);
 	temp(1) = params(4);
 	temp(2) = params(5);
 
 	R = eul2rotm (temp);
 
-	JacobiSVD<Matrix4f> svd(R, ComputeFullU | ComputeFullV);
+	JacobiSVD<Matrix4d> svd(R, ComputeFullU | ComputeFullV);
 	
 	R = svd.matrixU()*svd.matrixV().transpose();
 
@@ -59,10 +59,10 @@ Matrix4f reg_params_to_transformation_matrix(ArrayXf params) {
 	return T;
 }
 
-PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXf Xreg) {
-	Vector3f point;
-	Matrix4f testimated = reg_params_to_transformation_matrix (Xreg.segment(0,5));
-	Affine3f t;
+PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXd Xreg) {
+	Vector3d point;
+	Matrix4d testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
+	Affine3d t;
 	t.matrix() = testimated;
 	int numPoints = ptcldMoving.size() / 3;
 	PointCloud ptcldMovingTransformed(3,numPoints);

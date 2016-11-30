@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include <compute_transformed_points.h>
+#include <KDTree.h>
 #include <chrono>
 using namespace std;
 using namespace std::chrono;
@@ -9,19 +10,19 @@ int main() {
 	cout << "REGISTRATION TEST FUNCTIONS" << ".\n\n";
 
 	cout << "Testing euler to rotation matrix conversion" << "\n";
-	Array3f e(M_PI,0,0);
-	Matrix4f testEuler = eul2rotm(e);
-	Affine3f t;
+	Array3d e(M_PI,0,0);
+	Matrix4d testEuler = eul2rotm(e);
+	Affine3d t;
 	t.matrix() = testEuler;
-	AngleAxisf a;
+	AngleAxisd a;
 	a.fromRotationMatrix(t.rotation());
 	cout << "Angle: "<< a.angle() << ".\n";
 	cout << "Axis: " << a.axis().transpose() << "\n\n";
 
 	cout << "Testing regular params to rotation matrix" << ".\n";
 
-	ArrayXf regParams(5);
-	regParams << 1, 0, 0, 0, M_PI;
+	ArrayXd regParams(6);
+	regParams << 1, 0, 0, 0, M_PI, 0;
 	cout <<  reg_params_to_transformation_matrix(regParams) << "\n\n";
 
 	cout << "Testing point cloud transforms" << ".\n";
@@ -33,6 +34,22 @@ int main() {
 	cout << testPointCloud << "\n";
 	cout << "   =====================" << "\n";
 	cout << compute_transformed_points(testPointCloud,regParams) << "\n\n";
+
+	PointCloud testPointCloudMoving(3,1);
+	testPointCloud.row(0) << 1;
+	testPointCloud.row(1) << 0;
+	testPointCloud.row(2) << 0;
+
+	int sizePtcldMoving = testPointCloudMoving.size()/3;
+	int sizePtcldFixed = testPointCloud.size()/3;
+	int treeSize = sizePtcldMoving;
+	KDTree cloudTree = NULL;	// Generated kd tree from ptcldFixed
+	ArrayXd tolerance;
+
+	// Construct the kdtree from ptcldFixed
+	for (int i = 0; i < treeSize; i++) {
+		cloudTree = insert(testPointCloud.row(i), cloudTree);
+	}
 	/*
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
     for(int idx = 0; idx<50000; idx++) compute_transformed_points(testPointCloud,regParams);
