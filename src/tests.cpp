@@ -3,6 +3,7 @@
 #include <compute_transformed_points.h>
 #include <KDTree.h>
 #include <chrono>
+#include <qr_kf.h>
 using namespace std;
 using namespace std::chrono;
 
@@ -40,6 +41,7 @@ int main() {
 	testPointCloud.row(1) << 0;
 	testPointCloud.row(2) << 0;
 
+	cout << "Testing kdTree" << ".\n";
 	int sizePtcldMoving = testPointCloudMoving.size()/3;
 	int sizePtcldFixed = testPointCloud.size()/3;
 	int treeSize = sizePtcldMoving;
@@ -50,9 +52,17 @@ int main() {
 	for (int i = 0; i < treeSize; i++) {
 		cloudTree = insert(testPointCloud.row(i), cloudTree);
 	}
+
+	cout << "Testing quaternion to euler conversion" << ".\n";
+	Quaterniond quat = Quaterniond(.924, 0, .382, 0);
+	cout << quat2eul(quat) << "\n\n";
+	
 	/*
+	Array3d eul;
+	Matrix3d mat;
+	Quaterniond quat = Quaterniond(.924, 0, .382, 0);
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    for(int idx = 0; idx<50000; idx++) compute_transformed_points(testPointCloud,regParams);
+    for(int idx = 0; idx<5000000; idx++) mat = quat2rotm(quat);
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();
@@ -60,12 +70,15 @@ int main() {
     cout << duration << "\n";
 
     t1 = high_resolution_clock::now();
-    for(int idx = 0; idx<50000; idx++) compute_transformed_points2(testPointCloud,regParams);
+    for(int idx = 0; idx<5000000; idx++) mat = quat.matrix();
     t2 = high_resolution_clock::now();
 
     duration = duration_cast<microseconds>( t2 - t1 ).count();
 
-    cout << duration << "\n";
+    cout << duration << "\n\n";
+
+    cout << eul << "\n";
+    cout << mat << "\n";
 	*/
     return 0;
 }

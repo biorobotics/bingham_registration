@@ -6,14 +6,14 @@
  */
 #include <compute_transformed_points.h>
 
-Matrix4d eul2rotm(Array3d eul) {
+Matrix4d eul2rotm(Array3d eul) { // ZYX order
 	Matrix4d R = Matrix4d::Identity(4, 4);	// Since n_slices is just 1, make Matrix4d instead
 	Array3d ct = cos(eul);
 	Array3d st = sin(eul);
 
 	/*
 	 *     The rotation matrix R can be construted (as follows by
-     *     ct = [cx cy cz] and st =[sx sy sz]
+     *     ct = [cz cy cx] and st =[sz sy sx]
   	 *
      *       R = [  cy*cz   sy*sx*cz-sz*cx    sy*cx*cz+sz*sx
      *              cy*sz   sy*sx*sz+cz*cx    sy*cx*sz-cz*sx

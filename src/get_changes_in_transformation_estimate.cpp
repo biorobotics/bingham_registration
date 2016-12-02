@@ -31,8 +31,8 @@ rowvec eul2quat(rowvec eul) {
 
 struct tuple1 get_changes_in_transformation_estimate(rowvec Xreg, rowvec Xregprev) {
 	struct tuple1 result;
-	rowvec qs = eul2quat(Xreg.subvec(3, 5));
-	rowvec qsPrev = eul2quat(Xregprev.subvec(3, 5));
+	rowvec qs = eul2quat(Xreg.subvec(3, 6));
+	rowvec qsPrev = eul2quat(Xregprev.subvec(3, 6));
 	// Rotation difference in radians
 	double dR = acos(dot(qsPrev, qs));
 	// Euclidean difference

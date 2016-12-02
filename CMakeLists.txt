@@ -144,7 +144,7 @@ target_link_libraries(dual_quaternion_registration
 )
 
 ## Declare a C++ executable
-add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp src/KDTree.cpp)
+add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp src/KDTree.cpp src/qr_kf.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
