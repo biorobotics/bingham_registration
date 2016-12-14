@@ -10,12 +10,6 @@
 using namespace std;
 using namespace Eigen;
 
-struct triple2 {
-    Array4d Xk;   // 1x4
-    Matrix4d Pk;  // 4x4
-    ArrayXd Xreg; // 1x6
-};
-
 Array3d quat2eul(Quaterniond q) {
     // Normalize the quaternions
 
@@ -89,11 +83,11 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     // Check for input dimensions 
     if (Xk.size() != 4)
         cerr << "Xk has wrong dimension. Should be 4x1";
-    if (Pk.size() != 16)
+    if (Pk.rows() != 4 || Pk.cols() != 4)
         cerr << "Pk has wrong dimension. Should be 4x4";
-    if (p1c.size() == p1r.size() || p1c.size() != p2c.size() || p1c.size() != p2c.size())
+    if (p1c.cols() == p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols())
         cerr << "pxx are not equal in size";
-    int nPoints = p1c.size()/3;
+    int nPoints = p1c.cols();
     PointCloud pc = p1c - p2c;
     PointCloud pr = p1r - p2r;
     
@@ -150,31 +144,23 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     for(int i=0; i<3; i++) {
         centroid(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
     }
-    Quaternion XkQuat = Quaternion(Xk(0),Xk(1),Xk(2),Xk(3));
-    Vector3d centroidTransformed = quat2rotm(XkQuat) * centroid;
+    Quaterniond XkQuat = Quaterniond(Xk(0),Xk(1),Xk(2),Xk(3));
+    
+    Vector3d centroidTransformed = XkQuat.matrix() * centroid;
     Vector3d eulerRotation = quat2eul(XkQuat);
     Vector3d centroidDifference = centroid - centroidTransformed;
-    /*
+    
     // Estimated pose parameters  (x,y,z,alpha,beta,gamma)
-    rowvec Xreg = rowvec(t.n_elem + temp3.n_elem);
-    rowvec tTranspose = t.t();
-    rowvec eul = quat2eul(Xk.t());
-
-    for (int i = 0; i < t.n_elem; i++) {
-        Xreg(i) = tTranspose(i);
-    }
-
-    for (int i = 0; i < temp3.n_elem; i++) {
-        Xreg(i + t.n_elem) = eul(i);
-    }
-
+    VectorXd Xreg(6);
+    Xreg.block(0,0,3,1) = centroidDifference;
+    Xreg.block(3,0,3,1) = eulerRotation;
+    
     struct triple2 result;
     result.Xk = Xk;
     result.Pk = Pk;
     result.Xreg = Xreg;
 
     return result;
-    */
 }
 
 #if 0

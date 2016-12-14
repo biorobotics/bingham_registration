@@ -4,6 +4,7 @@
 #include <KDTree.h>
 #include <chrono>
 #include <qr_kf.h>
+#include <get_changes_in_transformation_estimate.h>
 using namespace std;
 using namespace std::chrono;
 
@@ -32,6 +33,8 @@ int main() {
 	testPointCloud.row(1) << 0, 1,   0,   0,   0;
 	testPointCloud.row(2) << 0, 0, 150, -.1,   0;
 
+	cout << "Number of rows: " << testPointCloud.rows();
+
 	cout << testPointCloud << "\n";
 	cout << "   =====================" << "\n";
 	cout << compute_transformed_points(testPointCloud,regParams) << "\n\n";
@@ -56,7 +59,7 @@ int main() {
 	cout << "Testing quaternion to euler conversion" << ".\n";
 	Quaterniond quat = Quaterniond(.924, 0, .382, 0);
 	cout << quat2eul(quat) << "\n\n";
-	
+
 	/*
 	Array3d eul;
 	Matrix3d mat;

@@ -5,14 +5,18 @@
  */
 #ifndef GET_CHANGES_IN_TRANSFORMATION_ESTIMATE
 #define GET_CHANGES_IN_TRANSFORMATION_ESTIMATE
+#include <Eigen/Dense>
+using Eigen::Vector3d;
+using Eigen::Quaterniond;
+using Eigen::VectorXd;
 
 struct tuple1{
 	double dR;
 	double dT;
 };
 
-rowvec eul2quat(mat eul);
+Quaterniond eul2quat(Vector3d eul);
 
-struct tuple1 get_changes_in_transformation_estimate(rowvec Xreg, rowvec Xregprev);
+struct tuple1 get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev);
 
 #endif

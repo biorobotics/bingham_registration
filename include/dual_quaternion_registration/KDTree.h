@@ -16,7 +16,18 @@ using Eigen::ArrayXd;
 struct KDNode;
 typedef struct KDNode *KDTree;
 
-struct triple1;
+struct KDNode{
+	Vector3d value;
+	KDTree left;
+	KDTree right;
+};
+
+// For return type
+struct triple1{
+	PointCloud pc;
+	PointCloud pr;
+	double res;
+};
 
 // call_error prints out error message and exit the program
 void call_error(string msg);

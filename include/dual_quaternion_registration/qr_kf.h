@@ -13,19 +13,15 @@ using Eigen::Array4d;
 using Eigen::ArrayXd;
 using Eigen::Quaterniond;
 
-struct triple2;
+struct triple2 {
+    Array4d Xk;   // 1x4
+    Matrix4d Pk;  // 4x4
+    ArrayXd Xreg; // 1x6
+};
 
 Array3d quat2eul(Quaterniond q);
 
+struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
+                     PointCloud p1r, PointCloud p2c, PointCloud p2r);
 
-
-/*
-mat quat2rotm(rowvec q);
-
-void call_error(string msg);
-
-rowvec quat2eul(rowvec q);
-
-struct triple2 qr_kf(vec Xk, mat Pk, double Rmag, mat p1c, mat p1r, mat p2c, mat p2r);
-*/
 #endif

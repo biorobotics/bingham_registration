@@ -11,14 +11,12 @@ Matrix4d eul2rotm(Array3d eul) { // ZYX order
 	Array3d ct = cos(eul);
 	Array3d st = sin(eul);
 
-	/*
-	 *     The rotation matrix R can be construted (as follows by
-     *     ct = [cz cy cx] and st =[sz sy sx]
-  	 *
-     *       R = [  cy*cz   sy*sx*cz-sz*cx    sy*cx*cz+sz*sx
-     *              cy*sz   sy*sx*sz+cz*cx    sy*cx*sz-cz*sx
-     *                -sy            cy*sx             cy*cx]
-	 */ 
+	//     The rotation matrix R can be construted (as follows by
+    //     ct = [cz cy cx] and st =[sz sy sx]
+  	//
+    //       R = [  cy*cz   sy*sx*cz-sz*cx    sy*cx*cz+sz*sx
+    //              cy*sz   sy*sx*sz+cz*cx    sy*cx*sz-cz*sx
+    //                -sy            cy*sx             cy*cx] 
 
 	R(0,0) = ct(1) * ct(0);
 	R(0,1) = st(2) * st(1) * ct(0) - ct(2) * st(0);
@@ -64,7 +62,7 @@ PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXd Xreg) {
 	Matrix4d testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
 	Affine3d t;
 	t.matrix() = testimated;
-	int numPoints = ptcldMoving.size() / 3;
+	int numPoints = ptcldMoving.cols();
 	PointCloud ptcldMovingTransformed(3,numPoints);
 	for (int r = 0; r < numPoints; r++) {
 		point = ptcldMoving.col(r);

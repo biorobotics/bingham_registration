@@ -5,38 +5,35 @@
  */
 
 #include <iostream>
-#include <armadillo>
-#include <cmath>
+#include <get_changes_in_transformation_estimate.h>
 
 using namespace std;
-using namespace arma;
+using namespace Eigen;
 
-struct tuple1{
-	double dR;
-	double dT;
-};
 
 // return rowvec q of dimension 1 x 4
-rowvec eul2quat(rowvec eul) {
-	rowvec c = cos(eul / 2);
-	rowvec s = sin(eul / 2);
-
-	rowvec q = rowvec(4);
-	q(0) = c(0) * c(1) * c(2) + s(0) * s(1) * s(2);
-	q(1) = c(0) * c(1) * s(2) - s(0) * s(1) * c(2);
-	q(2) = c(0) * s(1) * c(2) + s(0) * c(1) * s(2);
-	q(3) = s(0) * c(1) * c(2) - c(0) * s(1) * s(2);
+Quaterniond eul2quat(Vector3d eul) {
+	Array3d eulHalf = eul / 2;
+	Array3d c = eulHalf.cos();
+	Array3d s = eulHalf.sin();
+	
+	Quaterniond q;
+	q.w() = c(0) * c(1) * c(2) + s(0) * s(1) * s(2);
+	q.x() = c(0) * c(1) * s(2) - s(0) * s(1) * c(2);
+	q.y() = c(0) * s(1) * c(2) + s(0) * c(1) * s(2);
+	q.z() = s(0) * c(1) * c(2) - c(0) * s(1) * s(2);
 	return q;
 }
 
-struct tuple1 get_changes_in_transformation_estimate(rowvec Xreg, rowvec Xregprev) {
+struct tuple1 get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev) {
 	struct tuple1 result;
-	rowvec qs = eul2quat(Xreg.subvec(3, 6));
-	rowvec qsPrev = eul2quat(Xregprev.subvec(3, 6));
+	Quaterniond qs = eul2quat(Xreg.block(3,0,3,1));
+	Quaterniond qsPrev = eul2quat(Xregprev.block(3,0,3,1));
 	// Rotation difference in radians
-	double dR = acos(dot(qsPrev, qs));
+	double dR = acos(qsPrev.dot(qs));
+	
 	// Euclidean difference
-	double dT = std::sqrt(sum(square(Xregprev.subvec(0, 2) - Xreg.subvec(0, 2))));
+	double dT = (Xregprev.block(3,0,3,1) - Xreg.block(3,0,3,1)).norm();
 	result.dR = dR;
 	result.dT = dT;
 	return result;

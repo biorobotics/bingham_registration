@@ -144,7 +144,18 @@ target_link_libraries(dual_quaternion_registration
 )
 
 ## Declare a C++ executable
-add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp src/KDTree.cpp src/qr_kf.cpp)
+add_executable(registration src/registration_est_kf_rgbd.cpp src/compute_transformed_points.cpp
+               src/KDTree.cpp src/qr_kf.cpp src/get_changes_in_transformation_estimate.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Specify libraries to link a library or executable target against
+target_link_libraries(registration ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
+
+## Declare a C++ executable
+add_executable(unit_tests src/tests.cpp src/compute_transformed_points.cpp src/KDTree.cpp 
+               src/qr_kf.cpp src/get_changes_in_transformation_estimate.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

@@ -8,23 +8,6 @@
 
 using namespace Eigen;
 using namespace std;
-
-struct KDNode;
-typedef struct KDNode *KDTree;
-
-struct KDNode{
-	Vector3d value;
-	KDTree left;
-	KDTree right;
-};
-
-// For return type
-struct triple1{
-	PointCloud pc;
-	PointCloud pr;
-	double res;
-};
-
 // call_error prints out error message and exit the program
 void call_error(string msg) {
 	cerr << "Error: " << msg << endl;
@@ -136,7 +119,7 @@ struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size,
 	// Transform the target points before searching
 	targetsNew = compute_transformed_points(targets, Xreg);
 
-	if (targets.size()/3 != numtargets)
+	if (targets.cols() != numtargets)
 		call_error("target doesn't match target size");
 	// Find numtargets cloest points together with corresponding targets
 	for (int count = 0; count < numtargets; count++) {
