@@ -27,7 +27,6 @@
 #include "KDTree.h"
 #include "get_changes_in_transformation_estimate.h"
 #include "qr_kf.h"
-#include "qr_kf_old.h"
 #include "compute_transformed_points.h"
 
 using namespace std;
