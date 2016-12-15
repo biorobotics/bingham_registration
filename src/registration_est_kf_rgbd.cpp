@@ -45,7 +45,7 @@ const char* const DELIMITER = " ";
 // For the return type
 struct tuple2{
     VectorXd Xreg;
-    VectorXd Xregsave;
+    MatrixXd Xregsave;
 };
 
 /* 
@@ -108,23 +108,22 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
     PointCloud ptcldMovingNew = ptcldMoving;
 
     VectorXd Xregprev = VectorXd::Zero(6);
-
+    
     //********** Loop starts **********
-
     // If not converge, transform points using Xreg and repeat
     for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / windowsize); i++) {
-        
+        cout << "Iteration " << i << "/" << min(MAX_ITERATIONS, sizePtcldMoving / windowsize) << endl;
         int iOffset = i - 1;    // Armadillo is 0-index instead of 1-index
         
         // Tree search
         // Send as input a subset of the ptcldMoving points.
-        MatrixXd targets(windowsize, 3);
-
+        MatrixXd targets(3, windowsize);
+        
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
             
             for (int n = 0; n < 3; n++) 
-                targets(rOffset, n) = ptcldMovingNew(r, n);
+                targets(n,rOffset) = ptcldMovingNew(n, r);
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
@@ -142,16 +141,17 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
         // If truncSize odd, round down to even so pc and pr have same dimension
         int oddEntryNum = truncSize / 2;    // size of p1c/p1
         int evenEntryNum = oddEntryNum; // size of p2c/p2r
-        PointCloud p1c = PointCloud(oddEntryNum, 3);    // odd index points of pc
-        PointCloud p2c = PointCloud(evenEntryNum, 3);       // even index points of pc
-        PointCloud p1r = PointCloud(oddEntryNum, 3);    // odd index points of pr
-        PointCloud p2r = PointCloud(evenEntryNum, 3);       // even index points of pr
+
+        PointCloud p1c = PointCloud(3, oddEntryNum);    // odd index points of pc
+        PointCloud p2c = PointCloud(3, evenEntryNum);       // even index points of pc
+        PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
+        PointCloud p2r = PointCloud(3, evenEntryNum);       // even index points of pr
         
-        double Rmag=.04 + 4 * pow(res / 6, 2);  // Variable that helps calculate the noise 
+        double Rmag= .04 + 4 * pow(res / 6, 2);  // Variable that helps calculate the noise 
         
         int p1Count = 0;
         int p2Count = 0;
-
+        
         // Store odd entries in pc to p1c, pr to p1r
         // Store even entries in pc to p2c, pr to p2r
         for (int n = 1; n <= truncSize - truncSize % 2; n++) {
@@ -174,37 +174,37 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
                 p2Count++;
             }
         }
-
+        
         //  Quaternion Filtering:
         //  Takes updated Xk, Pk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Pk, and Xreg for next iteration. 
+        struct triple2 qfResult = qr_kf(Xk, Pk, Rmag, p1c, p1r, p2c, p2r); 
         
-        struct triple2 qfResult = qr_kf(Xk, Pk, Rmag, p1c, p1r, p2c, p2r);  
         Xk = qfResult.Xk;
         Pk = qfResult.Pk;
-
         // Store curretn Xreg in Xregsave
         Xregsave.col(i) = qfResult.Xreg;    // No offset applied because 
                                             // Xregsave(0) is saved for initial value   
-
+        
         Xreg = qfResult.Xreg;
         result.Xreg = qfResult.Xreg;
         result.Xregsave = Xregsave;
-
+        
         //  Check convergence:
         //  Takes in updated Xreg and previous Xreg
         //  Return dR, dT
- 
+        
         struct tuple1 convergenceResult = get_changes_in_transformation_estimate(
                                           qfResult.Xreg, Xregsave.col(i-1));
 
         if (convergenceResult.dT <= tolerance(0) && convergenceResult.dR <= tolerance(0))
         {
+            cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
         }
     }
-
+    
     return result;
 }
 // main:
@@ -217,8 +217,8 @@ int main() {
     ifstream sensedFile;
     ifstream CADFile;
 
-    sensedFile.open("data/data_bunny.txt", ifstream::in);
-    CADFile.open("data/model_bunny.txt", ifstream::in);
+    sensedFile.open("data/ptcld_moving_2.txt", ifstream::in);
+    CADFile.open("data/ptcld_fixed_2.txt", ifstream::in);
     
     if (!sensedFile.good() || !CADFile.good()) {
         cout << "File not found" << "\n";
@@ -310,7 +310,7 @@ int main() {
     
     sensedFile.close();
     CADFile.close();
-
+    
     clock_t begin = clock();    // For timing the performance
 
     // Run the registration function
@@ -319,10 +319,9 @@ int main() {
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-  cout << "Registration runtime is: " << elapsed_secs << " seconds." << endl;
-    cout << "Xreg: " << result.Xreg << endl;
-    cout << "Xregsave: ";
-    //result.Xregsave.print();
+    cout << "Registration runtime is: " << elapsed_secs << " seconds." << endl;
+    cout << "Xreg: " << endl << result.Xreg << endl;
+    cout << "Xregsave: " << endl << result.Xregsave.transpose() << endl;
     
     return 0;
 }

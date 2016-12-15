@@ -13,7 +13,8 @@ using namespace Eigen;
 Array3d quat2eul(Quaterniond q) {
     // Normalize the quaternions
 
-    q = q.normalized();
+    Quaterniond temp = q.normalized();
+    q = temp;
     
     double qw = q.w();
     double qx = q.x();
@@ -29,13 +30,13 @@ Array3d quat2eul(Quaterniond q) {
     return eul;
 }
 
-Array4d qr_kf_measurementFunction(Vector4d Xk, Vector3d p1, Vector3d p2) {
+Vector4d qr_kf_measurementFunction(Vector4d Xk, Vector3d p1, Vector3d p2) {
     /* Xk if size 4x1
     * p1, p2 is of size 1x3
     * g is of size 4x1
     */
 
-    Array4d g;
+    Vector4d g;
 
     g(0) = Xk(1)*(p2(0)-p1(0))+Xk(2)*(p2(1)-p1(1))+Xk(3)*(p2(2)-p1(2));
     g(1) = Xk(0)*(p1(0)-p2(0))-Xk(2)*(p1(2)+p2(2))+Xk(3)*(p1(1)+p2(1));
@@ -82,15 +83,14 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     
     // Check for input dimensions 
     if (Xk.size() != 4)
-        cerr << "Xk has wrong dimension. Should be 4x1";
+        cerr << "Xk has wrong dimension. Should be 4x1\n";
     if (Pk.rows() != 4 || Pk.cols() != 4)
-        cerr << "Pk has wrong dimension. Should be 4x4";
-    if (p1c.cols() == p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols())
-        cerr << "pxx are not equal in size";
+        cerr << "Pk has wrong dimension. Should be 4x4\n";
+    if (p1c.cols() != p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols())
+        cerr << "pxx are not equal in size\n";
     int nPoints = p1c.cols();
     PointCloud pc = p1c - p2c;
     PointCloud pr = p1r - p2r;
-    
     //dim is the total number of point pairs that we have
     int dim = 4 * nPoints;
 
@@ -106,13 +106,13 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     // M has dimension 4 x 4
     Matrix4d M =  XkSquare + Pk;
     // z is pseudo measurement
-    MatrixXd z = MatrixXd::Zero(1, dim);
+    MatrixXd z = MatrixXd::Zero(dim, 1);
     // R is pseudo measurement uncertainty
     MatrixXd R = MatrixXd::Zero(dim, dim);
     // g is estimated measurement
-    MatrixXd g = MatrixXd::Zero(1, dim);
+    VectorXd g = VectorXd::Zero(dim);
     // G is measurement Jacobian. Which is trivial for linear functions
-    MatrixXd G = MatrixXd::Zero(4, dim);
+    MatrixXd G = MatrixXd::Zero(dim,4);
 
     // find estimated measurements and uncertainties over all sensed points
     // considered. In future avoid for loop
@@ -120,40 +120,45 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
         Vector3d pcPoint = pc.col(i-1);
         Vector3d prPoint = pr.col(i-1);
         int idx = 4*i-4;
-        g.block(0, idx, 4, 1) = qr_kf_measurementFunction(Xk, pcPoint, prPoint);
-        G.block(0, idx, 4, 4) = qr_kf_measurementFunctionJacobian(pcPoint, prPoint);
-        R.block(idx, idx, 3, 3) = Rmag * (M.sum() * Matrix4d::Identity() - M);
+        g.segment(idx,4) = qr_kf_measurementFunction(Xk, pcPoint, prPoint);
+        G.block(idx, 0, 4, 4) = qr_kf_measurementFunctionJacobian(pcPoint, prPoint);
+        R.block(idx, idx, 4, 4) = Rmag * (M.trace() * Matrix4d::Identity() - M);
     }
-
+    
     // Kalman gain computation
-    MatrixXd K = Pk * G * (G.transpose()*Pk*G + R).inverse();    
+    MatrixXd K = Pk * G.transpose() * (G*Pk*G.transpose() + R).inverse();
 
     // state update
-    Array4d temp4x1 = Xk.matrix() + K*(z-g).transpose();
+    Array4d temp4x1 = Xk.matrix() + K*(z-g);
     Xk = temp4x1;
-    
+
     // check for double covering of quaternions. This step can actually be avoided
     if (Xk(0) < 0)
         Xk = -Xk;
     // uncertainty update
-    Pk = Pk - K*G.transpose()*Pk;
+    Pk = Pk - K*G*Pk;
     
     // Calculate translation vector from rotation estimate
     // quat2rotm converts quaternion to rotation matrix.
     Vector3d centroid;
     for(int i=0; i<3; i++) {
-        centroid(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
+        centroid(i) = (p1c.row(i).mean() + p2c.row(i).mean())/2.0;
     }
     Quaterniond XkQuat = Quaterniond(Xk(0),Xk(1),Xk(2),Xk(3));
     
-    Vector3d centroidTransformed = XkQuat.matrix() * centroid;
+    Vector3d centroidTransformed;
+    for(int i=0; i<3; i++) {
+        centroidTransformed(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
+    }
+
+    centroidTransformed = XkQuat.matrix() * centroidTransformed;
     Vector3d eulerRotation = quat2eul(XkQuat);
     Vector3d centroidDifference = centroid - centroidTransformed;
     
     // Estimated pose parameters  (x,y,z,alpha,beta,gamma)
     VectorXd Xreg(6);
-    Xreg.block(0,0,3,1) = centroidDifference;
-    Xreg.block(3,0,3,1) = eulerRotation;
+    Xreg.segment(0,3) = centroidDifference;
+    Xreg.segment(3,3) = eulerRotation;
     
     struct triple2 result;
     result.Xk = Xk;
@@ -161,6 +166,7 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     result.Xreg = Xreg;
 
     return result;
+
 }
 
 #if 0

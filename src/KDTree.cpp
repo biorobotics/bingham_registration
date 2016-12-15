@@ -119,8 +119,11 @@ struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size,
 	// Transform the target points before searching
 	targetsNew = compute_transformed_points(targets, Xreg);
 
-	if (targets.cols() != numtargets)
-		call_error("target doesn't match target size");
+	if (targets.cols() != numtargets){
+		ostringstream errorString;
+		errorString << "Pointcloud (" << targets.cols()<< ") doesn't match target size (" << numtargets << ")\n";
+		call_error(errorString.str());
+	}
 	// Find numtargets cloest points together with corresponding targets
 	for (int count = 0; count < numtargets; count++) {
 		struct KDNode nearestPoint = find_nearest(targetsNew.col(count), T, size);
@@ -142,12 +145,12 @@ struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size,
 	for (int count = 0; count < inlierSize; count++) {
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
 		filtered_resultTargets.col(count) = resultTargets.col(sortIndex[count]);
-		totalDistance += filtered_resultMatches(count, 3);
+		totalDistance += filtered_resultMatches(3, count);
 	}
 	
 	struct triple1 result;
 	// When return, ignore the last column which stores individual distances
-	result.pc = filtered_resultMatches.topLeftCorner(3, 2);
+	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result.pr = filtered_resultTargets;
 	result.res = totalDistance / inlierSize;
 	return result;
