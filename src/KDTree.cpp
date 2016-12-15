@@ -22,8 +22,9 @@ double find_distance(Vector3d point1, Vector3d point2) {
 // Insert is a function that inserts a point into the KDTree
 KDTree insert_helper(Vector3d point, KDTree T, int level) {
 	// If creating a new tree 
-	if (level < 0 || level > 2)
+	if (level < 0 || level > 2) {
 		call_error("Invalid component access");
+	}
 	if (T == NULL) {
 		T = (KDTree)malloc(sizeof(struct KDNode));
 		if (T == NULL)
@@ -34,10 +35,11 @@ KDTree insert_helper(Vector3d point, KDTree T, int level) {
 		(T->value)(2) = point(2);
 	}
 	else {
-		if (point(level) < T->value(level))
+		if (point(level) < T->value(level)) {
 			T->left = insert_helper(point, T->left, (level+1) % 3);
-		else
+		} else {
 			T->right = insert_helper(point, T->right, (level+1) % 3);
+		}
 	}
 	return T;
 }
@@ -64,16 +66,18 @@ void find_nearest_helper(KDTree T, Vector3d target, int level, KDTree *best, dou
 	}
 
 	//If find exact match
-	if (!*bestDistance)
+	if (!*bestDistance) {
 		return;
+	}
 
 	level = (level+1) % 3;
 	find_nearest_helper(diff > 0 ? T->left : T->right, target, level, best, bestDistance);
 	/* If the candidate hypersphere crosses this splitting plane, look on the
     * other side of the plane by examining the other subtree.
     */
-    if (fabs(diff) >= *bestDistance)
+    if (fabs(diff) >= *bestDistance) {
     	return;
+    }
     find_nearest_helper(diff > 0 ? T->right : T->left, target, level, best, bestDistance);
 }
 
@@ -106,7 +110,7 @@ vector<size_t> sort_indexes(const vector<T> &v) {
  * pr = set of all target points in corresponding order with pc
  * res = mean of all the distances calculated
  */
-struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size, double inlierRatio, ArrayXd Xreg) {
+struct KdResult kd_search(PointCloud targets, int numtargets, KDTree T, int size, double inlierRatio, ArrayXd Xreg) {
 
 	int inlierSize = trunc(numtargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numtargets);
@@ -148,7 +152,7 @@ struct triple1 kd_search(PointCloud targets, int numtargets, KDTree T, int size,
 		totalDistance += filtered_resultMatches(3, count);
 	}
 	
-	struct triple1 result;
+	struct KdResult result;
 	// When return, ignore the last column which stores individual distances
 	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result.pr = filtered_resultTargets;

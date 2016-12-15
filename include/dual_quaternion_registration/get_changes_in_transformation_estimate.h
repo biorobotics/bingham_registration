@@ -10,13 +10,13 @@ using Eigen::Vector3d;
 using Eigen::Quaterniond;
 using Eigen::VectorXd;
 
-struct tuple1{
+struct DeltaTransform{
 	double dR;
 	double dT;
 };
 
 Quaterniond eul2quat(Vector3d eul);
 
-struct tuple1 get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev);
+struct DeltaTransform get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev);
 
 #endif

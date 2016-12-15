@@ -13,7 +13,7 @@ using Eigen::Array4d;
 using Eigen::ArrayXd;
 using Eigen::Quaterniond;
 
-struct triple2 {
+struct QrKfResult {
     Array4d Xk;   // 1x4
     Matrix4d Pk;  // 4x4
     ArrayXd Xreg; // 1x6
@@ -21,11 +21,7 @@ struct triple2 {
 
 Array3d quat2eul(Quaterniond q);
 
-Vector4d qr_kf_measurementFunction(Vector4d Xk, Vector3d p1, Vector3d p2);
-
-Matrix4d qr_kf_measurementFunctionJacobian(Vector3d p1, Vector3d p2);
-
-struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
-                     PointCloud p1r, PointCloud p2c, PointCloud p2r);
+struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
+                     	PointCloud p1r, PointCloud p2c, PointCloud p2r);
 
 #endif

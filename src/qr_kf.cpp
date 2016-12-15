@@ -72,8 +72,8 @@ Matrix4d qr_kf_measurementFunctionJacobian(Vector3d p1, Vector3d p2) {
     return H;
 }
 
-struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
-                     PointCloud p1r, PointCloud p2c, PointCloud p2r) {
+struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
+                        PointCloud p1r, PointCloud p2c, PointCloud p2r) {
     /*Xk is of size 4x1  
      *Pk is of size 4x4
      *Rmag is a constant scalar
@@ -81,12 +81,15 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
      *Xreg is of size 1 x 6 */
     
     // Check for input dimensions 
-    if (Xk.size() != 4)
+    if (Xk.size() != 4) {
         cerr << "Xk has wrong dimension. Should be 4x1\n";
-    if (Pk.rows() != 4 || Pk.cols() != 4)
+    }
+    if (Pk.rows() != 4 || Pk.cols() != 4) {
         cerr << "Pk has wrong dimension. Should be 4x4\n";
-    if (p1c.cols() != p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols())
+    }
+    if (p1c.cols() != p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols()) {
         cerr << "pxx are not equal in size\n";
+    }
     int nPoints = p1c.cols();
     PointCloud pc = p1c - p2c;
     PointCloud pr = p1r - p2r;
@@ -135,8 +138,10 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     Xk = temp4x1;
 
     // check for double covering of quaternions. This step can actually be avoided
-    if (Xk(0) < 0)
+    if (Xk(0) < 0) {
         Xk = -Xk;
+    }
+
     // uncertainty update
     Pk = Pk - K*G*Pk;
     
@@ -148,20 +153,20 @@ struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     }
     Quaterniond XkQuat = Quaterniond(Xk(0),Xk(1),Xk(2),Xk(3)).normalized();
     
-    Vector3d centroidTransformed;
+    Vector3d centroidRotated;
     for(int i=0; i<3; i++) {
-        centroidTransformed(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
+        centroidRotated(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
     }
-    centroidTransformed = XkQuat.toRotationMatrix() * centroidTransformed;
+    centroidRotated = XkQuat.toRotationMatrix() * centroidRotated;
     Vector3d eulerRotation = quat2eul(XkQuat);
-    Vector3d centroidDifference = centroid - centroidTransformed;
+    Vector3d centroidDifference = centroid - centroidRotated;
     
     // Estimated pose parameters  (x,y,z,alpha,beta,gamma)
     VectorXd Xreg(6);
     Xreg.segment(0,3) = centroidDifference;
     Xreg.segment(3,3) = eulerRotation;
     
-    struct triple2 result;
+    struct QrKfResult result;
     result.Xk = Xk;
     result.Pk = Pk;
     result.Xreg = Xreg;

@@ -25,8 +25,8 @@ Quaterniond eul2quat(Vector3d eul) {
 	return q;
 }
 
-struct tuple1 get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev) {
-	struct tuple1 result;
+struct DeltaTransform get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev) {
+	struct DeltaTransform result;
 	Quaterniond qs = eul2quat(Xreg.segment(3,3));
 	Quaterniond qsPrev = eul2quat(Xregprev.segment(3,3));
 	// Rotation difference in radians

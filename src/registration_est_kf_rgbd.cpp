@@ -43,7 +43,7 @@ const int MAX_TOKENS_PER_LINE = 20;
 const char* const DELIMITER = " ";
 
 // For the return type
-struct tuple2{
+struct RegistrationResult{
     VectorXd Xreg;
     MatrixXd Xregsave;
 };
@@ -61,14 +61,14 @@ struct tuple2{
             sizePtcldFixed is size of ptcldFixed data 
  */
 
-struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed) {
+struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed) {
 
     if (ptcldMoving.rows() != DIMENSION || ptcldFixed.rows() != DIMENSION)
         call_error("Invalid point dimension");
     
     //************ Initialization **************
     
-    struct tuple2 result;
+    struct RegistrationResult result;
     int sizePtcldMoving = ptcldMoving.cols();
     int sizePtcldFixed = ptcldFixed.cols();
     int treeSize = sizePtcldFixed;
@@ -112,7 +112,7 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
     for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / windowsize); i++) {
-        int iOffset = i - 1;    // Armadillo is 0-index instead of 1-index
+        int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
         // Send as input a subset of the ptcldMoving points.
@@ -120,15 +120,15 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
         
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
-            
-            for (int n = 0; n < 3; n++) 
+            for (int n = 0; n < 3; n++) {
                 targets(n,rOffset) = ptcldMovingNew(n, r);
+            }
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-        struct triple1 searchResult = kd_search(targets, windowsize, cloudTree,
-                                      sizePtcldFixed, INLIER_RATIO, Xreg);
+        struct KdResult searchResult = kd_search(targets, windowsize, cloudTree,
+                                       sizePtcldFixed, INLIER_RATIO, Xreg);
 
         PointCloud pc = searchResult.pc;    // set of all closest point
         PointCloud pr = searchResult.pr;    // set of all target points in corresponding order with pc
@@ -154,7 +154,7 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
         // Store odd entries in pc to p1c, pr to p1r
         // Store even entries in pc to p2c, pr to p2r
         for (int n = 1; n <= truncSize - truncSize % 2; n++) {
-            int nOffset = n - 1;    // Armadillo is 0-index instead of 1-index
+            int nOffset = n - 1;    // Eigen is 0-index instead of 1-index
             if (n % 2) {    // If odd index point
                 if (p1Count >= oddEntryNum) {
                     call_error("Incorrect number of odd entry.");
@@ -178,7 +178,7 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
         //  Takes updated Xk, Pk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Pk, and Xreg for next iteration. 
-        struct triple2 qfResult = qr_kf(Xk, Pk, Rmag, p1c, p1r, p2c, p2r); 
+        struct QrKfResult qfResult = qr_kf(Xk, Pk, Rmag, p1c, p1r, p2c, p2r); 
         
         Xk = qfResult.Xk;
         Pk = qfResult.Pk;
@@ -194,11 +194,10 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
         //  Takes in updated Xreg and previous Xreg
         //  Return dR, dT
         
-        struct tuple1 convergenceResult = get_changes_in_transformation_estimate(
-                                          qfResult.Xreg, Xregsave.col(i-1));
+        struct DeltaTransform convergenceResult = get_changes_in_transformation_estimate(
+                                                  qfResult.Xreg, Xregsave.col(i-1));
 
-        if (convergenceResult.dT <= tolerance(0) && convergenceResult.dR <= tolerance(0))
-        {
+        if (convergenceResult.dT <= tolerance(0) && convergenceResult.dR <= tolerance(0)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
         }
@@ -248,7 +247,7 @@ int main(int argc, char *argv[]) {
     CADFile.open(fixedFileString, ifstream::in);
     
     if (!sensedFile.good() || !CADFile.good()) {
-        cout << "File not found" << "\n";
+        cout << "Files " << fixedFileString << ", " << movingFileString << " not found" << "\n";
         return 1; // exit if file not found
     } 
     
@@ -265,13 +264,15 @@ int main(int argc, char *argv[]) {
         Vector3d temp;
         iss >> temp(0) >> temp(1) >> temp(2);
         // Make sure all three were read in correctly
-        if(iss.fail())
+        if(iss.fail()) {
             call_error(movingFileString + ": Input data doesn't match dimension (too few per line)");
+        }
         // Make sure there are no more to read
         float eofCheck;
         iss >> eofCheck;
-        if(iss.good())
+        if(iss.good()) {
             call_error(movingFileString + ": Input data doesn't match dimension (too many per line)");
+        }
         // Add temp to list of vectors  
         pointVector.push_back(temp);
     }
@@ -293,13 +294,15 @@ int main(int argc, char *argv[]) {
         std::istringstream iss(buf);
         Vector3d temp;
         iss >> temp(0) >> temp(1) >> temp(2);
-        if(iss.fail())
+        if(iss.fail()) {
             call_error(fixedFileString + ": Input data doesn't match dimension (too few per line)");
+        }
         // Make sure there are no more to read
         float eofCheck;
         iss >> eofCheck;
-        if(iss.good())
+        if(iss.good()) {
             call_error(movingFileString + ": Input data doesn't match dimension (too many per line)");
+        }
         // Add temp to list of vectors
         pointVector.push_back(temp);
     }
@@ -316,14 +319,14 @@ int main(int argc, char *argv[]) {
     clock_t begin = clock();    // For timing the performance
 
     // Run the registration function
-    struct tuple2 result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed);
+    struct RegistrationResult result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed);
 
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-    cout << "Registration runtime is: " << elapsed_secs << " seconds." << endl;
-    cout << "Xreg: " << endl << result.Xreg << endl;
-    cout << "Xregsave: " << endl << result.Xregsave.transpose() << endl;
+    cout << "Registration runtime is: " << elapsed_secs << " seconds." << endl << endl;
+    cout << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
+    cout << "Xregsave:" << endl << result.Xregsave.transpose() << endl;
     
     return 0;
 }
