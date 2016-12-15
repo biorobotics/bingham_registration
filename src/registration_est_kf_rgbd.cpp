@@ -27,6 +27,7 @@
 #include "KDTree.h"
 #include "get_changes_in_transformation_estimate.h"
 #include "qr_kf.h"
+#include "qr_kf_old.h"
 #include "compute_transformed_points.h"
 
 using namespace std;
@@ -112,7 +113,6 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
     for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / windowsize); i++) {
-        cout << "Iteration " << i << "/" << min(MAX_ITERATIONS, sizePtcldMoving / windowsize) << endl;
         int iOffset = i - 1;    // Armadillo is 0-index instead of 1-index
         
         // Tree search
@@ -211,19 +211,47 @@ struct tuple2 registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldF
 // Read sensed data and CAD data from .txt files and use them as input for
 // running the registration function
 
-int main() {
-    
+int main(int argc, char *argv[]) {
+    // Defaults
+    string movingFileString = "/home/biomed/catkin_ws/src/dual_quaternion_registration/data/ptcld_moving_2.txt";
+    string fixedFileString = "/home/biomed/catkin_ws/src/dual_quaternion_registration/data/ptcld_fixed_2.txt";
+    // Replace filenames if arguments exist
+    for (int i = 1; i < argc; ++i) {
+        string arg = argv[i];
+        if (arg == "-m"){
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                // Increment 'i' so we don't get the argument as the next argv[i].
+                i++;
+                movingFileString = argv[i];
+            } else { // Uh-oh, there was no argument to the destination option.
+                std::cerr << "-m option requires filepath for moving pointcloud." << std::endl;
+                return 1;
+            }
+        }
+        if (arg == "-f"){
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++; // Increment 'i' so we don't get the argument as the next argv[i].
+                fixedFileString = argv[i]; 
+            } else { // Uh-oh, there was no argument to the destination option.
+                std::cerr << "-f option requires filepath for fixed pointcloud." << std::endl;
+                return 1;
+            }
+        }
+    }
+
     // Read .text files for data points
     ifstream sensedFile;
     ifstream CADFile;
 
-    sensedFile.open("data/ptcld_moving_2.txt", ifstream::in);
-    CADFile.open("data/ptcld_fixed_2.txt", ifstream::in);
+    cout << "\nStatic point cloud: " << fixedFileString << "\nMoving point cloud: " << movingFileString << endl;
+
+    sensedFile.open(movingFileString, ifstream::in);
+    CADFile.open(fixedFileString, ifstream::in);
     
     if (!sensedFile.good() || !CADFile.good()) {
         cout << "File not found" << "\n";
         return 1; // exit if file not found
-    }
+    } 
     
     // Vector for appending points
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> pointVector;
@@ -233,31 +261,19 @@ int main() {
         // read an entire line into memory
         char buf[MAX_CHARS_PER_LINE];
         sensedFile.getline(buf, MAX_CHARS_PER_LINE);
-    
-        // parse the line into blank-delimited tokens
-        int n = 0; // a for-loop index
-    
-        // array to store memory addresses of the tokens in buf
-        const char* token[MAX_TOKENS_PER_LINE] = {}; // initialize to 0
-        // parse the line
-        token[0] = strtok(buf, DELIMITER); // first token
-        if (token[0]) {// zero if line is blank
-            for (n = 1; n < MAX_TOKENS_PER_LINE; n++) {
-                token[n] = strtok(0, DELIMITER); // subsequent tokens
-                if (!token[n]) 
-                    break; // no more tokens
-            }
-        }
-
-        // Now n is set to # of tokens in each line
-        if (n != DIMENSION)
-            call_error("Input data doesn't match dimension1");
-        
-        // process the tokens
+        // store line in a vector
+        istringstream iss(buf);
         Vector3d temp;
-        for (int i = 0; i < n; i++)     // n = #of tokens
-            temp(i) = atof(token[i]);
-        
+        iss >> temp(0) >> temp(1) >> temp(2);
+        // Make sure all three were read in correctly
+        if(iss.fail())
+            call_error(movingFileString + ": Input data doesn't match dimension (too few per line)");
+        // Make sure there are no more to read
+        float eofCheck;
+        iss >> eofCheck;
+        if(iss.good())
+            call_error(movingFileString + ": Input data doesn't match dimension (too many per line)");
+        // Add temp to list of vectors  
         pointVector.push_back(temp);
     }
 
@@ -266,39 +282,26 @@ int main() {
     for(int i=0; i<pointVector.size(); i++){
         ptcldMoving.col(i) = pointVector[i];
     }
-
+    
     pointVector.clear();
 
     // read CADFile into ptcldFixed
     while (!CADFile.eof()) {
-        // read an entire line into memory
+                // read an entire line into memory
         char buf[MAX_CHARS_PER_LINE];
         CADFile.getline(buf, MAX_CHARS_PER_LINE);
-    
-        // parse the line into blank-delimited tokens
-        int n = 0; // a for-loop index
-    
-        // array to store memory addresses of the tokens in buf
-        const char* token[MAX_TOKENS_PER_LINE] = {}; // initialize to 0
-    
-        // parse the line
-        token[0] = strtok(buf, DELIMITER); // first token
-        if (token[0]) { // zero if line is blank
-            for (n = 1; n < MAX_TOKENS_PER_LINE; n++) {
-                token[n] = strtok(0, DELIMITER); // subsequent tokens
-                if (!token[n]) break; // no more tokens
-            }
-        }
-
-        // Now n is set to # of tokens in each line
-        if (n != DIMENSION)
-            call_error("Input data doesn't match dimension");
-        
-        // process the tokens
-        Vector3d temp(n);
-        for (int i = 0; i < n; i++) // n = #of tokens
-            temp(i) = atof(token[i]);
-        
+        // store line in a vector
+        std::istringstream iss(buf);
+        Vector3d temp;
+        iss >> temp(0) >> temp(1) >> temp(2);
+        if(iss.fail())
+            call_error(fixedFileString + ": Input data doesn't match dimension (too few per line)");
+        // Make sure there are no more to read
+        float eofCheck;
+        iss >> eofCheck;
+        if(iss.good())
+            call_error(movingFileString + ": Input data doesn't match dimension (too many per line)");
+        // Add temp to list of vectors
         pointVector.push_back(temp);
     }
 

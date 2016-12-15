@@ -27,13 +27,13 @@ Quaterniond eul2quat(Vector3d eul) {
 
 struct tuple1 get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev) {
 	struct tuple1 result;
-	Quaterniond qs = eul2quat(Xreg.block(3,0,3,1));
-	Quaterniond qsPrev = eul2quat(Xregprev.block(3,0,3,1));
+	Quaterniond qs = eul2quat(Xreg.segment(3,3));
+	Quaterniond qsPrev = eul2quat(Xregprev.segment(3,3));
 	// Rotation difference in radians
 	double dR = acos(qsPrev.dot(qs));
 	
 	// Euclidean difference
-	double dT = (Xregprev.block(3,0,3,1) - Xreg.block(3,0,3,1)).norm();
+	double dT = (Xregprev.segment(0,3) - Xreg.segment(0,3)).norm();
 	result.dR = dR;
 	result.dT = dT;
 	return result;

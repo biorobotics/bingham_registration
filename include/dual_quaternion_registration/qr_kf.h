@@ -21,6 +21,10 @@ struct triple2 {
 
 Array3d quat2eul(Quaterniond q);
 
+Vector4d qr_kf_measurementFunction(Vector4d Xk, Vector3d p1, Vector3d p2);
+
+Matrix4d qr_kf_measurementFunctionJacobian(Vector3d p1, Vector3d p2);
+
 struct triple2 qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
                      PointCloud p1r, PointCloud p2c, PointCloud p2r);
 
