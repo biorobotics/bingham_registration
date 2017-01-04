@@ -1,0 +1,5 @@
+sensor_msgs/PointCloud2 ptcld_moving
+sensor_msgs/PointCloud2 ptcld_fixed
+---
+float64[] xreg
+sensor_msgs/PointCloud2 xreg_saves

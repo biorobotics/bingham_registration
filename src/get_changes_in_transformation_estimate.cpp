@@ -14,6 +14,7 @@ using namespace Eigen;
 // return rowvec q of dimension 1 x 4
 Quaterniond eul2quat(Vector3d eul) {
 	Array3d eulHalf = eul / 2;
+
 	Array3d c = eulHalf.cos();
 	Array3d s = eulHalf.sin();
 	

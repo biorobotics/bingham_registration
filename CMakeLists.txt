@@ -1,20 +1,25 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dual_quaternion_registration)
 add_definitions(-std=c++11)
+add_definitions(${PCL_DEFINITIONS})
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   roscpp
+  std_msgs
+  genmsg
+  geometry_msgs
   sensor_msgs
   tf2
   tf2_ros
+  message_generation
+  cmake_modules
 )
-
-find_package(catkin REQUIRED cmake_modules)
 find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
+
 if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
   find_package(cmake_modules REQUIRED)
@@ -66,11 +71,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 # )
 
 # # Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+ add_service_files(
+   FILES
+   QFRegistration.srv
+ )
 
 # # Generate actions in the 'action' folder
 # add_action_files(
@@ -80,10 +84,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 # )
 
 # # Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   sensor_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   sensor_msgs
+ )
 
 # ###############################################
 # # Declare ROS dynamic reconfigure parameters ##
@@ -132,7 +136,10 @@ include_directories(
   include/dual_quaternion_registration
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
+link_directories(${PCL_LIBRARY_DIRS})
+
 
 ## Declare a C++ library
 add_library(dual_quaternion_registration
@@ -147,15 +154,17 @@ add_dependencies(dual_quaternion_registration ${${PROJECT_NAME}_EXPORTED_TARGETS
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(dual_quaternion_registration
-  	${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 	${EIGEN3_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 ## Declare a C++ executable
+
 add_executable(registration src/registration_main.cpp 
-                            src/registration_est_kf_rgbd.cpp
+                            src/registration_est_bingham_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
-                            src/KDTree.cpp src/qr_kf.cpp
+                            src/KDTree.cpp src/bingham_kf.cpp
                             src/get_changes_in_transformation_estimate.cpp
 )
 
@@ -165,6 +174,17 @@ add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 ## Specify libraries to link a library or executable target against
 target_link_libraries(registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
+add_executable(qf_registration_server src/qf_registration_server.cpp 
+                            src/registration_est_kf_rgbd.cpp
+                            src/compute_transformed_points.cpp
+                            src/KDTree.cpp src/qr_kf.cpp
+                            src/get_changes_in_transformation_estimate.cpp)
+target_link_libraries(qf_registration_server ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(qf_registration_server dual_quaternion_registration_gencpp)
+
+add_executable(qf_registration_client src/qf_registration_client.cpp)
+target_link_libraries(qf_registration_client ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(qf_registration_client dual_quaternion_registration_gencpp)
 #############
 ## Install ##
 #############

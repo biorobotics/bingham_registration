@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include "registration_est_kf_rgbd.h"
+#include "registration_est_bingham_kf_rgbd.h"
 
 // For .txt file parsing
 const int MAX_CHARS_PER_LINE = 512;     
@@ -15,8 +15,8 @@ const char* const DELIMITER = " ";
 
 int main(int argc, char *argv[]) {
     // Defaults
-    string movingFileString = "/home/biomed/catkin_ws/src/dual_quaternion_registration/data/ptcld_moving_2.txt";
-    string fixedFileString = "/home/biomed/catkin_ws/src/dual_quaternion_registration/data/ptcld_fixed_2.txt";
+    string movingFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_moving_4.txt";
+    string fixedFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_fixed_4.txt";
     // Replace filenames if arguments exist
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     clock_t begin = clock();    // For timing the performance
 
     // Run the registration function
-    struct RegistrationResult result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed);
+    struct RegistrationResult result = registration_est_bingham_kf_rgbd(ptcldMoving, ptcldFixed);
 
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -132,6 +132,11 @@ int main(int argc, char *argv[]) {
     cout << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
     cout << "Xregsave:" << endl << result.Xregsave.transpose() << endl;
     
+    ofstream myFile;
+    myFile.open("Result_O3.txt");
+    myFile << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
+    myFile << "Xregsave:" << endl << result.Xregsave.transpose() << endl;
+    myFile.close();
     return 0;
 }
 
