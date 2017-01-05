@@ -62,7 +62,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < treeSize; i++) {
-        cloudTree = insert(ptcldFixed.col(i), cloudTree);
+        insert(ptcldFixed.col(i), &cloudTree);
     }
 
     int windowsize = sizePtcldMoving / WINDOW_RATIO;
@@ -115,14 +115,17 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-        
-        struct KdResult searchResult = kd_search(targets, windowsize, cloudTree,
+      
+        struct KdResult *searchResult = kd_search(targets, windowsize, cloudTree,
                                        sizePtcldFixed, INLIER_RATIO, Xreg);
 
-        PointCloud pc = searchResult.pc;    // set of all closest point
-        PointCloud pr = searchResult.pr;    // set of all target points in corresponding order with pc
-        double res = searchResult.res;  // mean of all the distances calculated
+        PointCloud pc = searchResult->pc;    // set of all closest point
+        PointCloud pr = searchResult->pr;    // set of all target points in corresponding order with pc
+        double res = searchResult->res;  // mean of all the distances calculated
 
+        
+
+       
         // Truncate the windowsize according to INLIER_RATIO
         int truncSize = trunc(windowsize * INLIER_RATIO);
 
@@ -201,9 +204,11 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
         if (i >= MIN_ITERATIONS && convergenceResult.dT <= tolerance(0) && convergenceResult.dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
+            free_tree(cloudTree);
             break;  // Break out of loop if convergence met
         }
+
     }
-    
+    free_tree(cloudTree);
     return result;
 }

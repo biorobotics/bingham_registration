@@ -117,6 +117,9 @@ int main(int argc, char *argv[]) {
         ptcldFixed.col(i) = pointVector[i];
     }
     
+    pointVector.clear();
+    pointVector.shrink_to_fit();
+    
     sensedFile.close();
     CADFile.close();
     

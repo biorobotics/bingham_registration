@@ -75,21 +75,6 @@ Matrix4d qr_kf_measurementFunctionJacobian(Vector3d p1, Vector3d p2) {
     return H;
 }
 
-// Sort that returns the indexes in descending order. Requires c++11 for lambda functions
-// Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
-template <typename T>
-vector<size_t> sort_indexes_1(const vector<T> &v) {
-
-  // initialize original index locations
-  vector<size_t> idx(v.size());
-  for (size_t i = 0; i < idx.size(); i++) idx[i] = i;
-
-  // sort indexes in descending order based on comparing values in v
-  sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
-
-  return idx;
-}
-
 struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk, 
 								  double Rmag, PointCloud p1c, PointCloud p1r, 
 								  PointCloud p2c, PointCloud p2r) {
@@ -115,8 +100,8 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 	 with all diagonal elements being negative except for first entry which is
 	 0 */
 	double c = Zk.minCoeff();
-	if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	cout << "c = : " << c << endl; 
+	//if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
+	//cout << "c = : " << c << endl; 
 	Matrix4d temp = Mk * (Zk + c*MatrixXd::Identity(4,4))*(Mk.transpose());
 /*if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
 	cout << "temp = : " << temp << endl;*/
@@ -139,6 +124,13 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 	VectorXd s = es.eigenvalues().real();  // A vector whose entries are eigen values of RTmp
 	MatrixXd U = es.eigenvectors().real();	// A matrix whose column vectors are eigen vectors of RTmp
 	
+
+	// Normalize U
+	/*for (i = 0; i < U.cols(); i++)
+	{
+		U.col(i).norm();
+	}*/
+
 	// A step to make sure every column in U is unit vector
 /*	for (i = 0; i < U.cols(); i++) {
 		U.col(i) = 
@@ -172,6 +164,7 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 		D1 = D1 + G_tmp.transpose()*RInvTmp*G_tmp;
 	}
 
+
 	Matrix4d DStar = -0.5 * D1 + Mk * Zk * Mk.transpose();
 	
 	es.compute(DStar, true);
@@ -179,13 +172,19 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 	VectorXd ZTmp = es.eigenvalues().real();  // A vector whose entries are eigen values of RTmp
 	MatrixXd MTmp = es.eigenvectors().real();	// A matrix whose column vectors are eigen vectors of RTmp
 	
+	// Normalize MTmp
+/*	for (i = 0; i < U.cols(); i++)
+	{
+		MTmp.col(i).norm();
+	}*/
+
 	// Convert ZTmp to std::vector so we can call the sort function
 	vector<double> ZTmpSTD(ZTmp.data(), ZTmp.data() + ZTmp.size());
 	
 		//cout << "ZTmpSTD: " << endl;
 		//std::copy(ZTmpSTD.begin(), ZTmpSTD.end(), std::ostream_iterator<double>(std::cout, " "));
 	
-	vector<size_t> indx = sort_indexes_1(ZTmpSTD);
+	vector<size_t> indx = sort_indexes(ZTmpSTD, false);
 	
 		//cout << "indx is: " << endl;
 		//std::copy(indx.begin(), indx.end(), std::ostream_iterator<size_t>(std::cout, " "));
