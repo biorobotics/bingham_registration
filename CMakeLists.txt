@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dual_quaternion_registration)
-add_definitions(-std=c++11  -O3 ${PCL_DEFINITIONS})
+add_definitions(-std=c++11 -O3 -ffloat-store ${PCL_DEFINITIONS})
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -173,17 +173,6 @@ add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 ## Specify libraries to link a library or executable target against
 target_link_libraries(registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
-add_executable(qf_registration_server src/qf_registration_server.cpp 
-                            src/registration_est_kf_rgbd.cpp
-                            src/compute_transformed_points.cpp
-                            src/KDTree.cpp src/qr_kf.cpp
-                            src/get_changes_in_transformation_estimate.cpp)
-target_link_libraries(qf_registration_server ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
-add_dependencies(qf_registration_server dual_quaternion_registration_gencpp)
-
-add_executable(qf_registration_client src/qf_registration_client.cpp)
-target_link_libraries(qf_registration_client ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
-add_dependencies(qf_registration_client dual_quaternion_registration_gencpp)
 #############
 ## Install ##
 #############

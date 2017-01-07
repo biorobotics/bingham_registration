@@ -79,45 +79,45 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 								  double Rmag, PointCloud p1c, PointCloud p1r, 
 								  PointCloud p2c, PointCloud p2r) {
 
-/*	if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	{
-	cout << "Xk = : " << Xk << endl;
-	cout << "Mk = : " << Mk << endl;
-	cout << "Zk = : " << Zk << endl;
-	cout << "Rmag = : " << Rmag << endl;
-	cout << "p1c = : " << p1c << endl;
-	cout << "p1r = : " << p1r << endl;
-	cout << "p2c = : " << p2c << endl;
-	cout << "p2r = : " << p2r << endl;
-}*/
-
-
+	 // Check for input dimensions 
+    if (Xk.size() != 4) {
+        cerr << "Xk has wrong dimension. Should be 4x1\n";
+    }
+    if (Mk.rows() != 4 || Mk.cols() != 4) {
+        cerr << "Mk has wrong dimension. Should be 4x4\n";
+    }
+    if (Zk.rows() != 4 || Zk.cols() != 4) {
+        cerr << "Mk has wrong dimension. Should be 4x4\n";
+    }
+    if (p1c.cols() != p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols()) {
+        cerr << "pxx are not equal in size\n";
+    }
 
 	int i;
 	PointCloud pc = p1c - p2c;
 	PointCloud pr = p1r - p2r;
+	
 	/*c is the smallest diagonal value of Zk. remember Zk is a diagonal matrix
 	 with all diagonal elements being negative except for first entry which is
 	 0 */
 	double c = Zk.minCoeff();
-	//if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	//cout << "c = : " << c << endl; 
-	Matrix4d temp = Mk * (Zk + c*MatrixXd::Identity(4,4))*(Mk.transpose());
-/*if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	cout << "temp = : " << temp << endl;*/
 
-	Matrix4d Pk = -0.5 * (temp.inverse());
-/*	if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	cout << "Pk = : " << Pk << endl;*/
+	Matrix4d I = MatrixXd::Identity(4,4);
 
-	//cout << "Pk = : " << Pk << endl;
+	Matrix4d temp = Mk * (Zk + c*I)*(Mk.transpose());
+
+	Matrix4d tempInv;
+
+	if (c*c < pow(10, -100))
+		tempInv = (temp / (pow(10, -100))).inverse()*(pow(10, 100));
+	else
+		tempInv = temp.inverse();
+
+	Matrix4d Pk = -0.5 * tempInv;
+
 	Matrix4d Nk = Xk * Xk.transpose() + Pk;
-/*		if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	cout << "Nk = : " << Nk << endl;*/
-	Matrix4d RTmp = Rmag * (Nk.trace()*MatrixXd::Identity(4,4) - Nk);
-/*		if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	cout << "RTmp = : " << RTmp << endl;*/
 
+	Matrix4d RTmp = Rmag * (Nk.trace()*I - Nk);
 
 	EigenSolver<Matrix4d> es(RTmp);
 	
@@ -126,18 +126,10 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 	
 
 	// Normalize U
-	/*for (i = 0; i < U.cols(); i++)
+	for (i = 0; i < U.cols(); i++)
 	{
 		U.col(i).norm();
-	}*/
-
-	// A step to make sure every column in U is unit vector
-/*	for (i = 0; i < U.cols(); i++) {
-		U.col(i) = 
-	}*/
-
-    //cout << "s = : " << s << endl;
-    //cout << "U = : " << U << endl;
+	}
 
 	// If any elements in s <=10^-4, then set it to be equal to 1
 
@@ -148,16 +140,8 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 
 	// s.^-1 is essentially takes s=[a,b,c,d] and returns [1/a, 1/b, 1/c, 1/d]
 
-//	clock_t begin = clock();
 	Matrix4d RInvTmp = U * ((s.array().pow(-1)).matrix().asDiagonal()) * U.transpose();
-/*	clock_t end = clock();  
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-   	cout << "Before " << elapsed_secs << " seconds." << endl;*/
 
-/*	if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-	cout << "RInvTmp = : " << RInvTmp << endl; */
-
-	//clock_t begin = clock();
 	Matrix4d D1 = MatrixXd::Zero(4,4);	// Initialize D1 to zero matrix
 	for (i = 0; i < pc.cols(); i++) {
 		Matrix4d G_tmp = qr_kf_measurementFunctionJacobian(pc.col(i), pr.col(i));
@@ -173,60 +157,49 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
 	MatrixXd MTmp = es.eigenvectors().real();	// A matrix whose column vectors are eigen vectors of RTmp
 	
 	// Normalize MTmp
-/*	for (i = 0; i < U.cols(); i++)
+	for (i = 0; i < U.cols(); i++)
 	{
 		MTmp.col(i).norm();
-	}*/
+	}
 
 	// Convert ZTmp to std::vector so we can call the sort function
 	vector<double> ZTmpSTD(ZTmp.data(), ZTmp.data() + ZTmp.size());
-	
-		//cout << "ZTmpSTD: " << endl;
-		//std::copy(ZTmpSTD.begin(), ZTmpSTD.end(), std::ostream_iterator<double>(std::cout, " "));
-	
+
 	vector<size_t> indx = sort_indexes(ZTmpSTD, false);
-	
-		//cout << "indx is: " << endl;
-		//std::copy(indx.begin(), indx.end(), std::ostream_iterator<size_t>(std::cout, " "));
 	
 	VectorXd ZTmpSorted(ZTmp.size());
 
 
-	for (i = ZTmp.size()-1; i >= 0; i--)
-	{
+	for (i = ZTmp.size()-1; i > 0; i--)
 		ZTmpSorted(i) = ZTmp(indx[i]) - ZTmp(indx[0]);
-	}
 
-	//cout << "ZTmpSorted is " << ZTmpSorted << endl;
 	
 	// This step should ensure that Zk has first diagonal element = 0
 	ZTmpSorted(0) = 0;
-	
-	//cout << "ZTmpSorted after is " << ZTmpSorted << endl;
+
 	Zk = ZTmpSorted.asDiagonal();
 	
-	//cout << "Updated Zk is " << Zk << endl;
 	// Since we sorted and changed he order of the elements in Zk, we have to do the same
 	// change of orders for columns in Mk
 	
-	for (i = 0; i < ZTmp.size(); i++)
-		Mk.col(i) = MTmp.col(indx[i]);
-
-	//	//cout << "Updated Mk is " << Mk << endl;
+	Mk.col(0) = MTmp.col(indx[0]);
 	Xk = Mk.col(0);	// Update Xk
+
+	for (i = 1; i < ZTmp.size(); i++)
+		Mk.col(i) = MTmp.col(indx[i]);
+	
 
 	// Calculate translation vector from rotation estimate
     // quat2rotm converts quaternion to rotation matrix.
     Vector3d centroid;
+    Vector3d centroidRotated;
     for(int i=0; i<3; i++) {
         centroid(i) = (p1c.row(i).mean() + p2c.row(i).mean())/2.0;
+        centroidRotated(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
     }
     Quaterniond XkQuat = Quaterniond(Xk(0),Xk(1),Xk(2),Xk(3)).normalized();
     
-    Vector3d centroidRotated;
-    for(int i=0; i<3; i++) {
-        centroidRotated(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
-    }
+    
     centroidRotated = XkQuat.toRotationMatrix() * centroidRotated;
     Vector3d eulerRotation = quat2eul(XkQuat);
     Vector3d centroidDifference = centroid - centroidRotated;
@@ -242,12 +215,6 @@ struct BinghamKFResult bingham_kf(Vector4d Xk, Matrix4d Mk, Matrix4d Zk,
     result.Xreg = Xreg;
     result.Mk = Mk;
     result.Zk = Zk;
- /*   if (Rmag >  7.28719 - .1 && Rmag < 7.28719 + .1)
-    {
-     cout << "Updated Xk is " << result.Xk << endl;
-     cout << "Updated Xreg is " << result.Xreg << endl;
-     cout << "Updated Mk is " << result.Mk << endl;
-     cout << "Updated Zk is " << result.Zk << endl;
-}*/
+    
     return result;
 }

@@ -30,7 +30,7 @@ using namespace Eigen;
 
 #define WINDOW_RATIO 100     // The constant for deciding windowsize
 #define DIMENSION 3     // Dimension of data point
-#define INLIER_RATIO 0.9
+#define INLIER_RATIO 1
 #define MAX_ITERATIONS 100
 #define MIN_ITERATIONS 20
 
@@ -48,6 +48,8 @@ using namespace Eigen;
  */
 
 struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed) {
+    
+
     if (ptcldMoving.rows() != DIMENSION || ptcldFixed.rows() != DIMENSION)
         call_error("Invalid point dimension");
     
@@ -61,13 +63,13 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
     Vector2d tolerance;
 
     // Construct the kdtree from ptcldFixed
-    for (int i = 0; i < treeSize; i++) {
+    for (int i = 0; i < treeSize; i++) 
         insert(ptcldFixed.col(i), &cloudTree);
-    }
 
-    int windowsize = sizePtcldMoving / WINDOW_RATIO;
+    int windowsize = 20;
+    //int windowsize = sizePtcldMoving / WINDOW_RATIO;
 
-    tolerance << .001 , .0001; // Tolerance = [2 10^-4]
+    tolerance << .0001 , .009;
 
     VectorXd Xreg = VectorXd::Zero(6);  //Xreg: 1x6
 
@@ -76,27 +78,31 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
     
     MatrixXd Xregsave = MatrixXd::Zero(6,MAX_ITERATIONS + 1);
 
-    Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
+    //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
     
     // Convert Xk to Vector4d for later computation
     Vector4d Xk;
-    Xk(1) = Xk_quat.x() / Xk_quat. w();
+    Xk << 1, 0, 0, 0;
+    /*Xk(1) = Xk_quat.x() / Xk_quat. w();
     Xk(2) = Xk_quat.y() / Xk_quat. w();
     Xk(3) = Xk_quat.z() / Xk_quat. w();
-    Xk(0) = 1;
+    Xk(0) = 1;*/
 
     Matrix4d Mk= MatrixXd::Identity(4, 4);
 
     Matrix4d Zk = MatrixXd::Zero(4, 4);
 
-    for(int i = 1; i <= 3; i++) {
-        Zk(i, i) = -1 * pow((double)10, (double)-43);
-    }
+    for(int i = 1; i <= 3; i++) 
+        Zk(i, i) = -1 * pow((double)10, (double)-100);
+    
 
     PointCloud ptcldMovingNew = ptcldMoving;
 
     VectorXd Xregprev = VectorXd::Zero(6);
     
+    double BinghamKFSum = 0;  // for timing Bingham_kf
+
+
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
     for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / windowsize); i++) {
@@ -108,14 +114,12 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
-            for (int n = 0; n < 3; n++) {
+            for (int n = 0; n < 3; n++) 
                 targets(n,rOffset) = ptcldMovingNew(n, r);
-            }
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-      
         struct KdResult *searchResult = kd_search(targets, windowsize, cloudTree,
                                        sizePtcldFixed, INLIER_RATIO, Xreg);
 
@@ -123,9 +127,6 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         PointCloud pr = searchResult->pr;    // set of all target points in corresponding order with pc
         double res = searchResult->res;  // mean of all the distances calculated
 
-        
-
-       
         // Truncate the windowsize according to INLIER_RATIO
         int truncSize = trunc(windowsize * INLIER_RATIO);
 
@@ -148,9 +149,8 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         for (int n = 1; n <= truncSize - truncSize % 2; n++) {
             int nOffset = n - 1;    // Eigen is 0-index instead of 1-index
             if (n % 2) {    // If odd index point
-                if (p1Count >= oddEntryNum) {
+                if (p1Count >= oddEntryNum) 
                     call_error("Incorrect number of odd entry.");
-                }
 
                 p1c.col(p1Count) = pc.col(nOffset);
                 p1r.col(p1Count) = pr.col(nOffset);
@@ -161,7 +161,6 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
                     call_error("Incorrect number of even entry.");
                 p2c.col(p2Count) = pc.col(nOffset);
                 p2r.col(p2Count) = pr.col(nOffset);
-
                 p2Count++;
             }
         }
@@ -170,19 +169,12 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
-/*                if (i == 2)
-        {
-        cout << "Xk = : " << Xk << endl;
-    cout << "Mk = : " << Mk << endl;
-    cout << "Zk = : " << Zk << endl;
-    cout << "Rmag = : " << Rmag << endl;
-    cout << "p1c = : " << p1c << endl;
-    cout << "p1r = : " << p1r << endl;
-    cout << "p2c = : " << p2c << endl;
-    cout << "p2r = : " << p2r << endl;
-        }*/
 
+        clock_t start_2 = clock();
         struct BinghamKFResult QFResult = bingham_kf(Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r); 
+        clock_t end_2 = clock(); 
+        double elapsed_secs = double(end_2 - start_2) / CLOCKS_PER_SEC; 
+        BinghamKFSum += elapsed_secs;
 
         Xk = QFResult.Xk;
         Mk = QFResult.Mk;
@@ -202,13 +194,15 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         struct DeltaTransform convergenceResult = get_changes_in_transformation_estimate(
                                                   QFResult.Xreg, Xregsave.col(i-1));
 
-        if (i >= MIN_ITERATIONS && convergenceResult.dT <= tolerance(0) && convergenceResult.dR <= tolerance(1)) {
+        if (i >= MIN_ITERATIONS && convergenceResult.dT <= tolerance(0) && 
+            convergenceResult.dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
-            free_tree(cloudTree);
             break;  // Break out of loop if convergence met
         }
 
     }
+
     free_tree(cloudTree);
+    
     return result;
 }

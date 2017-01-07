@@ -1,6 +1,7 @@
 /*
  * File Header:
- * This file contains functions for performing KDTree Search.
+ * This file contains functions for performing KDTree Search. (updated
+    on 01/07/2017 for a better memory utilization)
  */
 #include <iostream>
 #include <vector>
@@ -8,6 +9,7 @@
 
 using namespace Eigen;
 using namespace std;
+
 // call_error prints out error message and exit the program
 void call_error(string msg) {
 	cerr << "Error: " << msg << endl;
@@ -19,12 +21,13 @@ double find_distance(Vector3d point1, Vector3d point2) {
 	return (point1 - point2).norm();
 }
 
-// Insert is a function that inserts a point into the KDTree
+// Insert is a function that inserts a point into the KDTree (which is 
+// modified in place in T)
 void insert_helper(Vector3d point, KDTree *T, int level) {
 	// If creating a new tree 
-	if (level < 0 || level > 2) {
+	if (level < 0 || level > 2) 
 		call_error("Invalid component access");
-	}
+	
 	if (T == NULL)
 		call_error("Invalid initialization");
 	if (*T == NULL)
@@ -39,11 +42,10 @@ void insert_helper(Vector3d point, KDTree *T, int level) {
 		((*T)->value)(2) = point(2);
 	}
 	else {
-		if (point(level) < (*T)->value(level)) {
+		if (point(level) < (*T)->value(level)) 
 			insert_helper(point, &((*T)->left), (level+1) % 3);
-		} else {
+		else 
 			insert_helper(point, &((*T)->right), (level+1) % 3);
-		}
 	}
 }
 
@@ -51,14 +53,19 @@ void insert(Vector3d point, KDTree *T) {
 	return insert_helper(point, T, 0);
 }
 
-// find_nearest is a function that finds the point in the cloud that is nearest to the target point
+/* find_nearest is a function that finds the point in the cloud that is nearest to the target point
+ * (the best point is modified in place in bestPP)
+ * 
+ * Requirement: T be a non-empty tree, bestPP be a non-null pointer to Vector3d * (which
+   is allowed to be NULL)
+ */
 void find_nearest_helper(KDTree T, Vector3d target, int level, Vector3d **bestPP, double *bestDistance) {
 	double distance, diff, diffSq;
 
 	// If reaches the leaf of the tree, end search
-	if (T == NULL){
+	if (T == NULL)
 		return;
-	}
+	
 	distance = find_distance(T->value, target);
 	diff = (T->value)(level) - target(level);
 	
@@ -66,21 +73,20 @@ void find_nearest_helper(KDTree T, Vector3d target, int level, Vector3d **bestPP
 		call_error("Invalid initialization");
 	if (!(*bestPP) || distance < *bestDistance) {
 		*bestDistance = distance;
-			*bestPP = &(T->value);
+		*bestPP = &(T->value);
 	}
 	//If find exact match
-	if (!*bestDistance) {
+	if (!*bestDistance) 
 		return;
-	}
-
+	
 	level = (level+1) % 3;
 	find_nearest_helper(diff > 0 ? T->left : T->right, target, level, bestPP, bestDistance);
 	/* If the candidate hypersphere crosses this splitting plane, look on the
     * other side of the plane by examining the other subtree.
     */
-    if (fabs(diff) >= *bestDistance) {
+    if (fabs(diff) >= *bestDistance) 
     	return;
-    }
+    
     find_nearest_helper(diff > 0 ? T->right : T->left, target, level, bestPP, bestDistance);
 }
 
@@ -98,8 +104,10 @@ Vector3d find_nearest(Vector3d target, KDTree T, int size) {
 	return result;
 }
 
-// Sort that returns the indexes in order. Requires c++11 for lambda functions
-// Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
+/* Sort that returns the indexes in order (set ascending true for ascending order, 
+ * false for descending order). Requires c++11 for lambda functions
+ * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
+ */
 vector<size_t> sort_indexes(const vector<double> &v, bool ascending) {
 
   // initialize original index locations
@@ -117,7 +125,7 @@ vector<size_t> sort_indexes(const vector<double> &v, bool ascending) {
 /*
  * kd_search returns pair<pc, pr, res>, where pc = set of all closest points
  * pr = set of all target points in corresponding order with pc
- * res = mean of all the distances calculated
+ * res = mean of the sum of all the distances calculated
  */
 struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int size, double inlierRatio, ArrayXd Xreg) {
 
@@ -147,7 +155,7 @@ struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int siz
 		(resultMatches.col(count))(2) = nearestPoint(2);
 		(resultMatches.col(count))(3) = find_distance(nearestPoint, targetsNew.col(count));
 		resultTargets.col(count) = targets.col(count);	// We want to return the original targets
-		}
+	}
 	
 	// Get distance row and turn into vector for sorting
 	VectorXd distances = resultMatches.row(3);
@@ -172,15 +180,12 @@ struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int siz
 	return result;
 }
 
-void free_tree(KDTree T)
-{
-	if (T)
-	{
-
+// This function frees the tree
+void free_tree(KDTree T) {
+	if (T) {
 		free_tree(T->left);
 		free_tree(T->right);
 		free(T);
 	}
-
 	return;
 }
