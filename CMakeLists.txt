@@ -33,6 +33,23 @@ endif()
 # System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
+# For setting up Qt
+
+# Find includes in corresponding build directories
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# Instruct CMake to run moc automatically when needed.
+set(CMAKE_AUTOMOC ON)
+
+# Find the QtWidgets library
+find_package(Qt5Widgets)
+
+set(UI_SOURCES
+    src/widget.ui
+)
+
+qt5_wrap_ui(UI_GENERATED_HEADERS ${UI_SOURCES})
+
+
 # # Uncomment this if the package has a setup.py. This macro ensures
 # # modules and global scripts declared therein get installed
 # # See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -167,11 +184,23 @@ add_executable(registration src/registration_main.cpp
                             src/get_changes_in_transformation_estimate.cpp
 )
 
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Specify libraries to link a library or executable target against
 target_link_libraries(registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+
+add_executable(registration_gui src/registration_gui_main.cpp 
+                            src/registration_est_bingham_kf_rgbd.cpp
+                            src/compute_transformed_points.cpp
+                            src/KDTree.cpp src/bingham_kf.cpp
+                            src/get_changes_in_transformation_estimate.cpp
+                            src/widget.cpp ${UI_GENERATED_HEADERS}
+)
+
+add_dependencies(registration_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(registration_gui ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES} Qt5::Widgets)
 
 #############
 ## Install ##
