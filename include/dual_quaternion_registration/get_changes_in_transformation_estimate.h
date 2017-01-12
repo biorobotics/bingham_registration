@@ -5,18 +5,17 @@
  */
 #ifndef GET_CHANGES_IN_TRANSFORMATION_ESTIMATE
 #define GET_CHANGES_IN_TRANSFORMATION_ESTIMATE
+
 #include <Eigen/Dense>
-using Eigen::Vector3d;
-using Eigen::Quaterniond;
-using Eigen::VectorXd;
+#include <long_double_def.h>
 
 struct DeltaTransform{
-	double dR;
-	double dT;
+	long double dR;
+	long double dT;
 };
 
-Quaterniond eul2quat(Vector3d eul);
+Quaternionld eul2quat(Vector3ld eul);
 
-struct DeltaTransform get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev);
+struct DeltaTransform get_changes_in_transformation_estimate(VectorXld Xreg, VectorXld Xregprev);
 
 #endif

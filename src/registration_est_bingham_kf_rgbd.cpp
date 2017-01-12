@@ -71,36 +71,36 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
     tolerance << .0001 , .009;
 
-    VectorXd Xreg = VectorXd::Zero(6);  //Xreg: 1x6
+    VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 1x6
 
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
     // iteration is stored there (dimensionL (MAX_ITERATIONS + 1) x 6)
     
-    MatrixXd Xregsave = MatrixXd::Zero(6,MAX_ITERATIONS + 1);
+    MatrixXld Xregsave = MatrixXld::Zero(6,MAX_ITERATIONS + 1);
 
     //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
     
-    // Convert Xk to Vector4d for later computation
-    Vector4d Xk;
+    // Convert Xk to Vector4ld for later computation
+    Vector4ld Xk;
     Xk << 1, 0, 0, 0;
     /*Xk(1) = Xk_quat.x() / Xk_quat. w();
     Xk(2) = Xk_quat.y() / Xk_quat. w();
     Xk(3) = Xk_quat.z() / Xk_quat. w();
     Xk(0) = 1;*/
 
-    Matrix4d Mk= MatrixXd::Identity(4, 4);
+    Matrix4ld Mk= MatrixXld::Identity(4, 4);
 
-    Matrix4d Zk = MatrixXd::Zero(4, 4);
+    Matrix4ld Zk = MatrixXld::Zero(4, 4);
 
     for(int i = 1; i <= 3; i++) 
-        Zk(i, i) = -1 * pow((double)10, (double)-100);
+        Zk(i, i) = -1 * pow((long double)10, (long double)-300);
     
 
     PointCloud ptcldMovingNew = ptcldMoving;
 
-    VectorXd Xregprev = VectorXd::Zero(6);
+    VectorXld Xregprev = VectorXld::Zero(6);
     
-    double BinghamKFSum = 0;  // for timing Bingham_kf
+    long double BinghamKFSum = 0;  // for timing Bingham_kf
 
 
     //********** Loop starts **********
@@ -109,8 +109,8 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
-        // Send as input a subset of the ptcldMoving points.
-        MatrixXd targets(3, windowsize);
+        // Send as input a subset of the pftcldMoving points.
+        MatrixXld targets(3, windowsize);
         
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
@@ -125,8 +125,12 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
         PointCloud pc = searchResult->pc;    // set of all closest point
         PointCloud pr = searchResult->pr;    // set of all target points in corresponding order with pc
-        double res = searchResult->res;  // mean of all the distances calculated
+        long double res = searchResult->res;  // mean of all the distances calculated
 
+        /*cout << "Start reporting kd_search result: " << endl << endl;
+        cout << "pc is: " << setprecision(18) << pc << endl;
+        cout << "pr is: " << setprecision(18) << pr << endl;
+        cout << "res is: " << setprecision(18) << res << endl;*/
         // Truncate the windowsize according to INLIER_RATIO
         int truncSize = trunc(windowsize * INLIER_RATIO);
 
@@ -139,9 +143,10 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        double Rmag= .01 + pow(res / 6, 2);  // Variable that helps calculate the noise 
+        long double Rmag= .04 + pow(res / 6, 2);  // Variable that helps calculate the noise 
         
-        int p1Count = 0;
+        //cout << "Rmag in new is: " << setprecision(18) << Rmag << endl;
+         int p1Count = 0;
         int p2Count = 0;
         
         // Store odd entries in pc to p1c, pr to p1r
@@ -173,7 +178,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         clock_t start_2 = clock();
         struct BinghamKFResult QFResult = bingham_kf(Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r); 
         clock_t end_2 = clock(); 
-        double elapsed_secs = double(end_2 - start_2) / CLOCKS_PER_SEC; 
+        long double elapsed_secs = (long double)(end_2 - start_2) / CLOCKS_PER_SEC; 
         BinghamKFSum += elapsed_secs;
 
         Xk = QFResult.Xk;
@@ -203,6 +208,6 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
     }
 
     free_tree(cloudTree);
-    
+
     return result;
 }

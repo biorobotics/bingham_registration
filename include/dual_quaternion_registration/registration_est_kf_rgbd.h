@@ -5,13 +5,12 @@
 #include "qr_kf.h"
 #include "compute_transformed_points.h"
 
-using Eigen::VectorXd;
-using Eigen::MatrixXd;
+#include <long_double_def.h>
 
 // For the return type
 struct RegistrationResult{
-    VectorXd Xreg;
-    MatrixXd Xregsave;
+    VectorXld Xreg;
+    MatrixXld Xregsave;
 };
 
 struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed);
