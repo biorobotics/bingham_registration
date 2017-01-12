@@ -8,13 +8,15 @@
 #define COMPUTE_TRANSFORMED_POINTS
 
 #include <Eigen/Dense>
+#include <long_double_def.h>
+
 using namespace Eigen;
 using namespace std;
 
-typedef Matrix<double, 3, Dynamic> PointCloud;
+typedef Matrix<long double, 3, Dynamic> PointCloud;
 
-Matrix4d reg_params_to_transformation_matrix(ArrayXd params);
+Matrix4ld reg_params_to_transformation_matrix(ArrayXld params);
 
-PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXd Xreg);
+PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXld Xreg);
 
 #endif

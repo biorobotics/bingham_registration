@@ -7,21 +7,17 @@
 #define QR_KF
 
 #include <Eigen/Dense>
-using Eigen::Matrix4d;
-using Eigen::Array3d;
-using Eigen::Array4d;
-using Eigen::ArrayXd;
-using Eigen::Quaterniond;
+#include <long_double_def.h>
 
 struct QrKfResult {
-    Array4d Xk;   // 1x4
-    Matrix4d Pk;  // 4x4
-    ArrayXd Xreg; // 1x6
+    Array4ld Xk;   // 1x4
+    Matrix4ld Pk;  // 4x4
+    ArrayXld Xreg; // 1x6
 };
 
-Array3d quat2eul(Quaterniond q);
+Array3ld quat2eul(Quaternionld q);
 
-struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
+struct QrKfResult qr_kf(Vector4ld Xk, Matrix4ld Pk, long double Rmag, PointCloud p1c,
                      	PointCloud p1r, PointCloud p2c, PointCloud p2r);
 
 #endif

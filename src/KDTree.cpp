@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <KDTree.h>
+#include <iomanip>
 
 using namespace Eigen;
 using namespace std;
@@ -17,13 +18,13 @@ void call_error(string msg) {
 }
 
 // find_distance returns the distance between two points
-double find_distance(Vector3d point1, Vector3d point2) {
+long double find_distance(Vector3ld point1, Vector3ld point2) {
 	return (point1 - point2).norm();
 }
 
 // Insert is a function that inserts a point into the KDTree (which is 
 // modified in place in T)
-void insert_helper(Vector3d point, KDTree *T, int level) {
+void insert_helper(Vector3ld point, KDTree *T, int level) {
 	// If creating a new tree 
 	if (level < 0 || level > 2) 
 		call_error("Invalid component access");
@@ -49,18 +50,18 @@ void insert_helper(Vector3d point, KDTree *T, int level) {
 	}
 }
 
-void insert(Vector3d point, KDTree *T) {
+void insert(Vector3ld point, KDTree *T) {
 	return insert_helper(point, T, 0);
 }
 
 /* find_nearest is a function that finds the point in the cloud that is nearest to the target point
  * (the best point is modified in place in bestPP)
  * 
- * Requirement: T be a non-empty tree, bestPP be a non-null pointer to Vector3d * (which
+ * Requirement: T be a non-empty tree, bestPP be a non-null pointer to Vector3ld * (which
    is allowed to be NULL)
  */
-void find_nearest_helper(KDTree T, Vector3d target, int level, Vector3d **bestPP, double *bestDistance) {
-	double distance, diff, diffSq;
+void find_nearest_helper(KDTree T, Vector3ld target, int level, Vector3ld **bestPP, long double *bestDistance) {
+	long double distance, diff, diffSq;
 
 	// If reaches the leaf of the tree, end search
 	if (T == NULL)
@@ -90,17 +91,17 @@ void find_nearest_helper(KDTree T, Vector3d target, int level, Vector3d **bestPP
     find_nearest_helper(diff > 0 ? T->right : T->left, target, level, bestPP, bestDistance);
 }
 
-Vector3d find_nearest(Vector3d target, KDTree T, int size) {
-	Vector3d *bestP = NULL;
-	Vector3d **bestPP = &bestP;
-	double *distanceResult = (double*)malloc(sizeof(double));
-	*distanceResult = numeric_limits<double>::max();
+Vector3ld find_nearest(Vector3ld target, KDTree T, int size) {
+	Vector3ld *bestP = NULL;
+	Vector3ld **bestPP = &bestP;
+	long double *distanceResult = (long double*)malloc(sizeof(long double));
+	*distanceResult = numeric_limits<long double>::max();
 
 	find_nearest_helper(T, target, 0, bestPP, distanceResult);
 	free(distanceResult);
  	if (!bestPP || !bestP)
  		call_error("find_nearest didn't find result.");
- 	Vector3d result = **bestPP;
+ 	Vector3ld result = **bestPP;
 	return result;
 }
 
@@ -108,7 +109,7 @@ Vector3d find_nearest(Vector3d target, KDTree T, int size) {
  * false for descending order). Requires c++11 for lambda functions
  * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
  */
-vector<size_t> sort_indexes(const vector<double> &v, bool ascending) {
+vector<size_t> sort_indexes(const vector<long double> &v, bool ascending) {
 
   // initialize original index locations
   vector<size_t> idx(v.size());
@@ -127,14 +128,14 @@ vector<size_t> sort_indexes(const vector<double> &v, bool ascending) {
  * pr = set of all target points in corresponding order with pc
  * res = mean of the sum of all the distances calculated
  */
-struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int size, double inlierRatio, ArrayXd Xreg) {
+struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int size, long double inlierRatio, ArrayXld Xreg) {
 
 	int inlierSize = trunc(numtargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numtargets);
-	MatrixXd resultMatches = MatrixXd(4, numtargets);	// First 3 rows = point, 4th row = distance 
+	MatrixXld resultMatches = MatrixXld(4, numtargets);	// First 3 rows = point, 4th row = distance 
 	PointCloud filtered_resultTargets = PointCloud(3, inlierSize);
-	MatrixXd filtered_resultMatches = MatrixXd(4, inlierSize);
-	double totalDistance;
+	MatrixXld filtered_resultMatches = MatrixXld(4, inlierSize);
+	long double totalDistance = 0;
 	PointCloud targetsNew = PointCloud(3, numtargets);
 	
 	// Transform the target points before searching
@@ -148,7 +149,7 @@ struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int siz
 
 	// Find numtargets cloest points together with corresponding targets
 	for (int count = 0; count < numtargets; count++) {
-		Vector3d nearestPoint = find_nearest(targetsNew.col(count), T, size);
+		Vector3ld nearestPoint = find_nearest(targetsNew.col(count), T, size);
 
 		(resultMatches.col(count))(0) = nearestPoint(0);
 		(resultMatches.col(count))(1) = nearestPoint(1);
@@ -158,10 +159,10 @@ struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int siz
 	}
 	
 	// Get distance row and turn into vector for sorting
-	VectorXd distances = resultMatches.row(3);
-	vector<double> distancesVector;
+	VectorXld distances = resultMatches.row(3);
+	vector<long double> distancesVector;
 	distancesVector.resize(distances.size());
-	VectorXd::Map(&distancesVector[0], distances.size()) = distances;
+	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
 	// Get indexes sorted by distance
 	vector<long unsigned int> sortIndex = sort_indexes(distancesVector, true);
 	
@@ -169,12 +170,15 @@ struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int siz
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
 		filtered_resultTargets.col(count) = resultTargets.col(sortIndex[count]);
 		totalDistance += filtered_resultMatches(3, count);
+		//cout << "totalDistance at count: " << count << " is: " << setprecision(18) << totalDistance << endl;
 	}
 	
 	struct KdResult *result = (struct KdResult*)calloc(1,sizeof(struct KdResult));
 	// When return, ignore the last column which stores individual distances
 	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result->pr = filtered_resultTargets;
+	//cout << "totalDistance is: " << totalDistance << endl;
+	//cout << "inlierSize: " << inlierSize << endl;
 	result->res = totalDistance / inlierSize;
 
 	return result;

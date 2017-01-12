@@ -1,4 +1,6 @@
 #include <iostream>
+#include <iomanip>
+#include <limits>
 #include <fstream>
 #include <cstring>
 #include <ctime>
@@ -15,9 +17,10 @@ const char* const DELIMITER = " ";
 
 int main(int argc, char *argv[]) {
     // Defaults
-    string movingFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_moving_3.txt";
-    string fixedFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_fixed_3.txt";
+    string movingFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_moving_5.txt";
+    string fixedFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_fixed_5.txt";
     // Replace filenames if arguments exist
+    //cout << "Precision of long double is: " << numeric_limits<long double>::digits10 << endl;
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if (arg == "-m"){
@@ -56,7 +59,7 @@ int main(int argc, char *argv[]) {
     } 
     
     // Vector for appending points
-    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> pointVector;
+    std::vector<Eigen::Matrix<long double, 3, 1>,Eigen::aligned_allocator<Eigen::Matrix<long double, 3, 1>>> pointVector;
     
     // read sensedFile into ptcldMoving
     while (!sensedFile.eof()) {
@@ -65,8 +68,9 @@ int main(int argc, char *argv[]) {
         sensedFile.getline(buf, MAX_CHARS_PER_LINE);
         // store line in a vector
         istringstream iss(buf);
-        Vector3d temp;
+        Vector3ld temp;
         iss >> temp(0) >> temp(1) >> temp(2);
+        //cout << "Temp is: " << setprecision(18) << temp << endl;
         // Make sure all three were read in correctly
         if(iss.fail())
             call_error(movingFileString + ": Input data doesn't match dimension (too few per line)");
@@ -95,7 +99,7 @@ int main(int argc, char *argv[]) {
         CADFile.getline(buf, MAX_CHARS_PER_LINE);
         // store line in a vector
         std::istringstream iss(buf);
-        Vector3d temp;
+        Vector3ld temp;
         iss >> temp(0) >> temp(1) >> temp(2);
         if(iss.fail()) 
             call_error(fixedFileString + ": Input data doesn't match dimension (too few per line)");
@@ -123,7 +127,7 @@ int main(int argc, char *argv[]) {
     double timeSum = 0;
     ofstream myFile;
     myFile.open("Result_temp.txt");
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         clock_t begin = clock();    // For timing the performance
 
         // Run the registration function
@@ -146,7 +150,7 @@ int main(int argc, char *argv[]) {
     cout << "Average registration runtime is: " << timeSum / 10 << " seconds." << endl << endl;
     myFile << "Average registration runtime is: " << timeSum / 10 << " seconds." << endl;
     myFile.close();
-    
+
     return 0;
 }
 

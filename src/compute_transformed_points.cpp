@@ -6,10 +6,10 @@
  */
 #include <compute_transformed_points.h>
 
-Matrix4d eul2rotm(Array3d eul) { // ZYX order
-	Matrix4d R = Matrix4d::Identity(4, 4);	// Since n_slices is just 1, make Matrix4d instead
-	Array3d ct = cos(eul);
-	Array3d st = sin(eul);
+Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
+	Matrix4ld R = Matrix4ld::Identity(4, 4);	// Since n_slices is just 1, make Matrix4ld instead
+	Array3ld ct = cos(eul);
+	Array3ld st = sin(eul);
 
 	//     The rotation matrix R can be construted (as follows by
     //     ct = [cz cy cx] and st =[sz sy sx]
@@ -30,22 +30,22 @@ Matrix4d eul2rotm(Array3d eul) { // ZYX order
 	return R;
 }
 
-Matrix4d reg_params_to_transformation_matrix(ArrayXd params) {
-	Matrix4d R, U, V;
-	Matrix4d T = Matrix4d::Identity(4, 4);
+Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
+	Matrix4ld R, U, V;
+	Matrix4ld T = Matrix4ld::Identity(4, 4);
 
 	for (int r = 0; r < 3; r++) {
 		T(r, 3) = params(r);
 	}
 
-	Array3d temp;
+	Array3ld temp;
 	temp(0) = params(3);
 	temp(1) = params(4);
 	temp(2) = params(5);
 
 	R = eul2rotm (temp);
 
-	JacobiSVD<Matrix4d> svd(R, ComputeFullU | ComputeFullV);
+	JacobiSVD<Matrix4ld> svd(R, ComputeFullU | ComputeFullV);
 	
 	R = svd.matrixU()*svd.matrixV().transpose();
 
@@ -57,10 +57,10 @@ Matrix4d reg_params_to_transformation_matrix(ArrayXd params) {
 	return T;
 }
 
-PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXd Xreg) {
-	Vector3d point;
-	Matrix4d testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
-	Affine3d t;
+PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXld Xreg) {
+	Vector3ld point;
+	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
+	Affine3ld t;
 	t.matrix() = testimated;
 	int numPoints = ptcldMoving.cols();
 	PointCloud ptcldMovingTransformed(3,numPoints);
