@@ -93,7 +93,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
     Matrix4ld Zk = MatrixXld::Zero(4, 4);
 
     for(int i = 1; i <= 3; i++) 
-        Zk(i, i) = -1 * pow((long double)10, (long double)-100);
+        Zk(i, i) = -1 * pow((long double)10, (long double)-300);
     
 
     PointCloud ptcldMovingNew = ptcldMoving;
