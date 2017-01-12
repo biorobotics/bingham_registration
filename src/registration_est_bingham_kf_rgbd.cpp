@@ -96,8 +96,6 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         Zk(i, i) = -1 * pow((long double)10, (long double)-300);
     
 
-    PointCloud ptcldMovingNew = ptcldMoving;
-
     VectorXld Xregprev = VectorXld::Zero(6);
     
     long double BinghamKFSum = 0;  // for timing Bingham_kf
@@ -115,7 +113,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
             for (int n = 0; n < 3; n++) 
-                targets(n,rOffset) = ptcldMovingNew(n, r);
+                targets(n,rOffset) = ptcldMoving(n, r);
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
