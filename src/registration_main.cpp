@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include "registration_est_kf_rgbd.h"
+#include "registration_est_bingham_kf_rgbd.h"
 
 // For .txt file parsing
 const int MAX_CHARS_PER_LINE = 512;     
@@ -15,8 +15,8 @@ const char* const DELIMITER = " ";
 
 int main(int argc, char *argv[]) {
     // Defaults
-    string movingFileString = "/home/biomed/catkin_ws/src/dual_quaternion_registration/data/ptcld_moving_2.txt";
-    string fixedFileString = "/home/biomed/catkin_ws/src/dual_quaternion_registration/data/ptcld_fixed_2.txt";
+    string movingFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_moving_3.txt";
+    string fixedFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_fixed_3.txt";
     // Replace filenames if arguments exist
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
@@ -68,24 +68,23 @@ int main(int argc, char *argv[]) {
         Vector3d temp;
         iss >> temp(0) >> temp(1) >> temp(2);
         // Make sure all three were read in correctly
-        if(iss.fail()) {
+        if(iss.fail())
             call_error(movingFileString + ": Input data doesn't match dimension (too few per line)");
-        }
+        
         // Make sure there are no more to read
         float eofCheck;
         iss >> eofCheck;
-        if(iss.good()) {
+        if(iss.good()) 
             call_error(movingFileString + ": Input data doesn't match dimension (too many per line)");
-        }
+        
         // Add temp to list of vectors  
         pointVector.push_back(temp);
     }
 
     PointCloud ptcldMoving(3,pointVector.size());
 
-    for(int i=0; i<pointVector.size(); i++){
+    for(int i=0; i<pointVector.size(); i++)
         ptcldMoving.col(i) = pointVector[i];
-    }
     
     pointVector.clear();
 
@@ -98,39 +97,55 @@ int main(int argc, char *argv[]) {
         std::istringstream iss(buf);
         Vector3d temp;
         iss >> temp(0) >> temp(1) >> temp(2);
-        if(iss.fail()) {
+        if(iss.fail()) 
             call_error(fixedFileString + ": Input data doesn't match dimension (too few per line)");
-        }
+        
         // Make sure there are no more to read
         float eofCheck;
         iss >> eofCheck;
-        if(iss.good()) {
+        if(iss.good()) 
             call_error(movingFileString + ": Input data doesn't match dimension (too many per line)");
-        }
         // Add temp to list of vectors
         pointVector.push_back(temp);
     }
 
     PointCloud ptcldFixed(3,pointVector.size());
 
-    for(int i=0; i<pointVector.size(); i++){
+    for(int i=0; i<pointVector.size(); i++)
         ptcldFixed.col(i) = pointVector[i];
-    }
+    
+    pointVector.clear();
+    pointVector.shrink_to_fit();
     
     sensedFile.close();
     CADFile.close();
     
-    clock_t begin = clock();    // For timing the performance
+    double timeSum = 0;
+    ofstream myFile;
+    myFile.open("Result_temp.txt");
+    for (int i = 0; i < 10; i++) {
+        clock_t begin = clock();    // For timing the performance
 
-    // Run the registration function
-    struct RegistrationResult result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed);
+        // Run the registration function
 
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+        struct RegistrationResult result = registration_est_bingham_kf_rgbd(ptcldMoving, 
+                                                                            ptcldFixed);
 
-    cout << "Registration runtime is: " << elapsed_secs << " seconds." << endl << endl;
-    cout << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
-    cout << "Xregsave:" << endl << result.Xregsave.transpose() << endl;
+        clock_t end = clock();
+        double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+        timeSum += elapsed_secs;
+    
+        cout << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
+        cout << "Xregsave:" << endl << result.Xregsave.transpose() << endl;
+        if (i == 9)
+        {
+            myFile << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
+            myFile << "Xregsave:" << endl << result.Xregsave.transpose() << endl << endl;
+        }
+    }
+    cout << "Average registration runtime is: " << timeSum / 10 << " seconds." << endl << endl;
+    myFile << "Average registration runtime is: " << timeSum / 10 << " seconds." << endl;
+    myFile.close();
     
     return 0;
 }

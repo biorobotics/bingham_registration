@@ -13,7 +13,8 @@ using namespace Eigen;
 
 // return rowvec q of dimension 1 x 4
 Quaterniond eul2quat(Vector3d eul) {
-	Array3d eulHalf = eul / 2;
+	Array3d eulHalf = eul.array() / 2;
+
 	Array3d c = eulHalf.cos();
 	Array3d s = eulHalf.sin();
 	
@@ -22,7 +23,7 @@ Quaterniond eul2quat(Vector3d eul) {
 	q.x() = c(0) * c(1) * s(2) - s(0) * s(1) * c(2);
 	q.y() = c(0) * s(1) * c(2) + s(0) * c(1) * s(2);
 	q.z() = s(0) * c(1) * c(2) - c(0) * s(1) * s(2);
-	return q;
+	return q.normalized();
 }
 
 struct DeltaTransform get_changes_in_transformation_estimate(VectorXd Xreg, VectorXd Xregprev) {

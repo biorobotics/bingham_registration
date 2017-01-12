@@ -8,7 +8,7 @@
  * Initialization (set up window size, kdtree, etc)
  *       |
  *       v
- * Tree search (inside the function, transform ptcld_moving by using Xreg then <-
+ * Tree search (inside the function, transform ptcldMoving by using Xreg then <-
                 search)                                                         |
  * Quaternion filter                                                            |
  * Check for convergence   -----------------------------------------------------
@@ -22,16 +22,17 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include "registration_est_kf_rgbd.h"
+#include "registration_est_bingham_kf_rgbd.h"
 #include "ros/ros.h"
 
 using namespace std;
 using namespace Eigen;
 
-#define WINDOW_RATIO 70     // The constant for deciding windowsize
+#define WINDOW_RATIO 100     // The constant for deciding windowsize
 #define DIMENSION 3     // Dimension of data point
-#define INLIER_RATIO 0.9
-#define MAX_ITERATIONS 70
+#define INLIER_RATIO 1
+#define MAX_ITERATIONS 100
+#define MIN_ITERATIONS 20
 
 /* 
  *  registration_est_kf_rgbd: (workflow explained in the file header)
@@ -41,12 +42,14 @@ using namespace Eigen;
             Xregsave is an nx6 matrix (a record of Xreg value at different iteration)
     Inputs:
             ptcldMoving is one set of point cloud data. This will represent the sensed points
-            sizePtcld_moving is size of ptcldMoving data
+            sizePtcldMoving is size of ptcldMoving data
             ptcldFixed is another set of point cloud data. This will represent CAD model points 
             sizePtcldFixed is size of ptcldFixed data 
  */
 
-struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed) {
+struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed) {
+    
+
     if (ptcldMoving.rows() != DIMENSION || ptcldFixed.rows() != DIMENSION)
         call_error("Invalid point dimension");
     
@@ -58,21 +61,15 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
     int treeSize = sizePtcldFixed;
     KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
     Vector2d tolerance;
-    
-    clock_t begin = clock();    // For timing the tree construction
 
     // Construct the kdtree from ptcldFixed
-    for (int i = 0; i < treeSize; i++) {
+    for (int i = 0; i < treeSize; i++) 
         insert(ptcldFixed.col(i), &cloudTree);
-    }
-    
-    clock_t end = clock();  
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    //cout << "Tree construction time: " << elapsed_secs << " seconds." << endl;
 
-    int windowsize = sizePtcldMoving / WINDOW_RATIO;
+    int windowsize = 20;
+    //int windowsize = sizePtcldMoving / WINDOW_RATIO;
 
-    tolerance << 0.0001 , .009; // Tolerance = [.0001 .009]
+    tolerance << .0001 , .009;
 
     VectorXd Xreg = VectorXd::Zero(6);  //Xreg: 1x6
 
@@ -80,19 +77,32 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
     // iteration is stored there (dimensionL (MAX_ITERATIONS + 1) x 6)
     
     MatrixXd Xregsave = MatrixXd::Zero(6,MAX_ITERATIONS + 1);
-    Vector4d Xk = Vector4d::Zero(); //Xk = [1; 0; 0; 0]
-    Xk(0) = 1;
-    Matrix4d Pk = Matrix4d::Identity(); // Pk = [0    0    0    0
-                                        //        0    10^7 0    0
-                                        //        0    0    10^7 0
-                                        //        0    0    0    10^7]
-    Pk *= pow(10.0, 7.0);
-    Pk(0, 0) = 0;
+
+    //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
+    
+    // Convert Xk to Vector4d for later computation
+    Vector4d Xk;
+    Xk << 1, 0, 0, 0;
+    /*Xk(1) = Xk_quat.x() / Xk_quat. w();
+    Xk(2) = Xk_quat.y() / Xk_quat. w();
+    Xk(3) = Xk_quat.z() / Xk_quat. w();
+    Xk(0) = 1;*/
+
+    Matrix4d Mk= MatrixXd::Identity(4, 4);
+
+    Matrix4d Zk = MatrixXd::Zero(4, 4);
+
+    for(int i = 1; i <= 3; i++) 
+        Zk(i, i) = -1 * pow((double)10, (double)-100);
+    
 
     PointCloud ptcldMovingNew = ptcldMoving;
 
     VectorXd Xregprev = VectorXd::Zero(6);
     
+    double BinghamKFSum = 0;  // for timing Bingham_kf
+
+
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
     for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / windowsize); i++) {
@@ -104,14 +114,12 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
         
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
-            for (int n = 0; n < 3; n++) {
+            for (int n = 0; n < 3; n++) 
                 targets(n,rOffset) = ptcldMovingNew(n, r);
-            }
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-        
         struct KdResult *searchResult = kd_search(targets, windowsize, cloudTree,
                                        sizePtcldFixed, INLIER_RATIO, Xreg);
 
@@ -127,11 +135,11 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
         int evenEntryNum = oddEntryNum; // size of p2c/p2r
 
         PointCloud p1c = PointCloud(3, oddEntryNum);    // odd index points of pc
-        PointCloud p2c = PointCloud(3, evenEntryNum);       // even index points of pc
+        PointCloud p2c = PointCloud(3, evenEntryNum);   // even index points of pc
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
-        PointCloud p2r = PointCloud(3, evenEntryNum);       // even index points of pr
+        PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        double Rmag= .04 + 4 * pow(res / 6, 2);  // Variable that helps calculate the noise 
+        double Rmag= .01 + pow(res / 6, 2);  // Variable that helps calculate the noise 
         
         int p1Count = 0;
         int p2Count = 0;
@@ -141,9 +149,8 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
         for (int n = 1; n <= truncSize - truncSize % 2; n++) {
             int nOffset = n - 1;    // Eigen is 0-index instead of 1-index
             if (n % 2) {    // If odd index point
-                if (p1Count >= oddEntryNum) {
+                if (p1Count >= oddEntryNum) 
                     call_error("Incorrect number of odd entry.");
-                }
 
                 p1c.col(p1Count) = pc.col(nOffset);
                 p1r.col(p1Count) = pr.col(nOffset);
@@ -154,25 +161,30 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
                     call_error("Incorrect number of even entry.");
                 p2c.col(p2Count) = pc.col(nOffset);
                 p2r.col(p2Count) = pr.col(nOffset);
-
                 p2Count++;
             }
         }
         
         //  Quaternion Filtering:
-        //  Takes updated Xk, Pk from last QF, updated Rmag, p1c, p1r, p2c,
+        //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
-        //  Output updated Xk, Pk, and Xreg for next iteration. 
-        struct QrKfResult qfResult = qr_kf(Xk, Pk, Rmag, p1c, p1r, p2c, p2r); 
-        
-        Xk = qfResult.Xk;
-        Pk = qfResult.Pk;
+        //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
+
+        clock_t start_2 = clock();
+        struct BinghamKFResult QFResult = bingham_kf(Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r); 
+        clock_t end_2 = clock(); 
+        double elapsed_secs = double(end_2 - start_2) / CLOCKS_PER_SEC; 
+        BinghamKFSum += elapsed_secs;
+
+        Xk = QFResult.Xk;
+        Mk = QFResult.Mk;
+        Zk = QFResult.Zk;
         // Store curretn Xreg in Xregsave
-        Xregsave.col(i) = qfResult.Xreg;    // No offset applied because 
+        Xregsave.col(i) = QFResult.Xreg;    // No offset applied because 
                                             // Xregsave(0) is saved for initial value   
         
-        Xreg = qfResult.Xreg;
-        result.Xreg = qfResult.Xreg;
+        Xreg = QFResult.Xreg;
+        result.Xreg = QFResult.Xreg;
         result.Xregsave = Xregsave;
         
         //  Check convergence:
@@ -180,13 +192,17 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
         //  Return dR, dT
         
         struct DeltaTransform convergenceResult = get_changes_in_transformation_estimate(
-                                                  qfResult.Xreg, Xregsave.col(i-1));
+                                                  QFResult.Xreg, Xregsave.col(i-1));
 
-        if (convergenceResult.dT <= tolerance(0) && convergenceResult.dR <= tolerance(0)) {
+        if (i >= MIN_ITERATIONS && convergenceResult.dT <= tolerance(0) && 
+            convergenceResult.dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
         }
+
     }
+
+    free_tree(cloudTree);
     
     return result;
 }
