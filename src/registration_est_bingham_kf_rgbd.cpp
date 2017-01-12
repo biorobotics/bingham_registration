@@ -143,7 +143,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        long double Rmag= .01 + pow(res / 6, 2);  // Variable that helps calculate the noise 
+        long double Rmag= .04 + pow(res / 6, 2);  // Variable that helps calculate the noise 
         
         //cout << "Rmag in new is: " << setprecision(18) << Rmag << endl;
          int p1Count = 0;
