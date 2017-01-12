@@ -10,18 +10,18 @@
 using namespace std;
 using namespace Eigen;
 
-Array3d quat2eul(Quaterniond q) {
+Array3ld quat2eul(Quaternionld q) {
     // Normalize the quaternions
 
-    Quaterniond temp = q.normalized();
+    Quaternionld temp = q.normalized();
     q = temp;
     
-    double qw = q.w();
-    double qx = q.x();
-    double qy = q.y();
-    double qz = q.z();
+    long double qw = q.w();
+    long double qx = q.x();
+    long double qy = q.y();
+    long double qz = q.z();
 
-    Array3d eul(3);
+    Array3ld eul(3);
 
     eul(0) = atan2(2 * (qx * qy + qw * qz), pow(qw, 2) + pow(qx, 2) - pow(qy, 2) - pow(qz, 2));
     eul(1)= asin(-2 * (qx * qz - qw * qy));
@@ -30,13 +30,13 @@ Array3d quat2eul(Quaterniond q) {
     return eul;
 }
 
-Vector4d qr_kf_measurementFunction(Vector4d Xk, Vector3d p1, Vector3d p2) {
+Vector4ld qr_kf_measurementFunction(Vector4ld Xk, Vector3ld p1, Vector3ld p2) {
     /* Xk if size 4x1
     * p1, p2 is of size 1x3
     * g is of size 4x1
     */
 
-    Vector4d g = Vector4d::Zero();
+    Vector4ld g = Vector4ld::Zero();
     g(0) = Xk(1)*(p2(0)-p1(0))+Xk(2)*(p2(1)-p1(1))+Xk(3)*(p2(2)-p1(2));
     g(1) = Xk(0)*(p1(0)-p2(0))-Xk(2)*(p1(2)+p2(2))+Xk(3)*(p1(1)+p2(1));
     g(2) = Xk(0)*(p1(1)-p2(1))+Xk(1)*(p1(2)+p2(2))-Xk(3)*(p1(0)+p2(0));
@@ -44,35 +44,35 @@ Vector4d qr_kf_measurementFunction(Vector4d Xk, Vector3d p1, Vector3d p2) {
     return g;
 }
 
-Matrix4d qr_kf_measurementFunctionJacobian(Vector3d p1, Vector3d p2) {
+Matrix4ld qr_kf_measurementFunctionJacobian(Vector3ld p1, Vector3ld p2) {
     /*p1, p2 is of size 1x3
     *H is of size 4x4 */
-    Matrix4d H;
+    Matrix4ld H;
 
-    H(0,0) = (double)0;
+    H(0,0) = (long double)0;
     H(0,1) = p2(0)-p1(0);
     H(0,2) = p2(1)-p1(1);
     H(0,3) = p2(2)-p1(2);
 
     H(1,0) = p1(0)-p2(0);
-    H(1,1) = (double)0;
+    H(1,1) = (long double)0;
     H(1,2) = -(p1(2)+p2(2));
     H(1,3) = p1(1)+p2(1);
 
     H(2,0) = p1(1)-p2(1);
     H(2,1) = p1(2)+p2(2);
-    H(2,2) = (double)0;
+    H(2,2) = (long double)0;
     H(2,3) = -(p1(0)+p2(0));
 
     H(3,0) = p1(2)-p2(2);
     H(3,1) = -(p1(1)+p2(1));
     H(3,2) = p1(0)+p2(0);
-    H(3,3) = (double)0;
+    H(3,3) = (long double)0;
 
     return H;
 }
 
-struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
+struct QrKfResult qr_kf(Vector4ld Xk, Matrix4ld Pk, long double Rmag, PointCloud p1c,
                         PointCloud p1r, PointCloud p2c, PointCloud p2r) {
     /*Xk is of size 4x1  
      *Pk is of size 4x4
@@ -98,26 +98,26 @@ struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
 
     // Add process uncertainty based on correpondence uncertainty. Details yet
     // to be published
-    Matrix4d XkSquare = Xk*Xk.transpose();
-    Matrix4d temp4x4 = Pk + Rmag * (Matrix4d::Identity() - XkSquare);
+    Matrix4ld XkSquare = Xk*Xk.transpose();
+    Matrix4ld temp4x4 = Pk + Rmag * (Matrix4ld::Identity() - XkSquare);
     Pk = temp4x4;
     Pk.row(0) << 0, 0, 0, 0;
     Pk.col(0) << 0, 0, 0, 0;
     
     // Scaled pseudo-measurement uncertainty. Details in RSS 2016 paper
     // M has dimension 4 x 4
-    Matrix4d M =  XkSquare + Pk;
+    Matrix4ld M =  XkSquare + Pk;
     // z is pseudo measurement
-    MatrixXd z = MatrixXd::Zero(dim, 1);
+    MatrixXld z = MatrixXld::Zero(dim, 1);
     // R is pseudo measurement uncertainty
-    MatrixXd R = MatrixXd::Zero(dim, dim);
+    MatrixXld R = MatrixXld::Zero(dim, dim);
     // g is estimated measurement
-    VectorXd g = VectorXd::Zero(dim);
+    VectorXld g = VectorXld::Zero(dim);
     // G is measurement Jacobian. Which is trivial for linear functions
-    MatrixXd G = MatrixXd::Zero(dim,4);
+    MatrixXld G = MatrixXld::Zero(dim,4);
 
-    Vector3d pcPoint;
-    Vector3d prPoint;
+    Vector3ld pcPoint;
+    Vector3ld prPoint;
 
     // find estimated measurements and uncertainties over all sensed points
     // considered. In future avoid for loop
@@ -127,14 +127,14 @@ struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
         int idx = 4*i-4;
         g.segment(idx,4) = qr_kf_measurementFunction(Xk, pcPoint, prPoint);
         G.block(idx, 0, 4, 4) = qr_kf_measurementFunctionJacobian(pcPoint, prPoint);
-        R.block(idx, idx, 4, 4) = Rmag * (M.trace() * Matrix4d::Identity() - M);
+        R.block(idx, idx, 4, 4) = Rmag * (M.trace() * Matrix4ld::Identity() - M);
     }
     
     // Kalman gain computation
-    MatrixXd K = Pk * G.transpose() * (G*Pk*G.transpose() + R).inverse();
+    MatrixXld K = Pk * G.transpose() * (G*Pk*G.transpose() + R).inverse();
 
     // state update
-    Array4d temp4x1 = Xk.matrix() + K*(z-g);
+    Array4ld temp4x1 = Xk.matrix() + K*(z-g);
     Xk = temp4x1;
 
     // check for double covering of quaternions. This step can actually be avoided
@@ -147,22 +147,22 @@ struct QrKfResult qr_kf(Vector4d Xk, Matrix4d Pk, double Rmag, PointCloud p1c,
     
     // Calculate translation vector from rotation estimate
     // quat2rotm converts quaternion to rotation matrix.
-    Vector3d centroid;
+    Vector3ld centroid;
     for(int i=0; i<3; i++) {
         centroid(i) = (p1c.row(i).mean() + p2c.row(i).mean())/2.0;
     }
-    Quaterniond XkQuat = Quaterniond(Xk(0),Xk(1),Xk(2),Xk(3)).normalized();
+    Quaternionld XkQuat = Quaternionld(Xk(0),Xk(1),Xk(2),Xk(3)).normalized();
     
-    Vector3d centroidRotated;
+    Vector3ld centroidRotated;
     for(int i=0; i<3; i++) {
         centroidRotated(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
     }
     centroidRotated = XkQuat.toRotationMatrix() * centroidRotated;
-    Vector3d eulerRotation = quat2eul(XkQuat);
-    Vector3d centroidDifference = centroid - centroidRotated;
+    Vector3ld eulerRotation = quat2eul(XkQuat);
+    Vector3ld centroidDifference = centroid - centroidRotated;
     
     // Estimated pose parameters  (x,y,z,alpha,beta,gamma)
-    VectorXd Xreg(6);
+    VectorXld Xreg(6);
     Xreg.segment(0,3) = centroidDifference;
     Xreg.segment(3,3) = eulerRotation;
     

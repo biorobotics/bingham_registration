@@ -67,22 +67,22 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
     }
     
     clock_t end = clock();  
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    long double elapsed_secs = (long double)(end - begin) / CLOCKS_PER_SEC;
     //cout << "Tree construction time: " << elapsed_secs << " seconds." << endl;
 
     int windowsize = sizePtcldMoving / WINDOW_RATIO;
 
     tolerance << 0.0001 , .009; // Tolerance = [.0001 .009]
 
-    VectorXd Xreg = VectorXd::Zero(6);  //Xreg: 1x6
+    VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 1x6
 
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
     // iteration is stored there (dimensionL (MAX_ITERATIONS + 1) x 6)
     
-    MatrixXd Xregsave = MatrixXd::Zero(6,MAX_ITERATIONS + 1);
-    Vector4d Xk = Vector4d::Zero(); //Xk = [1; 0; 0; 0]
+    MatrixXld Xregsave = MatrixXld::Zero(6,MAX_ITERATIONS + 1);
+    Vector4ld Xk = Vector4ld::Zero(); //Xk = [1; 0; 0; 0]
     Xk(0) = 1;
-    Matrix4d Pk = Matrix4d::Identity(); // Pk = [0    0    0    0
+    Matrix4ld Pk = Matrix4ld::Identity(); // Pk = [0    0    0    0
                                         //        0    10^7 0    0
                                         //        0    0    10^7 0
                                         //        0    0    0    10^7]
@@ -91,7 +91,7 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
 
     PointCloud ptcldMovingNew = ptcldMoving;
 
-    VectorXd Xregprev = VectorXd::Zero(6);
+    VectorXld Xregprev = VectorXld::Zero(6);
     
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
@@ -100,7 +100,7 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
         
         // Tree search
         // Send as input a subset of the ptcldMoving points.
-        MatrixXd targets(3, windowsize);
+        MatrixXld targets(3, windowsize);
         
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
@@ -117,7 +117,7 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
 
         PointCloud pc = searchResult->pc;    // set of all closest point
         PointCloud pr = searchResult->pr;    // set of all target points in corresponding order with pc
-        double res = searchResult->res;  // mean of all the distances calculated
+        long double res = searchResult->res;  // mean of all the distances calculated
 
         // Truncate the windowsize according to INLIER_RATIO
         int truncSize = trunc(windowsize * INLIER_RATIO);
@@ -131,7 +131,7 @@ struct RegistrationResult registration_est_kf_rgbd(PointCloud ptcldMoving, Point
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);       // even index points of pr
         
-        double Rmag= .04 + 4 * pow(res / 6, 2);  // Variable that helps calculate the noise 
+        long double Rmag= .04 + 4 * pow(res / 6, 2);  // Variable that helps calculate the noise 
         
         int p1Count = 0;
         int p2Count = 0;
