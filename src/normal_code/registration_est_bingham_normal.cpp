@@ -2,7 +2,7 @@
  * File Header:
  * 
  * This file performs the final registration function for fitting the sensed
- * data points onto the CAD model points
+ * data points onto the CAD model points with the consideration of normals
  * 
  * Workflow diagram:
  * Initialization (set up window size, kdtree, etc)
@@ -22,7 +22,7 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include "registration_est_bingham_kf_rgbd.h"
+#include "registration_est_bingham_normal.h"
 #include "ros/ros.h"
 
 using namespace std;
@@ -31,8 +31,8 @@ using namespace Eigen;
 #define WINDOW_RATIO 100     // The constant for deciding windowsize
 #define DIMENSION 3     // Dimension of data point
 #define INLIER_RATIO 1
-#define MAX_ITERATIONS 1
-#define MIN_ITERATIONS 1
+#define MAX_ITERATIONS 100
+#define MIN_ITERATIONS 20
 
 /* 
  *  registration_est_kf_rgbd: (workflow explained in the file header)
@@ -47,7 +47,8 @@ using namespace Eigen;
             sizePtcldFixed is size of ptcldFixed data 
  */
 
-struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMoving, PointCloud ptcldFixed) {
+struct RegistrationResult registration_est_bingham_normal(PointCloud ptcldMoving, PointCloud ptcldFixed,
+                                                        PointCloud normalMoving, PointCloud normalFixed) {
     
 
     if (ptcldMoving.rows() != DIMENSION || ptcldFixed.rows() != DIMENSION)
@@ -64,7 +65,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < treeSize; i++) 
-        insert(ptcldFixed.col(i), &cloudTree);
+        insert(ptcldFixed.col(i), i, &cloudTree);
 
     int windowsize = 20;
     //int windowsize = sizePtcldMoving / WINDOW_RATIO;
@@ -76,8 +77,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
     // iteration is stored there (dimensionL (MAX_ITERATIONS + 1) x 6)
     
-    MatrixXld Xregsave = MatrixXld::Zero(6,MAX_ITERATIONS + 1);
-
+    MatrixXld Xregsave = MatrixXld::Zero(6, MAX_ITERATIONS + 1);
     //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
     
     // Convert Xk to Vector4ld for later computation
@@ -93,10 +93,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
     Matrix4ld Zk = MatrixXld::Zero(4, 4);
 
     for(int i = 1; i <= 3; i++) 
-        Zk(i, i) = -1 * pow((long double)10, (long double)-100);
-    
-
-    PointCloud ptcldMovingNew = ptcldMoving;
+        Zk(i, i) = -1 * pow((long double)10, (long double)-300);
 
     VectorXld Xregprev = VectorXld::Zero(6);
     
@@ -109,32 +106,42 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
-        // Send as input a subset of the pftcldMoving points.
+        // Send as input a subset of the ptcldMoving and normalMoving points.
         MatrixXld targets(3, windowsize);
-        
+        MatrixXld normalTargets(3, windowsize);
+
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
-            for (int n = 0; n < 3; n++) 
-                targets(n,rOffset) = ptcldMovingNew(n, r);
+            for (int n = 0; n < 3; n++) {
+                targets(n,rOffset) = ptcldMoving(n, r);
+                normalTargets(n,rOffset) = normalMoving(n, r);
+            }
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-        clock_t kd_start = clock();
-        struct KdResult *searchResult = kd_search(targets, windowsize, cloudTree,
-                                       sizePtcldFixed, INLIER_RATIO, Xreg);
+        clock_t start = clock();
+         //cout << "size of sizeCloud is: " << sizeof(normalFixed) << endl;
+        struct KDNormalResult *searchResult = kd_search_normals(targets, windowsize, cloudTree,
+                                       sizePtcldFixed, INLIER_RATIO, Xreg, 
+                                       normalMoving, normalFixed);
+        clock_t end = clock();
+        long double elapsed_secs_3 = (long double)(end - start) / CLOCKS_PER_SEC; 
+        //cout << "tree takes: " << elapsed_secs_3 << endl;
 
-        clock_t kd_end = clock();
-        long double kd_time = (long double)(kd_end - kd_start) / CLOCKS_PER_SEC;
-        cout << "tree takes: " << kd_time << " seconds." << endl;
+
         PointCloud pc = searchResult->pc;    // set of all closest point
         PointCloud pr = searchResult->pr;    // set of all target points in corresponding order with pc
-        long double res = searchResult->res;  // mean of all the distances calculated
 
         /*cout << "Start reporting kd_search result: " << endl << endl;
+        cout << "Size of pc is: " << pc.rows() << " x " << pc.cols() << endl;
         cout << "pc is: " << setprecision(18) << pc << endl;
         cout << "pr is: " << setprecision(18) << pr << endl;
-        cout << "res is: " << setprecision(18) << res << endl;*/
+        cout << "res1 is: " << setprecision(18) << searchResult->res1 << endl;
+        cout << "res2 is: " << setprecision(18) << searchResult->res2 << endl;*/
+
+        //cout << "normalr is: " << searchResult->normalr << endl;
+
         // Truncate the windowsize according to INLIER_RATIO
         int truncSize = trunc(windowsize * INLIER_RATIO);
 
@@ -147,9 +154,10 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        long double Rmag= .01 + pow(res / 6, 2);  // Variable that helps calculate the noise 
-        
-        cout << "Rmag in new is: " << setprecision(18) << Rmag << endl;
+        long double Rmag= .04 + pow(searchResult->res1 / 6, 2);  // Variable that helps calculate the noise 
+        long double Qmag = .04 + pow(searchResult->res2 / 6, 2);
+        /*cout << "Rmag is: " << setprecision(18) << Rmag << endl;
+        cout << "Qmag is: " << setprecision(18) << Qmag << endl;*/
          int p1Count = 0;
         int p2Count = 0;
         
@@ -173,25 +181,34 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
                 p2Count++;
             }
         }
-        
+      /*  clock_t start_4 = clock();
+        PointCloud tempttt = searchResult->normalr;
+        clock_t end_4 = clock();
+        long double elapsed_secs_4 = (long double)(end_4 - start_4) / CLOCKS_PER_SEC; 
+        cout << "temp: " << elapsed_secs_4 << " seconds." << endl;*/
         //  Quaternion Filtering:
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
 
+
         clock_t start_2 = clock();
-        struct BinghamKFResult QFResult = bingham_kf(Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r); 
+        struct BinghamNormalKFResult QFResult = bingham_normal_kf(Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, 
+                                                            p2c, p2r, searchResult->normalc, searchResult->normalr); 
+        
         clock_t end_2 = clock(); 
         long double elapsed_secs = (long double)(end_2 - start_2) / CLOCKS_PER_SEC; 
-        BinghamKFSum += elapsed_secs;
+        //cout << "bingham_normal_kf takes: " << elapsed_secs << " seconds." << endl;
 
         Xk = QFResult.Xk;
         Mk = QFResult.Mk;
         Zk = QFResult.Zk;
         // Store curretn Xreg in Xregsave
+
         Xregsave.col(i) = QFResult.Xreg;    // No offset applied because 
                                             // Xregsave(0) is saved for initial value   
         
+//cout << "Here" << endl;
         Xreg = QFResult.Xreg;
         result.Xreg = QFResult.Xreg;
         result.Xregsave = Xregsave;
@@ -211,7 +228,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
     }
 
-    free_tree(cloudTree);
+    //free_tree(cloudTree);
 
     return result;
 }

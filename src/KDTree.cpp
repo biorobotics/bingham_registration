@@ -130,6 +130,7 @@ vector<size_t> sort_indexes(const vector<long double> &v, bool ascending) {
  */
 struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int size, long double inlierRatio, ArrayXld Xreg) {
 
+	clock_t start = clock();
 	int inlierSize = trunc(numtargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numtargets);
 	MatrixXld resultMatches = MatrixXld(4, numtargets);	// First 3 rows = point, 4th row = distance 
@@ -181,6 +182,9 @@ struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int siz
 	//cout << "inlierSize: " << inlierSize << endl;
 	result->res = totalDistance / inlierSize;
 
+	clock_t end = clock();
+	long double elapsed_time = (long double)(end - start) / CLOCKS_PER_SEC; 
+	cout << "This entire chunk takes: " << elapsed_time << " seconds. " << endl;
 	return result;
 }
 

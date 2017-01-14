@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         istringstream iss(buf);
         Vector3ld temp;
         iss >> temp(0) >> temp(1) >> temp(2);
-        //cout << "Temp is: " << setprecision(18) << temp << endl;
+        //cout << "Temp is: " << setprecision(15) << temp << endl;
         // Make sure all three were read in correctly
         if(iss.fail())
             call_error(movingFileString + ": Input data doesn't match dimension (too few per line)");
