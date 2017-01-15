@@ -47,26 +47,30 @@ using namespace Eigen;
             sizePtcldFixed is size of ptcldFixed data 
  */
 
-struct RegistrationResult registration_est_bingham_normal(PointCloud ptcldMoving, PointCloud ptcldFixed,
-                                                        PointCloud normalMoving, PointCloud normalFixed) {
+struct RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
+                                                        PointCloud *normalMoving, PointCloud *normalFixed) {
     
-
-    if (ptcldMoving.rows() != DIMENSION || ptcldFixed.rows() != DIMENSION)
+    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
     
     //************ Initialization **************
     
     struct RegistrationResult result;
-    int sizePtcldMoving = ptcldMoving.cols();
-    int sizePtcldFixed = ptcldFixed.cols();
+    int sizePtcldMoving = (*ptcldMoving).cols();
+    int sizePtcldFixed = (*ptcldFixed).cols();
     int treeSize = sizePtcldFixed;
+
+    //clock_t tree_construction_start = clock();
     KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
     Vector2d tolerance;
 
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < treeSize; i++) 
-        insert(ptcldFixed.col(i), i, &cloudTree);
+        insert((*ptcldFixed).col(i), i, &cloudTree);
 
+    //clock_t tree_construction_end = clock();
+    //long double time_tree_construction = (long double)(tree_construction_end - tree_construction_start) / CLOCKS_PER_SEC;
+    //cout << "Tree construction takes: " << time_tree_construction << " seconds. " << endl;
     int windowsize = 20;
     //int windowsize = sizePtcldMoving / WINDOW_RATIO;
 
@@ -107,27 +111,30 @@ struct RegistrationResult registration_est_bingham_normal(PointCloud ptcldMoving
         
         // Tree search
         // Send as input a subset of the ptcldMoving and normalMoving points.
-        MatrixXld targets(3, windowsize);
-        MatrixXld normalTargets(3, windowsize);
+        PointCloud targets(3, windowsize);
+        PointCloud normalTargets(3, windowsize);
 
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
             for (int n = 0; n < 3; n++) {
-                targets(n,rOffset) = ptcldMoving(n, r);
-                normalTargets(n,rOffset) = normalMoving(n, r);
+                targets(n,rOffset) = (*ptcldMoving)(n, r);
+                normalTargets(n,rOffset) = (*normalMoving)(n, r);
             }
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-        clock_t start = clock();
-         //cout << "size of sizeCloud is: " << sizeof(normalFixed) << endl;
-        struct KDNormalResult *searchResult = kd_search_normals(targets, windowsize, cloudTree,
-                                       sizePtcldFixed, INLIER_RATIO, Xreg, 
-                                       normalMoving, normalFixed);
-        clock_t end = clock();
-        long double elapsed_secs_3 = (long double)(end - start) / CLOCKS_PER_SEC; 
-        //cout << "tree takes: " << elapsed_secs_3 << endl;
+        //clock_t kd_search_start = clock();
+        // cout << "size of sizeCloud is: " << sizeof(cloudTree) << endl;
+
+         //cout << "Before the call: " <<  clock() / (long double)CLOCKS_PER_SEC<< endl;
+        struct KDNormalResult *searchResult = kd_search_normals(&targets, windowsize, cloudTree,
+                                       sizePtcldFixed, INLIER_RATIO, &Xreg, 
+                                       &normalTargets, normalFixed);
+        //cout << "After return: " << clock() / (long double)CLOCKS_PER_SEC << endl;
+        //clock_t kd_search_end = clock();
+        //long double time_kd_search = (long double)(kd_search_end- kd_search_start) / CLOCKS_PER_SEC; 
+        //cout << "kd search takes: " << time_kd_search << endl;
 
 
         PointCloud pc = searchResult->pc;    // set of all closest point
@@ -192,12 +199,12 @@ struct RegistrationResult registration_est_bingham_normal(PointCloud ptcldMoving
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
 
 
-        clock_t start_2 = clock();
-        struct BinghamNormalKFResult QFResult = bingham_normal_kf(Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, 
-                                                            p2c, p2r, searchResult->normalc, searchResult->normalr); 
+        //clock_t start_2 = clock();
+        struct BinghamNormalKFResult QFResult = bingham_normal_kf(&Xk, &Mk, &Zk, Rmag, Qmag, &p1c, &p1r, 
+                                                            &p2c, &p2r, &(searchResult->normalc), &(searchResult->normalr)); 
         
-        clock_t end_2 = clock(); 
-        long double elapsed_secs = (long double)(end_2 - start_2) / CLOCKS_PER_SEC; 
+        //clock_t end_2 = clock(); 
+        //long double elapsed_secs = (long double)(end_2 - start_2) / CLOCKS_PER_SEC; 
         //cout << "bingham_normal_kf takes: " << elapsed_secs << " seconds." << endl;
 
         Xk = QFResult.Xk;

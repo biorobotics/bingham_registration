@@ -219,10 +219,10 @@ int main(int argc, char *argv[]) {
 
         // Run the registration function
         //cout << "col 86631 of normalFixed is: " << setprecision(18) << normalFixed.col(86630) << endl;
-        struct RegistrationResult result = registration_est_bingham_normal(ptcldMoving, 
-                                                                            ptcldFixed,
-                                                                            normalMoving,
-                                                                            normalFixed);
+        struct RegistrationResult result = registration_est_bingham_normal(&ptcldMoving, 
+                                                                            &ptcldFixed,
+                                                                            &normalMoving,
+                                                                            &normalFixed);
 
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

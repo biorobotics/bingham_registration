@@ -92,7 +92,7 @@ void find_nearest_helper(KDTree T, Vector3ld target, int level, KDTree bestN, lo
     find_nearest_helper(diff > 0 ? T->right : T->left, target, level, bestN, bestDistance);
 }
 
-struct KDNode find_nearest(Vector3ld target, KDTree T, int size) {
+struct KDNode* find_nearest(Vector3ld target, KDTree T, int size) {
 	KDTree bestN = (KDTree)malloc(sizeof(struct KDNode));
 	if (!bestN)
 		call_error("malloc failed.");
@@ -100,9 +100,10 @@ struct KDNode find_nearest(Vector3ld target, KDTree T, int size) {
 	*distanceResult = numeric_limits<long double>::max();
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
+
 	free(distanceResult);
 
-	return *bestN;
+	return bestN;
 }
 
 /* Sort that returns the indexes in order (set ascending true for ascending order, 
@@ -128,12 +129,15 @@ vector<size_t> sort_indexes(const vector<long double> &v, bool ascending) {
  * pr = set of all target points in corresponding order with pc
  * res = mean of the sum of all the distances calculated
  */
-struct KDNormalResult* kd_search_normals(PointCloud targets, int numtargets, KDTree T, int size, 
-									long double inlierRatio, VectorXld Xreg, 
-									PointCloud normalMoving, PointCloud normalFixed) {
-clock_t start_14 = clock();
+struct KDNormalResult* kd_search_normals(PointCloud *targets, int numtargets, KDTree T, int size, 
+									long double inlierRatio, VectorXld *Xreg, 
+									PointCloud *normalMoving, PointCloud *normalFixed) {
+    //cout << "After the call: " << clock() / (long double)CLOCKS_PER_SEC << endl;
+    //clock_t start = clock();
 	int inlierSize = trunc(numtargets * inlierRatio);	// Round down to int
 	MatrixXld resultMatches = MatrixXld(4, numtargets);	// First 3 rows = point, 4th row = distance 
+	
+
 	MatrixXld normalMatches = MatrixXld(4, numtargets);	// The corrsponding normals in normalFixed with results
 														// in resultMatches  
 
@@ -150,16 +154,15 @@ clock_t start_14 = clock();
 
 	
 	// Transform the target points before searching
-
-	targetsNew = compute_transformed_points(targets, Xreg);
-	/*VectorXld normalrNewTemp = VectorXld::Zero(6);
+	targetsNew = compute_transformed_points(*targets, *Xreg);
+	VectorXld normalrNewTemp = VectorXld::Zero(6);
 
 	for (int i = 3; i < 6; i++) {
-		normalrNewTemp(i) = Xreg(i);
-	}*/
+		normalrNewTemp(i) = (*Xreg)(i);
+	}
+/*
 
-
-	clock_t normal_compute_start = clock();
+	
 	long double crz = cos(Xreg(3));
 	long double cry = cos(Xreg(4));
 	long double crx = cos(Xreg(5));
@@ -173,41 +176,38 @@ clock_t start_14 = clock();
 	         cry*srz, crx*crz+srx*sry*srz, -srx*crz+crx*sry*srz,
 	         -sry, srx*cry, crx*cry;
 
-	//cout << "normalMoving size is: " << normalMoving.rows() << " x " << normalMoving.cols() << endl;
-	normalrNew = (TComb * normalMoving);
-	clock_t normal_compute_end = clock();
-	long double elapsed_secs_normal = (long double)(normal_compute_end - normal_compute_start) / CLOCKS_PER_SEC;
-	//cout << "Normal compute part takes: " << elapsed_secs_normal << " seconds." << endl;
+	//cout << "normalMoving size is: " << normalMoving.rows() << " x " << normalMoving.cols() << endl;*/
+	//normalrNew = (TComb * normalMoving);
+
 	//cout << "Here" << endl;
-	//normalrNew = compute_transformed_points(normalMoving, normalrNewTemp);
+	normalrNew = compute_transformed_points(*normalMoving, normalrNewTemp);
 
 
 
-	if (targets.cols() != numtargets){
+	if ((*targets).cols() != numtargets){
 		ostringstream errorString;
-		errorString << "Pointcloud (" << targets.cols()<< ") doesn't match target size (" << numtargets << ")\n";
+		errorString << "Pointcloud (" << (*targets).cols()<< ") doesn't match target size (" << numtargets << ")\n";
 		call_error(errorString.str());
 	}
 
-
+	//clock_t normal_find_start = clock();
 	// Find numtargets closet points together with corresponding targets
 	for (int count = 0; count < numtargets; count++) {
-		struct KDNode nearestPoint = find_nearest(targetsNew.col(count), T, size);
+		struct KDNode *nearestPoint = find_nearest(targetsNew.col(count), T, size);
 
-		(resultMatches.col(count))(0) = nearestPoint.value(0);
-		(resultMatches.col(count))(1) = nearestPoint.value(1);
-		(resultMatches.col(count))(2) = nearestPoint.value(2);
-		(resultMatches.col(count))(3) = find_distance(nearestPoint.value, targetsNew.col(count));
-		
-		normalMatches.col(count)(0) = normalFixed(0, nearestPoint.index);
-		normalMatches.col(count)(1) = normalFixed(1, nearestPoint.index);
-		normalMatches.col(count)(2) = normalFixed(2, nearestPoint.index);
-		(normalMatches.col(count))(3) = find_distance(normalFixed.col(nearestPoint.index), normalrNew.col(count));
+		(resultMatches.col(count))(0) = nearestPoint->value(0);
+		(resultMatches.col(count))(1) = nearestPoint->value(1);
+		(resultMatches.col(count))(2) = nearestPoint->value(2);
+		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, targetsNew.col(count));
+
+		normalMatches.col(count)(0) = (*normalFixed)(0, nearestPoint->index);
+		normalMatches.col(count)(1) = (*normalFixed)(1, nearestPoint->index);
+		normalMatches.col(count)(2) = (*normalFixed)(2, nearestPoint->index);
+		(normalMatches.col(count))(3) = find_distance((*normalFixed).col(nearestPoint->index), normalrNew.col(count));
 	}
-	
-	/*clock_t end = clock();
-	long double elapsed_secs = (long double)(end - start) / CLOCKS_PER_SEC; 
-	cout << "First part of kd_search takes: " << elapsed_secs << endl;*/
+	//clock_t normal_find_end = clock();
+	//long double time_normal_find = (long double)(normal_find_end - normal_find_start) / CLOCKS_PER_SEC;
+	//cout << "normal find takes: " << time_normal_find << " seconds." << endl;
 
 	// Get distance row and turn into vector for sorting
 
@@ -221,31 +221,32 @@ clock_t start_14 = clock();
 	
 	for (int count = 0; count < inlierSize; count++) {
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		filtered_resultTargets.col(count) = targets.col(sortIndex[count]);
+		filtered_resultTargets.col(count) = (*targets).col(sortIndex[count]);
 
 		filtered_normalMatches.col(count) = normalMatches.col(sortIndex[count]);
-		filtered_normalTargets.col(count) = normalMoving.col(sortIndex[count]);
+		filtered_normalTargets.col(count) = (*normalMoving).col(sortIndex[count]);
 		totalPointDistance += filtered_resultMatches(3, count);
 		totalNormalDistance += filtered_normalMatches(3, count);
 		//cout << "totalPointDistance at count: " << count << " is: " << setprecision(18) << totalPointDistance << endl;
 	}
 
+
 	struct KDNormalResult *result = (struct KDNormalResult*)calloc(1,sizeof(struct KDNormalResult));
 	// When return, ignore the last column which stores individual distances
 	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result->normalc = filtered_normalMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result->pr = filtered_resultTargets.topLeftCorner(3,filtered_resultMatches.cols());
-	result->normalr = filtered_normalTargets.topLeftCorner(3,filtered_resultMatches.cols());
+	result->pr = filtered_resultTargets;
+	result->normalr = filtered_normalTargets;
 	//cout << "totalPointDistance is: " << totalPointDistance << endl;
 	//cout << "inlierSize: " << inlierSize << endl;
 	result->res1 = totalPointDistance / inlierSize;
 	//result->res2 = totalNormalDistance / inlierSize;
 	result->res2 = totalNormalDistance / inlierSize;
-
-		clock_t end_14= clock();
-	long double elapsed_secs_14 = (long double)(end_14 - start_14) / CLOCKS_PER_SEC; 
-	//cout << "This entire chunk takes: " << elapsed_secs_14 << endl;
-	//cout << "Size of result is: " << sizeof(result) << endl;
+	//clock_t end = clock();
+	//long double time = (long double) (end-start) / CLOCKS_PER_SEC;
+	//cout << "This chunk takes: " << time << " seconds. " << endl;
+	
+	//cout << "res2 is: " << result->res2 << endl;
 	return result;
 }
 

@@ -44,9 +44,9 @@ vector<size_t> sort_indexes(const vector<long double> &v, bool ascending);
 
 /* kd_normal_search returns the result of serach struct KDNormalResult (each filed is commented above)
  */
-struct KDNormalResult* kd_search_normals(PointCloud targets, int numtargets, KDTree T, int size, 
-										long double inlierRatio, VectorXld Xreg, 
-										PointCloud normalMoving, PointCloud normalFixed);
+struct KDNormalResult* kd_search_normals(PointCloud *targets, int numtargets, KDTree T, int size, 
+										long double inlierRatio, VectorXld *Xreg, 
+										PointCloud *normalMoving, PointCloud *normalFixed);
 
 void free_tree(KDTree T);
 #endif

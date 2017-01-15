@@ -40,7 +40,7 @@ vector<size_t> sort_indexes(const vector<long double> &v, bool ascending);
  * pr = set of all target points in corresponding order with pc
  * res = mean of all the distances calculated
  */
-struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int size, long double inlierRatio, ArrayXld Xreg);
+struct KdResult* kd_search(PointCloud *targets, int numtargets, KDTree T, int size, long double inlierRatio, ArrayXld *Xreg);
 
 void free_tree(KDTree T);
 #endif

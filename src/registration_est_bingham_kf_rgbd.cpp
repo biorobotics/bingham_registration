@@ -31,8 +31,8 @@ using namespace Eigen;
 #define WINDOW_RATIO 100     // The constant for deciding windowsize
 #define DIMENSION 3     // Dimension of data point
 #define INLIER_RATIO 1
-#define MAX_ITERATIONS 1
-#define MIN_ITERATIONS 1
+#define MAX_ITERATIONS 100
+#define MIN_ITERATIONS 20
 
 /* 
  *  registration_est_kf_rgbd: (workflow explained in the file header)
@@ -71,7 +71,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
     tolerance << .0001 , .009;
 
-    VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 1x6
+    ArrayXld Xreg = VectorXld::Zero(6);  //Xreg: 1x6
 
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
     // iteration is stored there (dimensionL (MAX_ITERATIONS + 1) x 6)
@@ -110,7 +110,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         
         // Tree search
         // Send as input a subset of the pftcldMoving points.
-        MatrixXld targets(3, windowsize);
+        PointCloud targets(3, windowsize);
         
         for (int r = windowsize * (iOffset); r < windowsize * i; r++) {
             int rOffset = r - windowsize * (iOffset);
@@ -120,13 +120,9 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration 
-        clock_t kd_start = clock();
-        struct KdResult *searchResult = kd_search(targets, windowsize, cloudTree,
-                                       sizePtcldFixed, INLIER_RATIO, Xreg);
+        struct KdResult *searchResult = kd_search(&targets, windowsize, cloudTree,
+                                       sizePtcldFixed, INLIER_RATIO, &Xreg);
 
-        clock_t kd_end = clock();
-        long double kd_time = (long double)(kd_end - kd_start) / CLOCKS_PER_SEC;
-        cout << "tree takes: " << kd_time << " seconds." << endl;
         PointCloud pc = searchResult->pc;    // set of all closest point
         PointCloud pr = searchResult->pr;    // set of all target points in corresponding order with pc
         long double res = searchResult->res;  // mean of all the distances calculated
@@ -149,7 +145,7 @@ struct RegistrationResult registration_est_bingham_kf_rgbd(PointCloud ptcldMovin
         
         long double Rmag= .01 + pow(res / 6, 2);  // Variable that helps calculate the noise 
         
-        cout << "Rmag in new is: " << setprecision(18) << Rmag << endl;
+        //cout << "Rmag in new is: " << setprecision(18) << Rmag << endl;
          int p1Count = 0;
         int p2Count = 0;
         

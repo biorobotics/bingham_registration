@@ -78,27 +78,27 @@ Matrix4ld qr_kf_measurementFunctionJacobian(Vector3ld p1, Vector3ld p2) {
     return H;
 }
 
-struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matrix4ld Zk, 
-								  long double Rmag, long double Qmag, PointCloud p1c, PointCloud p1r, 
-								  PointCloud p2c, PointCloud p2r, PointCloud normalc, PointCloud normalr) {
+struct BinghamNormalKFResult bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+								  long double Rmag, long double Qmag, PointCloud *p1c, PointCloud *p1r, 
+								  PointCloud *p2c, PointCloud *p2r, PointCloud *normalc, PointCloud *normalr) {
 
 	 // Check for input dimensions 
-    if (Xk.size() != 4) {
+    if ((*Xk).size() != 4) {
         cerr << "Xk has wrong dimension. Should be 4x1\n";
     }
-    if (Mk.rows() != 4 || Mk.cols() != 4) {
+    if ((*Mk).rows() != 4 || (*Mk).cols() != 4) {
         cerr << "Mk has wrong dimension. Should be 4x4\n";
     }
-    if (Zk.rows() != 4 || Zk.cols() != 4) {
+    if ((*Zk).rows() != 4 || (*Zk).cols() != 4) {
         cerr << "Mk has wrong dimension. Should be 4x4\n";
     }
-    if (p1c.cols() != p1r.cols() || p1c.cols() != p2c.cols() || p1c.cols() != p2c.cols()) {
+    if ((*p1c).cols() != (*p1r).cols() || (*p1c).cols() != (*p2c).cols() || (*p1c).cols() != (*p2c).cols()) {
         cerr << "pxx are not equal in size\n";
     }
 
 	int i;
-	PointCloud pc = p1c - p2c;
-	PointCloud pr = p1r - p2r;
+	PointCloud pc = *p1c - *p2c;
+	PointCloud pr = *p1r - *p2r;
 
 	/*cout << "Xk is: " << setprecision(18) << Xk << endl;
 	cout << "Mk is: " << setprecision(18) << Mk << endl;
@@ -110,11 +110,11 @@ struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matri
 	/*c is the smallest diagonal value of Zk. remember Zk is a diagonal matrix
 	 with all diagonal elements being negative except for first entry which is
 	 0 */
-	long double c = Zk.minCoeff();
+	long double c = (*Zk).minCoeff();
 
 	Matrix4ld I = MatrixXld::Identity(4,4);
 
-	Matrix4ld temp = Mk * (Zk + c*I)*(Mk.transpose());
+	Matrix4ld temp = (*Mk) * ((*Zk) + c*I)*((*Mk).transpose());
 
 	Matrix4ld tempInv;
 
@@ -125,7 +125,7 @@ struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matri
 
 	Matrix4ld Pk = -0.5 * tempInv;
 
-	Matrix4ld Nk = Xk * Xk.transpose() + Pk;
+	Matrix4ld Nk = (*Xk) * (*Xk).transpose() + Pk;
 
 	Matrix4ld RTmp = Rmag * (Nk.trace()*I - Nk);
 
@@ -165,12 +165,12 @@ struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matri
 
 	Matrix4ld D2 = MatrixXld::Zero(4,4);	// Initialize D2 to zero matrix
 
-	for (i = 0; i < normalc.cols(); i++) {
-		Matrix4ld H_tmp = qr_kf_measurementFunctionJacobian(normalc.col(i), normalr.col(i));
+	for (i = 0; i < (*normalc).cols(); i++) {
+		Matrix4ld H_tmp = qr_kf_measurementFunctionJacobian((*normalc).col(i), (*normalr).col(i));
 		D2 = D2 + H_tmp.transpose()*QInvTmp*H_tmp;
 	}
 
-	Matrix4ld DStar = -0.5*D1 - 0.5*D2 + Mk*Zk*Mk.transpose();
+	Matrix4ld DStar = -0.5*D1 - 0.5*D2 + (*Mk)*(*Zk)*(*Mk).transpose();
 	
 	es.compute(DStar, true);
 	// This part might have problem
@@ -198,16 +198,16 @@ struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matri
 	// This step should ensure that Zk has first diagonal element = 0
 	ZTmpSorted(0) = 0;
 
-	Zk = ZTmpSorted.asDiagonal();
+	(*Zk) = ZTmpSorted.asDiagonal();
 	
 	// Since we sorted and changed he order of the elements in Zk, we have to do the same
 	// change of orders for columns in Mk
 	
-	Mk.col(0) = MTmp.col(indx[0]);
-	Xk = Mk.col(0);	// Update Xk
+	(*Mk).col(0) = MTmp.col(indx[0]);
+	(*Xk) = (*Mk).col(0);	// Update Xk
 
 	for (i = 1; i < ZTmp.size(); i++)
-		Mk.col(i) = MTmp.col(indx[i]);
+		(*Mk).col(i) = MTmp.col(indx[i]);
 	
 
 	// Calculate translation vector from rotation estimate
@@ -215,10 +215,10 @@ struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matri
     Vector3ld centroid;
     Vector3ld centroidRotated;
     for(int i=0; i<3; i++) {
-        centroid(i) = (p1c.row(i).mean() + p2c.row(i).mean())/2.0;
-        centroidRotated(i) = (p1r.row(i).mean() + p2r.row(i).mean())/2.0;
+        centroid(i) = ((*p1c).row(i).mean() + (*p2c).row(i).mean())/2.0;
+        centroidRotated(i) = ((*p1r).row(i).mean() + (*p2r).row(i).mean())/2.0;
     }
-    Quaternionld XkQuat = Quaternionld(Xk(0),Xk(1),Xk(2),Xk(3)).normalized();
+    Quaternionld XkQuat = Quaternionld((*Xk)(0),(*Xk)(1),(*Xk)(2),(*Xk)(3)).normalized();
     
     
     centroidRotated = XkQuat.toRotationMatrix() * centroidRotated;
@@ -232,10 +232,10 @@ struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matri
     Xreg.segment(3,3) = eulerRotation;
     
     struct BinghamNormalKFResult result;
-    result.Xk = Xk;
+    result.Xk = (*Xk);
     result.Xreg = Xreg;
-    result.Mk = Mk;
-    result.Zk = Zk;
+    result.Mk = (*Mk);
+    result.Zk = (*Zk);
 
     return result;
 }

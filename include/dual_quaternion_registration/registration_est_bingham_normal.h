@@ -16,7 +16,7 @@ struct RegistrationResult{
     MatrixXld Xregsave;
 };
 
-struct RegistrationResult registration_est_bingham_normal(PointCloud ptcldMoving, PointCloud ptcldFixed,
-														   PointCloud normalMoving, PointCloud normalFixed);
+struct RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
+														   PointCloud *normalMoving, PointCloud *normalFixed);
 
 #endif

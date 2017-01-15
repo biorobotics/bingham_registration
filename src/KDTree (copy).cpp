@@ -128,7 +128,7 @@ vector<size_t> sort_indexes(const vector<long double> &v, bool ascending) {
  * pr = set of all target points in corresponding order with pc
  * res = mean of the sum of all the distances calculated
  */
-struct KdResult* kd_search(PointCloud *targets_p, int numtargets, KDTree T, int size, long double inlierRatio, ArrayXld *Xreg) {
+struct KdResult* kd_search(PointCloud targets, int numtargets, KDTree T, int size, long double inlierRatio, ArrayXld Xreg) {
 
 	int inlierSize = trunc(numtargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numtargets);
@@ -137,15 +137,16 @@ struct KdResult* kd_search(PointCloud *targets_p, int numtargets, KDTree T, int 
 	MatrixXld filtered_resultMatches = MatrixXld(4, inlierSize);
 	long double totalDistance = 0;
 	PointCloud targetsNew = PointCloud(3, numtargets);
-	PointCloud targets = *targets_p;
+	
 	// Transform the target points before searching
-	targetsNew = compute_transformed_points(targets, *Xreg);
+	targetsNew = compute_transformed_points(targets, Xreg);
 
 	if (targets.cols() != numtargets){
 		ostringstream errorString;
 		errorString << "Pointcloud (" << targets.cols()<< ") doesn't match target size (" << numtargets << ")\n";
 		call_error(errorString.str());
 	}
+
 	// Find numtargets cloest points together with corresponding targets
 	for (int count = 0; count < numtargets; count++) {
 		Vector3ld nearestPoint = find_nearest(targetsNew.col(count), T, size);
@@ -156,7 +157,7 @@ struct KdResult* kd_search(PointCloud *targets_p, int numtargets, KDTree T, int 
 		(resultMatches.col(count))(3) = find_distance(nearestPoint, targetsNew.col(count));
 		resultTargets.col(count) = targets.col(count);	// We want to return the original targets
 	}
-
+	
 	// Get distance row and turn into vector for sorting
 	VectorXld distances = resultMatches.row(3);
 	vector<long double> distancesVector;

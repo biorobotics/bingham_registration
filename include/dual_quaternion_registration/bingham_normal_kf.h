@@ -20,9 +20,9 @@ struct BinghamNormalKFResult {
 
 Vector3ld quat2eul(Quaternionld q);
 
-struct BinghamNormalKFResult bingham_normal_kf(Vector4ld Xk, Matrix4ld Mk, Matrix4ld Zk, 
-								  long double Rmag, long double Qmag, PointCloud p1c, PointCloud p1r, 
-								  PointCloud p2c, PointCloud p2r, PointCloud normalc,
-								  PointCloud normalr);
+struct BinghamNormalKFResult bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+								  long double Rmag, long double Qmag, PointCloud *p1c, PointCloud *p1r, 
+								  PointCloud *p2c, PointCloud *p2r, PointCloud *normalc,
+								  PointCloud *normalr);
 
 #endif

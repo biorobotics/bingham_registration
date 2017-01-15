@@ -17,8 +17,8 @@ const char* const DELIMITER = " ";
 
 int main(int argc, char *argv[]) {
     // Defaults
-    string movingFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_moving_5.txt";
-    string fixedFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_fixed_5.txt";
+    string movingFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_moving_6.txt";
+    string fixedFileString = "/home/olivia/qf_registration_ws/src/dual_quaternion_registration/data/ptcld_fixed_6.txt";
     // Replace filenames if arguments exist
     //cout << "Precision of long double is: " << numeric_limits<long double>::digits10 << endl;
     for (int i = 1; i < argc; ++i) {
@@ -66,11 +66,13 @@ int main(int argc, char *argv[]) {
         // read an entire line into memory
         char buf[MAX_CHARS_PER_LINE];
         sensedFile.getline(buf, MAX_CHARS_PER_LINE);
+        if (sensedFile.eof())
+            break;
         // store line in a vector
         istringstream iss(buf);
         Vector3ld temp;
         iss >> temp(0) >> temp(1) >> temp(2);
-        //cout << "Temp is: " << setprecision(15) << temp << endl;
+        //cout << "Temp is: " << setprecision(18) << temp << endl;
         // Make sure all three were read in correctly
         if(iss.fail())
             call_error(movingFileString + ": Input data doesn't match dimension (too few per line)");
@@ -97,6 +99,8 @@ int main(int argc, char *argv[]) {
                 // read an entire line into memory
         char buf[MAX_CHARS_PER_LINE];
         CADFile.getline(buf, MAX_CHARS_PER_LINE);
+        if (CADFile.eof())
+            break;
         // store line in a vector
         std::istringstream iss(buf);
         Vector3ld temp;
@@ -132,6 +136,7 @@ int main(int argc, char *argv[]) {
 
         // Run the registration function
 
+         
         struct RegistrationResult result = registration_est_bingham_kf_rgbd(ptcldMoving, 
                                                                             ptcldFixed);
 
@@ -147,8 +152,8 @@ int main(int argc, char *argv[]) {
             myFile << "Xregsave:" << endl << result.Xregsave.transpose() << endl << endl;
         }
     }
-    cout << "Average registration runtime is: " << timeSum / 10 << " seconds." << endl << endl;
-    myFile << "Average registration runtime is: " << timeSum / 10 << " seconds." << endl;
+    cout << "Average registration runtime is: " << timeSum / 1 << " seconds." << endl << endl;
+    myFile << "Average registration runtime is: " << timeSum / 1 << " seconds." << endl;
     myFile.close();
 
     return 0;
