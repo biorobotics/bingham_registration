@@ -1,7 +1,7 @@
 /*
- *	File Header:
- *  get_changes_in_transformation_estimate takes in the updated Xreg and previous
- *  Xreg, outputs dT and dR for checking if convergence is met.
+ *	File Header for get_changes_in_transformation_estimate.cpp:
+ *  	get_changes_in_transformation_estimate takes in the updated Xreg and previous
+ *  	Xreg, outputs dT and dR for checking if convergence is met.
  */
 
 #include <iostream>
@@ -11,7 +11,10 @@ using namespace std;
 using namespace Eigen;
 
 
-// return rowvec q of dimension 1 x 4
+/* eul2quat:
+ *		Input: euler angle in vector
+ 		Output: quaternion after conversion 
+ */
 Quaternionld eul2quat(Vector3ld eul) {
 	Array3ld eulHalf = eul.array() / 2;
 
@@ -26,8 +29,12 @@ Quaternionld eul2quat(Vector3ld eul) {
 	return q.normalized();
 }
 
-struct DeltaTransform get_changes_in_transformation_estimate(VectorXld Xreg, VectorXld Xregprev) {
-	struct DeltaTransform result;
+/* get_changes_in_transformation_estimate:
+ *		Input: pose from last iteration, a record of the poses from earlier iterations
+ 		Output: dR and dT to check wheter to stop the iteration
+ */
+struct DeltaTransform *get_changes_in_transformation_estimate(VectorXld Xreg, VectorXld Xregprev) {
+	struct DeltaTransform *result = (struct DeltaTransform*)calloc(1, sizeof(struct DeltaTransform));
 	Quaternionld qs = eul2quat(Xreg.segment(3,3));
 	Quaternionld qsPrev = eul2quat(Xregprev.segment(3,3));
 	// Rotation difference in radians
@@ -35,7 +42,8 @@ struct DeltaTransform get_changes_in_transformation_estimate(VectorXld Xreg, Vec
 	
 	// Euclidean difference
 	long double dT = (Xregprev.segment(0,3) - Xreg.segment(0,3)).norm();
-	result.dR = dR;
-	result.dT = dT;
+	result->dR = dR;
+	result->dT = dT;
+
 	return result;
 }

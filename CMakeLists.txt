@@ -143,7 +143,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 ## Declare a C++ library
 add_library(dual_quaternion_registration
    src/compute_transformed_points.cpp
-   src/normal_code/kd_search_normals.cpp
+   src/kd_tree.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -163,7 +163,7 @@ target_link_libraries(dual_quaternion_registration
 add_executable(registration src/registration_main.cpp 
                             src/registration_est_bingham_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
-                            src/KDTree.cpp src/bingham_kf.cpp
+                            src/kd_tree.cpp src/bingham_kf.cpp
                             src/get_changes_in_transformation_estimate.cpp
 )
 
@@ -172,18 +172,6 @@ add_executable(registration src/registration_main.cpp
 add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Specify libraries to link a library or executable target against
 target_link_libraries(registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
-
-add_executable(normal_registration src/normal_code/registration_normal_main.cpp 
-                            src/normal_code/registration_est_bingham_normal.cpp
-                            src/compute_transformed_points.cpp
-                            src/normal_code/kd_search_normals.cpp 
-    src/normal_code/bingham_normal_kf.cpp
-                            src/get_changes_in_transformation_estimate.cpp
-)
-
-add_dependencies(normal_registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-## Specify libraries to link a library or executable target against
-target_link_libraries(normal_registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
 #############
 ## Install ##

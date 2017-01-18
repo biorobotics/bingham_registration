@@ -1,6 +1,6 @@
 /*
- * File Header:
- * This file contains functions for performing quaternion filtering
+ * File Header for bingham_kf.h:
+ * 		This file contains functions for performing Bingham quaternion filtering
  */
 
 #ifndef BINGHAM_KF
@@ -17,10 +17,26 @@ struct BinghamKFResult {
     VectorXld Xreg;  // 6 * 1. The updated Xreg 
 };
 
+/*  quat2eul:
+ *		Input: quaternion
+ 		Output: euler angle in vector after conversion
+ */
 Vector3ld quat2eul(Quaternionld q);
 
-struct BinghamKFResult bingham_kf(Vector4ld Xk, Matrix4ld Mk, Matrix4ld Zk, 
-								  long double Rmag, PointCloud p1c, PointCloud p1r, 
-								  PointCloud p2c, PointCloud p2r);
+/* bingham_kf:
+ *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
+ 		Output: Updated Xk, Mk, Zk, Xreg
+ */
+struct BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+								  long double Rmag, PointCloud *p1c, PointCloud *p1r, 
+								  PointCloud *p2c, PointCloud *p2r);
 
+/* bingham_normal_kf: (the version of bingham_kf with the aid of normals)
+ *		Input: previous Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, p2c, p2r, normalc,
+ 		Output: Updated Xk, Mk, Zk, Xreg
+ */
+struct BinghamKFResult *bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+								  long double Rmag, long double Qmag, PointCloud *p1c, 
+								  PointCloud *p1r, PointCloud *p2c, PointCloud *p2r, 
+								  PointCloud *normalc, PointCloud *normalr);
 #endif
