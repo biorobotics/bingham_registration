@@ -4,7 +4,7 @@
  */
 
 #include <iostream>
-#include <kd_tree.h>
+#include "kd_tree.h"
 #include <bingham_kf.h>
 #include <algorithm>
 #include <iterator>
@@ -82,7 +82,7 @@ Matrix4ld qr_kf_measurementFunctionJacobian(Vector3ld p1, Vector3ld p2) {
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-struct BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+extern "C" struct BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 								  long double Rmag, PointCloud *p1c, PointCloud *p1r, 
 								  PointCloud *p2c, PointCloud *p2r) {
 	 // Check for input dimensions 

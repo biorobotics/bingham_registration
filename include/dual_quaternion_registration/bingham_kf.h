@@ -27,7 +27,7 @@ Vector3ld quat2eul(Quaternionld q);
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-struct BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+extern "C" struct BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 								  long double Rmag, PointCloud *p1c, PointCloud *p1r, 
 								  PointCloud *p2c, PointCloud *p2r);
 

@@ -51,7 +51,7 @@ using namespace Eigen;
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-struct RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
+extern "C" struct RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
                                                             PointCloud *ptcldFixed) {
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
@@ -210,7 +210,7 @@ struct RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMov
             normalMoving (3xn) is one set of normal data. This will represent the sensed normals
             normalFixed (3xn) is another set of point normal data. This will represent CAD model normals 
  */
-struct RegistrationResult *registration_est_bingham_normal(PointCloud *ptcldMoving, 
+extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud *ptcldMoving, 
                                                            PointCloud *ptcldFixed,
                                                            PointCloud *normalMoving, 
                                                            PointCloud *normalFixed) {

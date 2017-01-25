@@ -33,7 +33,7 @@ Quaternionld eul2quat(Vector3ld eul) {
  *		Input: pose from last iteration, a record of the poses from earlier iterations
  		Output: dR and dT to check wheter to stop the iteration
  */
-struct DeltaTransform *get_changes_in_transformation_estimate(VectorXld Xreg, VectorXld Xregprev) {
+extern "C" struct DeltaTransform *get_changes_in_transformation_estimate(VectorXld Xreg, VectorXld Xregprev) {
 	struct DeltaTransform *result = (struct DeltaTransform*)calloc(1, sizeof(struct DeltaTransform));
 	Quaternionld qs = eul2quat(Xreg.segment(3,3));
 	Quaternionld qsPrev = eul2quat(Xregprev.segment(3,3));
