@@ -22,7 +22,10 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 10; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-extern "C" int qf_register(char* movingData, char* fixedData) {
+extern "C" long double* qf_register(char* movingData, char* fixedData) {
+
+    long double* returnArray = new long double[6];
+
     cout << &movingData << endl;
     char* movingPointsString = movingData;
 
@@ -47,7 +50,7 @@ extern "C" int qf_register(char* movingData, char* fixedData) {
     if (!sensedFile.good() || !CADFile.good()) {
         cout << "Files " << fixedPointsString << ", " << movingPointsString << " not found" 
         << "\n";
-        return 1; // exit if file not found
+        return returnArray; // exit if file not found
     } 
 
     // Open the normal-related files if normal option is used
@@ -58,7 +61,7 @@ extern "C" int qf_register(char* movingData, char* fixedData) {
         if (!sensedNormalFile.good() || !CADNormalFile.good()) {
             cout << "Files " << fixedNormalsString << ", " << movingNormalsString 
             << " not found" << "\n";
-            return 1; // exit if file not found
+            return returnArray; // exit if file not found
         } 
     }
     
@@ -222,14 +225,13 @@ extern "C" int qf_register(char* movingData, char* fixedData) {
         double timeSum = 0;
         ofstream myFile;
         myFile.open("result_normal.txt");
-
+        struct RegistrationResult *result;
         for (int i = 0; i < NUM_OF_RUNS; i++) {
             clock_t begin = clock();    // For timing the performance
 
             // Run the registration function with normals
-            struct RegistrationResult *result = registration_est_bingham_normal(
-                                                &ptcldMoving, &ptcldFixed, 
-                                                &normalMoving, &normalFixed);
+            result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
+                                                     &normalMoving, &normalFixed);
             clock_t end = clock();
             double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
             timeSum += elapsed_secs;
@@ -250,8 +252,8 @@ extern "C" int qf_register(char* movingData, char* fixedData) {
         myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
             << " seconds." << endl;
         myFile.close();
-
-        return 0;
+        Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+        return returnArray;
     }
 
     /*** The following registration is performed when normals are not used ***/
@@ -262,13 +264,14 @@ extern "C" int qf_register(char* movingData, char* fixedData) {
     
     double timeSum = 0;
     ofstream myFile;
+    struct RegistrationResult *result;
     myFile.open("result_no_normal.txt");
 
         clock_t begin = clock();    // For timing the performance
 
         // Run the registration function without normals
-        struct RegistrationResult *result = registration_est_bingham_kf_rgbd(&ptcldMoving, 
-                                                                             &ptcldFixed);
+        result = registration_est_bingham_kf_rgbd(&ptcldMoving, 
+                                                  &ptcldFixed);
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     
@@ -280,8 +283,8 @@ extern "C" int qf_register(char* movingData, char* fixedData) {
     myFile << "Registration runtime is: " << elapsed_secs
                                                   << " seconds." << endl;
     myFile.close();
-
-    return 0;
+    Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+    return returnArray;
 }
 
 int main (void) {
