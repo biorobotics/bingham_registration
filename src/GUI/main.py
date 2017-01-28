@@ -8,7 +8,9 @@ from math import radians, degrees
 
 # Load c library
 import ctypes
-lib = ctypes.cdll.LoadLibrary('/home/biomed/registration_ws/devel_release/lib/libdual_quaternion_registration.so')
+path = os.path.dirname(os.path.realpath(__file__))
+path = os.path.join(path,'..','..','build','libdual_quaternion_registration.so')
+lib = ctypes.cdll.LoadLibrary(path)
 
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
@@ -45,7 +47,7 @@ class MyWindow(QtGui.QMainWindow):
         self.ren.ResetCamera()
         
         self.vtkFrame.setLayout(self.vl)
-        self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera)
+        self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
         self.show()
         self.iren.Initialize()
 
