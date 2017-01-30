@@ -4,8 +4,8 @@
  * 		Return transformed sensed points 
  * 		
  */
-#include <compute_transformed_points.h>
-
+#include "compute_transformed_points.h"
+#include "stdafx.h"
 /* eul2rotm:
  *		Input: euler angle in array (for the use of cos, sin function), in ZYX order
  		Output: quaternion after conversion 

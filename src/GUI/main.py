@@ -9,12 +9,15 @@ from math import radians, degrees
 # Load c library
 import ctypes
 path = os.path.dirname(os.path.realpath(__file__))
-path = os.path.join(path,'..','..','build','libdual_quaternion_registration.so')
-lib = ctypes.cdll.LoadLibrary(path)
+#path = os.path.join(path,'..','..','build','libdual_quaternion_registration.so')
+os.chdir("C:\\Users\\biorobotics\\Documents\\Visual Studio 2015\\Projects\\test\\x64\\Debug\\")
+lib = ctypes.CDLL("Test.dll")
+lib.qf_register.argtypes = [ctypes.c_wchar_p,ctypes.c_wchar_p]
 
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
+        os.chdir(path)
         uic.loadUi('registration_gui.ui', self)
         # Connect buttons to functions
         # import moving data
@@ -99,6 +102,7 @@ class MyWindow(QtGui.QMainWindow):
 
         # Generate colors
         colors = vtk.vtkElevationFilter()
+        #colors.SetInputData(polydata)
         colors.SetInputConnection(polydata.GetProducerPort())
         colors.SetLowPoint(0, 0, bounds[5])
         colors.SetHighPoint(0, 0, bounds[4])
@@ -136,7 +140,12 @@ class MyWindow(QtGui.QMainWindow):
         print("Registration starts\n")
         print(str(self.ptcldMovingText.text()))
         print(str(self.ptcldFixedText.text()))
-        output = lib.qf_register(str(self.ptcldMovingText.text()), str(self.ptcldFixedText.text()))
+
+        b_string1 = str(self.ptcldMovingText.text()).encode('utf-8')
+        b_string2 = str(self.ptcldFixedText.text()).encode('utf-8')
+        lib.qf_register.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+
+        output = lib.qf_register(b_string1, b_string2)
         ArrayType = ctypes.c_longdouble*6
         array_pointer = ctypes.cast(output,ctypes.POINTER(ArrayType))
         test = np.frombuffer(array_pointer.contents, dtype=np.longdouble)

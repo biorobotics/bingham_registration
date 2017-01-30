@@ -9,8 +9,10 @@
 			return search result
 
  */
+#define NOMINMAX
 #include <iostream>
 #include <vector>
+#include <limits>
 #include <kd_tree.h>
 #include <iomanip>
 
@@ -110,7 +112,7 @@ void insert_normal(Vector3ld point, int index, KDNormalTree *T) {
 	return insert_normal_helper(point, index, T, 0);
 }
 
-/* find_nearest_helper:
+/* find_nearest_helper: (inspired by https://rosettacode.org/wiki/K-d_tree)
  * 		Input: kd-tree, point (whose closest match needs to be searched in kd-tree), 
  			   the level to search, a storage for current best found, a storage for
  			   current distance
@@ -173,16 +175,16 @@ NodeType* find_nearest(Vector3ld target, NodeType *T) {
 
  * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
  */
-vector<size_t> sort_indexes(const vector<long double> &v, bool ascending) {
+vector<unsigned int> sort_indexes(const vector<long double> &v, bool ascending) {
 	// initialize original index locations
-	vector<size_t> idx(v.size());
+	vector<unsigned int> idx(v.size());
 	for (size_t i = 0; i < idx.size(); i++) idx[i] = i;
 
 	// sort indexes based on comparing values in v
  	if (ascending)
-  		sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+  		sort(idx.begin(), idx.end(), [&v](unsigned int i1, unsigned int i2) {return v[i1] < v[i2];});
   	else
-  		sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
+  		sort(idx.begin(), idx.end(), [&v](unsigned int i1, unsigned int i2) {return v[i1] > v[i2];});
   	
   	return idx;
 }
@@ -234,7 +236,7 @@ struct KdResult* kd_search(PointCloud *targets_p, KDTree T, long double inlierRa
 	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
 
 	// Get indexes sorted by distance
-	vector<long unsigned int> sortIndex = sort_indexes(distancesVector, true);
+	vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
 	
 	for (int count = 0; count < inlierSize; count++) {
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
@@ -326,7 +328,7 @@ struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T,
 	distancesVector.resize(distances.size());
 	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
 	// Get indexes sorted by distance
-	vector<long unsigned int> sortIndex = sort_indexes(distancesVector, true);
+	vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
 	
 	
 	for (int count = 0; count < inlierSize; count++) {

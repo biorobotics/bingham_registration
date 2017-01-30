@@ -22,7 +22,7 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 10; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-extern "C" long double* qf_register(char* movingData, char* fixedData) {
+extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char* fixedData) {
 
     long double* returnArray = new long double[6];
 
@@ -100,7 +100,7 @@ extern "C" long double* qf_register(char* movingData, char* fixedData) {
     }
 
     PointCloud ptcldMoving(3,pointVector.size());
-
+	//cout << "pointVector size is " << pointVector.size() << endl;
     for(int i=0; i<pointVector.size(); i++)
         ptcldMoving.col(i) = pointVector[i];
     
@@ -285,8 +285,4 @@ extern "C" long double* qf_register(char* movingData, char* fixedData) {
     myFile.close();
     Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
     return returnArray;
-}
-
-int main (void) {
-    return 0;
 }

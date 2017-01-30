@@ -1,3 +1,4 @@
+#include <windows.h>
 /*
  * File Header for registration_est_bingham_kf_rgbd.cpp
  * 
@@ -28,7 +29,6 @@
 #include <cstring>
 #include <ctime>
 #include "registration_est_bingham_kf_rgbd.h"
-#include "ros/ros.h"
 
 using namespace std;
 using namespace Eigen;
@@ -36,8 +36,8 @@ using namespace Eigen;
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
 #define INLIER_RATIO 1
-#define MAX_ITERATIONS 100
-#define MIN_ITERATIONS 20
+#define MAX_ITERATIONS 100  //100
+#define MIN_ITERATIONS 20  //20
 #define WINDOW_SIZE 20
 
 /* 
