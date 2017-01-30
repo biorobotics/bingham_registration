@@ -38,23 +38,22 @@ Initialization values in registration_est_bingham_kf_rgbd.cpp:<br />
   
 I also have the data (runtime, Xregsaves) of running different dataset, if you need those numbers let me know. (data collected by calling catkin_make to make files)
 
-Compilation on Windows:
-Install cmake
-Install Visual Studio
-Install Eigen (different for each operating system)
-Add vtk to python (conda install vtk)
-Add qt4 to python (conda install pyqt=4)
-make a build directory
-open up cmake gui (cmake-gui)
-set source directory to dual_quaternion_registration
-set build directory to one we just made
-once you press configure, a menu should pop up asking which generator to use
-Select Visual Studio XX XXXX Win64 (or Win32 depending on your operating system)
-Ignore the toolset and compiler options. Native should work fine.
-Double click on the generated solution (in the build directory)
-Once Visual Studio is open, switch to Release mode and build.
-the library file (lib_qf_registration_windows.dll) must be moved out of dual_quaternion_registration/precompiled_clibs/Release
-back out to dual_quaternion_registration/precompiled_clibs/
+## Compilation on Windows:
+* Install cmake
+* Install Visual Studio
+* Install Eigen (different for each operating system)
+* Add vtk to python (conda install vtk)
+* Add qt4 to python (conda install pyqt=4)
+* make a build directory
+* open up cmake gui (cmake-gui)
+* set source directory to dual_quaternion_registration
+* set build directory to one we just made
+* once you press configure, a menu should pop up asking which generator to use
+* Select Visual Studio XX XXXX Win64 (or Win32 depending on your operating system)
+* Ignore the toolset and compiler options. Native should work fine.
+* Double click on the generated solution (in the build directory)
+* Once Visual Studio is open, switch to Release mode and build.
+* the library file (lib_qf_registration_windows.dll) must be moved out of dual_quaternion_registration/precompiled_clibs/Release back out to dual_quaternion_registration/precompiled_clibs/
 
 
 
