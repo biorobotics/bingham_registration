@@ -1,5 +1,12 @@
 #ifndef REGISTRATION_TOOLS
 #define REGISTRATION_TOOLS
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#define EXPORT extern "C" __declspec(dllexport)
+#else
+#define EXPORT extern "C"
+#endif
+
 /* sort_indexes:
 *		Input: vector to be sorted, sorting order option (true for ascending, vice versa)
 Return: the sorted results' index in the original vector

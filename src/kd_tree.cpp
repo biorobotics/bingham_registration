@@ -113,7 +113,7 @@ void insert_normal(Vector3ld point, int index, KDNormalTree *T) {
 template <class TreeType>
 void find_nearest_helper(TreeType T, Vector3ld target, int level, TreeType bestN, 
 						 long double *bestDistance) {
-	long double distance, diff, diffSq;
+	long double distance, diff;
 	// If reaches the leaf of the tree, end search
 	if (T == NULL)
 		return;

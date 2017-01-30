@@ -18,7 +18,7 @@ print glob.glob("*")
 
 # If on windows
 if os.name == "nt":
-    lib = ctypes.CDLL("./lib_qf_registration_win_10.dll")
+    lib = ctypes.CDLL("./lib_qf_registration_windows.dll")
 else:
     lib = ctypes.CDLL("./lib_qf_registration_linux.so")
 
@@ -113,17 +113,20 @@ class MyWindow(QtGui.QMainWindow):
         # Generate colors
         colors = vtk.vtkElevationFilter()
         #colors.SetInputData(polydata)
-        colors.SetInputConnection(polydata.GetProducerPort())
+        if vtk.VTK_MAJOR_VERSION <= 5:
+            colors.SetInputConnection(polydata.GetProducerPort())
+        else:
+            colors.SetInputData(polydata)
         colors.SetLowPoint(0, 0, bounds[5])
         colors.SetHighPoint(0, 0, bounds[4])
         colors.SetScalarRange(color)
-
         # Visualization
         mapper = vtk.vtkPolyDataMapper()
         if vtk.VTK_MAJOR_VERSION <= 5:
             mapper.SetInput(colors.GetOutput())
         else:
-            mapper.SetInputData(colors)
+            colors.Update()
+            mapper.SetInputData(colors.GetOutput())
 
         actor.SetMapper(mapper)
         size = 4 / len(str(polydata.GetNumberOfPoints())) + 1
@@ -144,6 +147,7 @@ class MyWindow(QtGui.QMainWindow):
             polydata = self._readFile(fname,(.8,1))
             self._updateActorPolydata(self.actor_fixed,polydata,self.fixed_color)
         self.ren.ResetCamera()
+        self.iren.Render()
 
     # Take file path from the lineEdit and perform registration using those dataset
     def qf_register(self):

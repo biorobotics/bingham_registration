@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "pch.h"
 #include <registration_tools.h>
 /* call_error:
@@ -16,12 +17,11 @@ Output: euler angle in vector after conversion
 Vector3ld quat2eul(Quaternionld q) {
 	// Normalize the quaternions
 	Quaternionld temp = q.normalized();
-	q = temp;
 
-	long double qw = q.w();
-	long double qx = q.x();
-	long double qy = q.y();
-	long double qz = q.z();
+	long double qw = temp.w();
+	long double qx = temp.x();
+	long double qy = temp.y();
+	long double qz = temp.z();
 
 	Vector3ld eul(3);
 
@@ -42,7 +42,7 @@ Return: the sorted results' index in the original vector
 vector<unsigned int> sort_indexes(const vector<long double> &v, bool ascending) {
 	// initialize original index locations
 	vector<unsigned int> idx(v.size());
-	for (size_t i = 0; i < idx.size(); i++) idx[i] = i;
+	for (unsigned int i = 0; i < idx.size(); i++) idx[i] = i;
 
 	// sort indexes based on comparing values in v
 	if (ascending)

@@ -221,7 +221,13 @@ add_executable(registration src/dual_quaternion_registration.cpp
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+IF (WIN32)
+set_target_properties(dual_quaternion_registration PROPERTIES OUTPUT_NAME "_qf_registration_windows")
+ELSE()
 set_target_properties(dual_quaternion_registration PROPERTIES OUTPUT_NAME "_qf_registration_linux")
+ENDIF()
+set_target_properties(dual_quaternion_registration PROPERTIES SKIP_BUILD_RPATH TRUE)
+set_target_properties(dual_quaternion_registration PROPERTIES PREFIX "lib")
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs)
 install(TARGETS dual_quaternion_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
 
