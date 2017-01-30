@@ -8,19 +8,27 @@ from math import radians, degrees
 
 # Load c library
 import ctypes
+
 functionPath = os.path.dirname(os.path.realpath(__file__))
-path = os.path.join(functionPath,'..','..','build','libdual_quaternion_registration.so')
-#os.chdir(path)
-#os.chdir("C:\\Users\\biorobotics\\Documents\\Visual Studio 2015\\Projects\\test\\x64\\Debug\\")
-#lib = ctypes.CDLL("Test.dll")
-lib = ctypes.CDLL(path)
+path = os.path.join(functionPath,"..","..","precompiled_clibs")
+os.chdir(path)
+
+import glob
+print glob.glob("*")
+
+# If on windows
+if os.name == "nt":
+    lib = ctypes.CDLL("./lib_qf_registration_win_10.dll")
+else:
+    lib = ctypes.CDLL("./lib_qf_registration_linux.so")
+
 lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p]
 
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
         os.chdir(functionPath)
-        uic.loadUi('registration_gui.ui', self)
+        uic.loadUi("registration_gui.ui", self)
         # Connect buttons to functions
         # import moving data
         self.ptcldMovingButton.clicked.connect(self.import_data)
@@ -37,9 +45,9 @@ class MyWindow(QtGui.QMainWindow):
         self.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
 
-        filename_fixed = './bunny/ptcld_fixed_5.txt'
-        filename_moving = './bunny/ptcld_moving_5.txt'
-        #filename = './bunny/reconstruction/bun_zipper.ply'
+        filename_fixed = "./bunny/ptcld_fixed_5.txt"
+        filename_moving = "./bunny/ptcld_moving_5.txt"
+        #filename = "./bunny/reconstruction/bun_zipper.ply"
 
         self.actor_moving = vtk.vtkActor()
         self.moving_color = (0,0.2)
@@ -61,7 +69,7 @@ class MyWindow(QtGui.QMainWindow):
         extension = os.path.splitext(filename)[1]
 
         # Read PLY into vtkPoints
-        if extension == '.ply':
+        if extension == ".ply":
             reader = vtk.vtkPLYReader()
             reader.SetFileName(filename)
             reader.Update()
@@ -72,7 +80,7 @@ class MyWindow(QtGui.QMainWindow):
                 vertices.InsertCellPoint(i)
 
         # Read TXT into vtkPoints
-        elif extension == '.txt':
+        elif extension == ".txt":
             textReader = vtk.vtkDelimitedTextReader()
             textReader.SetFileName(filename)
             textReader.SetFieldDelimiterCharacters('\t ')
@@ -89,7 +97,7 @@ class MyWindow(QtGui.QMainWindow):
                 vertices.InsertCellPoint(i)
 
         else:
-            raise InputError('file must be ply or txt')
+            raise InputError("file must be ply or txt")
 
         # Add all generated data to polydata
         polydata = vtk.vtkPolyData()
@@ -124,7 +132,7 @@ class MyWindow(QtGui.QMainWindow):
     # Function for opening .txt file and import the file path into the lineEdit
     def import_data(self):
         cwd = os.getcwd()
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', cwd)
+        fname = QtGui.QFileDialog.getOpenFileName(self, "Open file", cwd)
         fname = str(fname)
         sending_button = str(self.sender().objectName())
         if sending_button == "ptcldMovingButton":
@@ -143,8 +151,8 @@ class MyWindow(QtGui.QMainWindow):
         print(str(self.ptcldMovingText.text()))
         print(str(self.ptcldFixedText.text()))
 
-        b_string1 = str(self.ptcldMovingText.text()).encode('utf-8')
-        b_string2 = str(self.ptcldFixedText.text()).encode('utf-8')
+        b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
+        b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
         lib.qf_register.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
 
         output = lib.qf_register(b_string1, b_string2)
@@ -233,7 +241,7 @@ def reg_params_to_transformation_matrix(params):
     return retMat
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = MyWindow()
     quat = eul2quat([0.509564, 0.486538, 0.230276])
