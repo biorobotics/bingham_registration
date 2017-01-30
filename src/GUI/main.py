@@ -9,12 +9,10 @@ from math import radians, degrees
 # Load c library
 import ctypes
 
+startPath = os.getcwd()
 functionPath = os.path.dirname(os.path.realpath(__file__))
 path = os.path.join(functionPath,"..","..","precompiled_clibs")
 os.chdir(path)
-
-import glob
-print glob.glob("*")
 
 # If on windows
 if os.name == "nt":
@@ -25,19 +23,19 @@ else:
 lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
 lib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
 
-print dir(lib)
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
         os.chdir(functionPath)
         uic.loadUi("registration_gui.ui", self)
+        os.chdir(startPath)
         # Connect buttons to functions
         # import moving data
         self.ptcldMovingButton.clicked.connect(self.import_data)
         # import fixed data  
         self.ptcldFixedButton.clicked.connect(self.import_data)  
         # execute qr_register function                                                                                               
-        self.registrationButton.clicked.connect(self.qf_register) 
+        self.registrationButton.clicked.connect(self.qf_register)
  
         self.vl = QtGui.QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.vtkFrame)
@@ -46,10 +44,6 @@ class MyWindow(QtGui.QMainWindow):
         self.ren = vtk.vtkRenderer()
         self.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
         self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
-
-        filename_fixed = "./bunny/ptcld_fixed_5.txt"
-        filename_moving = "./bunny/ptcld_moving_5.txt"
-        #filename = "./bunny/reconstruction/bun_zipper.ply"
 
         self.actor_moving = vtk.vtkActor()
         self.moving_color = (0,0.2)
@@ -158,6 +152,13 @@ class MyWindow(QtGui.QMainWindow):
         print("Registration starts\n")
         print(str(self.ptcldMovingText.text()))
         print(str(self.ptcldFixedText.text()))
+
+        maxIter = self.maxIterations.value
+        inlierRatio = self.inlierRatio.value
+        windowSize = self.windowSize.value
+        rotTolerance = self.rotationTolerance.value
+        transTolerance = self.translationTolerance.value
+
 
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
