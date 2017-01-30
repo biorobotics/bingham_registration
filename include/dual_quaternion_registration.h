@@ -6,7 +6,7 @@
 		#define EXPORT extern "C"
 	#endif
 	EXPORT long double* qf_register(char const * movingData, char const * fixedData,
-									int inlierRatio, int maxIterations, int windowSize,
+									double inlierRatio, int maxIterations, int windowSize,
 									double toleranceT, double toleranceR);
 
 	int main(int argc, char *argv[]);

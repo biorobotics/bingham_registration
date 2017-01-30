@@ -20,7 +20,7 @@ if os.name == "nt":
 else:
     lib = ctypes.CDLL("./lib_qf_registration_linux.so")
 
-lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
+lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
 lib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
 
 class MyWindow(QtGui.QMainWindow):
@@ -36,7 +36,7 @@ class MyWindow(QtGui.QMainWindow):
         self.ptcldFixedButton.clicked.connect(self.import_data)  
         # execute qr_register function                                                                                               
         self.registrationButton.clicked.connect(self.qf_register)
- 
+
         self.vl = QtGui.QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.vtkFrame)
         self.vl.addWidget(self.vtkWidget)
@@ -153,17 +153,20 @@ class MyWindow(QtGui.QMainWindow):
         print(str(self.ptcldMovingText.text()))
         print(str(self.ptcldFixedText.text()))
 
-        maxIter = self.maxIterations.value
-        inlierRatio = self.inlierRatio.value
-        windowSize = self.windowSize.value
-        rotTolerance = self.rotationTolerance.value
-        transTolerance = self.translationTolerance.value
+        maxIter = self.maxIterations.value()
+        inlierRatio = self.inlierRatio.value()
+        windowSize = self.windowSize.value()
+        rotTolerance = self.rotationTolerance.value()
+        transTolerance = self.translationTolerance.value()
 
 
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
-        lib.qf_register.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-        output = lib.qf_register(b_string1, b_string2, 1, 100, 20, ctypes.c_double(0.001), ctypes.c_double(0.009))
+        output = lib.qf_register(b_string1, b_string2,
+                                 ctypes.c_double(inlierRatio),
+                                 ctypes.c_int(maxIter),                                 ctypes.c_int(windowSize),
+                                 ctypes.c_double(rotTolerance),
+                                 ctypes.c_double(transTolerance))
         test = np.frombuffer(output.contents, dtype=np.longdouble)
         transform = vtk.vtkTransform()
         transform.SetMatrix(reg_params_to_transformation_matrix(test))

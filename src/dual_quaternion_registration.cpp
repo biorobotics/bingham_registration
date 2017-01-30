@@ -29,7 +29,7 @@ const int NUM_OF_RUNS = 10; // # of runs to run the registration for average per
 
 // Should at least provide the two ptcld datasets
 long double* qf_register(char const * movingData, char const * fixedData, 
-                         int inlierRatio, int maxIterations, int windowSize,
+                         double inlierRatio, int maxIterations, int windowSize,
                          double toleranceT, double toleranceR) {
 
     long double* returnArray = new long double[6];

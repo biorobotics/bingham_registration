@@ -53,11 +53,11 @@ using namespace Eigen;
 
 RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
                                                      PointCloud *ptcldFixed,
-                                                     int inlierRatio,
+                                                     double inlierRatio,
                                                      int maxIterations,
                                                      int windowSize,
                                                      double toleranceT,
-                                                     double toleranceR) {
+                                                     double toleranceR){
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -219,7 +219,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
                                                            PointCloud *ptcldFixed,
                                                            PointCloud *normalMoving, 
                                                            PointCloud *normalFixed,
-                                                           int inlierRatio,
+                                                           double inlierRatio,
                                                            int maxIterations,
                                                            int windowSize,
                                                            double toleranceT,
