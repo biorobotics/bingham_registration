@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="RegistrationTab">
        <attribute name="title">
@@ -328,9 +328,6 @@ QPushButton:hover:!pressed
          </spacer>
         </item>
        </layout>
-       <zorder>layoutWidget</zorder>
-       <zorder>translationToleranceLabel</zorder>
-       <zorder>maxIterationsLabel</zorder>
        <zorder>optionsSpacer</zorder>
       </widget>
      </widget>
