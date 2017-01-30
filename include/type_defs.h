@@ -1,14 +1,16 @@
-/*
- * File header:
- 		These are customized definitions for long double type application in Eigen
- */
-
-#ifndef LONG_DOUBLE_DEF
-#define LONG_DOUBLE_DEF
+#ifndef TYPE_DEFS
+#define TYPE_DEFS
 
 #include <Eigen/Dense>
-using namespace Eigen;
 
+using Eigen::Matrix;
+using Eigen::Array;
+using Eigen::Quaternion;
+using Eigen::Transform;
+using Eigen::Dynamic;
+using Eigen::Affine;
+
+typedef Matrix<long double, 3, Dynamic> PointCloud;
 
 typedef Matrix<long double, Dynamic, Dynamic> MatrixXld;
 typedef Matrix<long double, 4, 4> Matrix4ld;
@@ -21,5 +23,4 @@ typedef Matrix<long double, 3, 1> Vector3ld;
 typedef Matrix<long double, 4, 1> Vector4ld;
 typedef Quaternion<long double> Quaternionld;
 typedef Transform<long double, 3, Affine> Affine3ld;
-
 #endif

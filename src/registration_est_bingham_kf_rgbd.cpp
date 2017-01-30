@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "pch.h"
 /*
  * File Header for registration_est_bingham_kf_rgbd.cpp
  * 
@@ -28,7 +28,11 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include "registration_est_bingham_kf_rgbd.h"
+#include <kd_tree.h>
+#include <bingham_kf.h>
+#include <compute_transformed_points.h>
+#include <get_changes_in_transformation_estimate.h>
+#include <registration_est_bingham_kf_rgbd.h>
 
 using namespace std;
 using namespace Eigen;
@@ -36,8 +40,8 @@ using namespace Eigen;
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
 #define INLIER_RATIO 1
-#define MAX_ITERATIONS 100  //100
-#define MIN_ITERATIONS 20  //20
+#define MAX_ITERATIONS 100
+#define MIN_ITERATIONS 20
 #define WINDOW_SIZE 20
 
 /* 
@@ -51,8 +55,8 @@ using namespace Eigen;
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-extern "C" struct RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
-                                                            PointCloud *ptcldFixed) {
+RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
+                                                     PointCloud *ptcldFixed) {
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");

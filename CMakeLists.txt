@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dual_quaternion_registration)
-add_definitions(-std=c++11 -O3 ${PCL_DEFINITIONS})
+add_definitions(-std=c++11 -O3) #${PCL_DEFINITIONS})
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  genmsg
-  geometry_msgs
-  sensor_msgs
-  tf2
-  tf2_ros
-  message_generation
-  cmake_modules
-)
+#find_package(catkin REQUIRED COMPONENTS
+#  roscpp
+#  std_msgs
+#  genmsg
+#  geometry_msgs
+#  sensor_msgs
+#  tf2
+#  tf2_ros
+#  message_generation
+#  cmake_modules
+#)
 find_package(Eigen3 REQUIRED)
-find_package(PCL REQUIRED)
+#find_package(PCL REQUIRED)
 
 if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
@@ -31,7 +31,7 @@ else()
 endif()
 
 # System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+#find_package(Boost REQUIRED COMPONENTS system)
 
 # For setting up Qt
 
@@ -77,10 +77,10 @@ set(CMAKE_AUTOMOC ON)
 # )
 
 # # Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   QFRegistration.srv
- )
+# add_service_files(
+#   FILES
+#   QFRegistration.srv
+# )
 
 # # Generate actions in the 'action' folder
 # add_action_files(
@@ -90,10 +90,10 @@ set(CMAKE_AUTOMOC ON)
 # )
 
 # # Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   sensor_msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   sensor_msgs
+# )
 
 # ###############################################
 # # Declare ROS dynamic reconfigure parameters ##
@@ -124,12 +124,12 @@ set(CMAKE_AUTOMOC ON)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIRS}
-  LIBRARIES dual_quaternion_registration
-  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros
+#catkin_package(
+#  INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIRS}
+#  LIBRARIES dual_quaternion_registration
+#  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs tf2 tf2_ros
 #  DEPENDS system_lib
-)
+#)
 
 ###########
 ## Build ##
@@ -137,26 +137,27 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(include)
 set(CMAKE_BUILD_TYPE Release)
 
 include_directories(
   include/dual_quaternion_registration
-  ${catkin_INCLUDE_DIRS}
+  #${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
+  #${PCL_INCLUDE_DIRS}
 )
-link_directories(${PCL_LIBRARY_DIRS})
+#link_directories(${PCL_LIBRARY_DIRS})
 
 
 ## Declare a C++ library
-add_library(dual_quaternion_registration
+add_library(dual_quaternion_registration MODULE
+   src/registration_tools.cpp
    src/compute_transformed_points.cpp
    src/kd_tree.cpp
    src/registration_est_bingham_kf_rgbd.cpp
    src/get_changes_in_transformation_estimate.cpp
    src/bingham_kf.cpp
-   src/registration_gui_main.cpp
+   src/dual_quaternion_registration.cpp
 )
 
 
@@ -164,18 +165,19 @@ add_library(dual_quaternion_registration
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(dual_quaternion_registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(dual_quaternion_registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(dual_quaternion_registration
-  ${catkin_LIBRARIES}
-	${EIGEN3_LIBRARIES}
-  ${PCL_LIBRARIES}
+  #${catkin_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
+  #${PCL_LIBRARIES}
 )
 
 ## Declare a C++ executable
 
-add_executable(registration src/registration_main.cpp 
+add_executable(registration src/dual_quaternion_registration.cpp 
+                            src/registration_tools.cpp
                             src/registration_est_bingham_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
                             src/kd_tree.cpp src/bingham_kf.cpp
@@ -184,20 +186,20 @@ add_executable(registration src/registration_main.cpp
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(registration ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+#target_link_libraries(registration ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
-add_executable(registration_gui src/registration_gui_main.cpp 
-                            src/registration_est_bingham_kf_rgbd.cpp
-                            src/compute_transformed_points.cpp
-                            src/kd_tree.cpp src/bingham_kf.cpp
-                            src/get_changes_in_transformation_estimate.cpp
-                            ${UI_GENERATED_HEADERS}
-)
+#add_executable(registration_gui src/registration_gui_main.cpp 
+#                            src/registration_est_bingham_kf_rgbd.cpp
+#                            src/compute_transformed_points.cpp
+#                            src/kd_tree.cpp src/bingham_kf.cpp
+#                            src/get_changes_in_transformation_estimate.cpp
+#                            ${UI_GENERATED_HEADERS}
+#)
 
-add_dependencies(registration_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(registration_gui ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+#add_dependencies(registration_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(registration_gui ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
 #############
 ## Install ##
@@ -214,7 +216,7 @@ target_link_libraries(registration_gui ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
- install(TARGETS dual_quaternion_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+# install(TARGETS dual_quaternion_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

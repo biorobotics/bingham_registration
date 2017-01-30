@@ -8,16 +8,18 @@ from math import radians, degrees
 
 # Load c library
 import ctypes
-path = os.path.dirname(os.path.realpath(__file__))
-#path = os.path.join(path,'..','..','build','libdual_quaternion_registration.so')
-os.chdir("C:\\Users\\biorobotics\\Documents\\Visual Studio 2015\\Projects\\test\\x64\\Debug\\")
-lib = ctypes.CDLL("Test.dll")
-lib.qf_register.argtypes = [ctypes.c_wchar_p,ctypes.c_wchar_p]
+functionPath = os.path.dirname(os.path.realpath(__file__))
+path = os.path.join(functionPath,'..','..','build','libdual_quaternion_registration.so')
+#os.chdir(path)
+#os.chdir("C:\\Users\\biorobotics\\Documents\\Visual Studio 2015\\Projects\\test\\x64\\Debug\\")
+#lib = ctypes.CDLL("Test.dll")
+lib = ctypes.CDLL(path)
+lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p]
 
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
-        os.chdir(path)
+        os.chdir(functionPath)
         uic.loadUi('registration_gui.ui', self)
         # Connect buttons to functions
         # import moving data

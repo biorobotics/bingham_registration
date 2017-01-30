@@ -2,13 +2,7 @@
 #define REGISTRATION_EST_BINGHAM_KF_RGBD
 
 #include <Eigen/Dense>
-#include <Eigen/StdVector>
-#include <kd_tree.h>
-#include <get_changes_in_transformation_estimate.h>
-#include <bingham_kf.h>
-#include <compute_transformed_points.h>
-
-#include <long_double_def.h>
+#include <type_defs.h>
 
 struct RegistrationResult{
     VectorXld Xreg;

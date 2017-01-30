@@ -1,3 +1,4 @@
+#include "pch.h"
 /*
  *	File Header for get_changes_in_transformation_estimate.cpp:
  *  	get_changes_in_transformation_estimate takes in the updated Xreg and previous

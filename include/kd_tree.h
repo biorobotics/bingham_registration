@@ -7,10 +7,11 @@
 #define KD_TREE
 
 #include <Eigen/Dense>
-#include <compute_transformed_points.h>
-#include <long_double_def.h>
+#include <type_defs.h>
+#include <vector>
 
 using std::string;
+using std::vector;
 
 struct KDNode;
 typedef struct KDNode *KDTree;
@@ -44,12 +45,6 @@ struct KDNormalResult{
 	PointCloud normalr;
 };
 
-/* call_error: 
- * 		Input: error message
- *      Return: none. Prints out error message and exit the program
- */
-void call_error(string msg);
-
 /* insert:
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
@@ -62,15 +57,6 @@ void insert(Vector3ld point, KDTree *T);
  */
 void insert_normal(Vector3ld point, int index, KDNormalTree *T);
 
-/* sort_indexes:
- *		Input: vector to be sorted, sorting order option (true for ascending, vice versa)
- 		Return: the sorted results' index in the original vector
-
- * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
- */
-vector<size_t> sort_indexes(const vector<long double> &v, bool ascending);
-
-
 /*
  * kd_search:
  		Input: target point cloud, kd-tree, inlier ratio, Xreg from last iteration
@@ -80,8 +66,6 @@ vector<size_t> sort_indexes(const vector<long double> &v, bool ascending);
  				res = mean of the sum of all the distances calculated
  */
 struct KdResult* kd_search(PointCloud *targets, KDTree T, long double inlierRatio, VectorXld *Xreg);
-
-
 
 /*
  * kd_search_normals:

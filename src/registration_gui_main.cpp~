@@ -5,14 +5,20 @@
         quaternion registration with Bingham distribution-based filtering. It outputs
         the resutl pose (Xreg) and a record of all the intermediate poses as well (Xregsave).
  */
-
+#include <pch.h>
 #include <iostream>
 #include <iomanip>
 #include <limits>
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include "registration_est_bingham_kf_rgbd.h"
+#include <vector>
+#include <stdexcept>
+#include <registration_tools.h>
+#include <registration_est_bingham_kf_rgbd.h>
+#include <dual_quaternion_registration.h>
+
+using namespace std;
 
 // For .txt file parsing
 const int MAX_CHARS_PER_LINE = 512;     
@@ -22,16 +28,16 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 10; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char* fixedData) {
+//extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char* fixedData) {
+long double* qf_register(char const * movingData, char const * fixedData) {
 
     long double* returnArray = new long double[6];
 
     cout << &movingData << endl;
-    char* movingPointsString = movingData;
-
-    char* fixedPointsString = fixedData;
-    char* movingNormalsString;
-    char* fixedNormalsString;
+    char const * movingPointsString = movingData;
+    char const * fixedPointsString = fixedData;
+    char const * movingNormalsString = "";
+    char const * fixedNormalsString = "";
 
     // Read .text files for data points
     ifstream sensedFile;    // stream for ptcld moving
@@ -100,7 +106,7 @@ extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char
     }
 
     PointCloud ptcldMoving(3,pointVector.size());
-	//cout << "pointVector size is " << pointVector.size() << endl;
+
     for(int i=0; i<pointVector.size(); i++)
         ptcldMoving.col(i) = pointVector[i];
     
@@ -252,7 +258,7 @@ extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char
         myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
             << " seconds." << endl;
         myFile.close();
-        Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+        Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
         return returnArray;
     }
 
@@ -283,6 +289,88 @@ extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char
     myFile << "Registration runtime is: " << elapsed_secs
                                                   << " seconds." << endl;
     myFile.close();
-    Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+	Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
     return returnArray;
+}
+
+int main(int argc, char *argv[]) {
+
+    string movingPointsString;
+    string fixedPointsString;
+    string movingNormalsString;
+    string fixedNormalsString;
+    int useNormal = 0;
+    int normalFileProvided = 0;
+    int pointFileProvided = 0;
+
+    // Replace filenames by the arguments
+    for (int i = 1; i < argc; ++i) {
+        string arg = argv[i];
+
+        // Parse ptcld_moving from .txt
+        if (arg == "-pm") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++; // Increment 'i' so we don't get the argument as the next argv[i].
+                movingPointsString = argv[i];
+                pointFileProvided++;
+            } else { // If there was no argument to the destination option.
+                std::cerr << "-pm option requires filepath for moving pointcloud." 
+                << std::endl;
+                return 1;
+            }
+        }
+        // Parse ptcld_fixed from .txt
+        else if (arg == "-pf") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++; // Increment 'i' so we don't get the argument as the next argv[i].
+                fixedPointsString = argv[i];
+                pointFileProvided++;
+            } else { // If there was no argument to the destination option.
+                std::cerr << "-pf option requires filepath for fixed pointcloud." 
+                << std::endl;
+                return 1;
+            }
+        }
+        // Parse normal moving from .txt
+        else if (arg == "-nm") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++; // Increment 'i' so we don't get the argument as the next argv[i].
+                movingNormalsString = argv[i];
+                useNormal = 1; 
+                normalFileProvided++;
+            } else { // If there was no argument to the destination option.
+                std::cerr << "-nm option requires filepath for moving normals." 
+                << std::endl;
+                return 1;
+            }
+        }
+        // Parse normal fixed from .txt
+        else if (arg == "-nf") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++; // Increment 'i' so we don't get the argument as the next argv[i].
+                fixedNormalsString = argv[i];
+                useNormal = 1;
+                normalFileProvided++;
+            } else { // If there was no argument to the destination option.
+                std::cerr << "-nm option requires filepath for moving normals." 
+                << std::endl;
+                return 1;
+            }
+        }
+        // If an invalid argument is provided
+        else {
+            std::cerr << "Invalid argument. Usage: -pm .. -pv .. (optional) (-nm .. -nv ..)" 
+             << std::endl;
+            return 1;
+        }
+    }
+
+    // Check if enough arguments were entered
+    if (pointFileProvided != 2 || (useNormal && normalFileProvided != 2)) {
+        std::cerr << "Not enough argument. Usage: -pm .. -pv .. (optional) (-nm .. -nv ..)" 
+        << std::endl;
+        return 1;
+    }
+
+    qf_register(movingPointsString.c_str(),fixedPointsString.c_str());
 }

@@ -1,3 +1,4 @@
+//#include "pch.h"
 /*
  * File Header for kd_tree.cpp:
  * 		This file contains functions for performing kdtree search on 3-D points 
@@ -10,23 +11,13 @@
 
  */
 #define NOMINMAX
-#include <iostream>
-#include <vector>
 #include <limits>
 #include <kd_tree.h>
-#include <iomanip>
+#include <registration_tools.h>
+#include <compute_transformed_points.h>
 
 using namespace Eigen;
 using namespace std;
-
-/* call_error: 
- * 		Input: error message
- *      Return: none. Prints out error message and exit the program
- */
-void call_error(string msg) {
-	cerr << "Error: " << msg << endl;
-	exit(1);
-}
 
 /* find_distance:
  * 		Input: two points in Vector3ld type
@@ -112,7 +103,7 @@ void insert_normal(Vector3ld point, int index, KDNormalTree *T) {
 	return insert_normal_helper(point, index, T, 0);
 }
 
-/* find_nearest_helper: (inspired by https://rosettacode.org/wiki/K-d_tree)
+/* find_nearest_helper:
  * 		Input: kd-tree, point (whose closest match needs to be searched in kd-tree), 
  			   the level to search, a storage for current best found, a storage for
  			   current distance
@@ -165,28 +156,6 @@ NodeType* find_nearest(Vector3ld target, NodeType *T) {
 
 	//free(distanceResult);
 	return bestN;
-}
-
-
-
-/* sort_indexes:
- *		Input: vector to be sorted, sorting order option (true for ascending, vice versa)
- 		Return: the sorted results' index in the original vector
-
- * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
- */
-vector<unsigned int> sort_indexes(const vector<long double> &v, bool ascending) {
-	// initialize original index locations
-	vector<unsigned int> idx(v.size());
-	for (size_t i = 0; i < idx.size(); i++) idx[i] = i;
-
-	// sort indexes based on comparing values in v
- 	if (ascending)
-  		sort(idx.begin(), idx.end(), [&v](unsigned int i1, unsigned int i2) {return v[i1] < v[i2];});
-  	else
-  		sort(idx.begin(), idx.end(), [&v](unsigned int i1, unsigned int i2) {return v[i1] > v[i2];});
-  	
-  	return idx;
 }
 
 /*

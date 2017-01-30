@@ -6,8 +6,8 @@
 #ifndef BINGHAM_KF
 #define BINGHAM_KF
 
-#include <Eigen/Dense>
-#include <long_double_def.h>
+#include <type_defs.h>
+#include <registration_tools.h>
 
 
 struct BinghamKFResult {
@@ -17,19 +17,13 @@ struct BinghamKFResult {
     VectorXld Xreg;  // 6 * 1. The updated Xreg 
 };
 
-/*  quat2eul:
- *		Input: quaternion
- 		Output: euler angle in vector after conversion
- */
-Vector3ld quat2eul(Quaternionld q);
-
 /* bingham_kf:
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-extern "C" struct BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
-								  long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-								  PointCloud *p2c, PointCloud *p2r);
+BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+							long double Rmag, PointCloud *p1c, PointCloud *p1r, 
+							PointCloud *p2c, PointCloud *p2r);
 
 /* bingham_normal_kf: (the version of bingham_kf with the aid of normals)
  *		Input: previous Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, p2c, p2r, normalc,
