@@ -12,7 +12,7 @@
 using namespace std;
 using namespace Eigen;
 
-Vector4ld qr_kf_measurementFunction(Vector4ld Xk, Vector3ld p1, Vector3ld p2) {
+Vector4ld qr_kf_measurementFunction(const Vector4ld& Xk, const Vector3ld& p1, const Vector3ld& p2) {
     /* Xk if size 4x1
     * p1, p2 is of size 3x1
     * g is of size 4x1
@@ -25,7 +25,7 @@ Vector4ld qr_kf_measurementFunction(Vector4ld Xk, Vector3ld p1, Vector3ld p2) {
     return g;
 }
 
-Matrix4ld qr_kf_measurementFunctionJacobian(Vector3ld p1, Vector3ld p2) {
+Matrix4ld qr_kf_measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld& p2) {
     /*p1, p2 is of size 1x3
     *H is of size 4x4 */
     Matrix4ld H;
@@ -90,9 +90,33 @@ BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 
 	Matrix4ld tempInv;
 
-	// An altinate calculation to prevent overflow
-	if (c*c < pow(10, -100))
+	/* An alternate calculation to prevent overflow cases that show up when we
+		 * use dynamically linked library
+		 */
+	if (abs(temp(0, 0)) < pow(10, -300))
+		tempInv = (temp / (pow(10, -300))).inverse()*(pow(10, 300));
+	else if (abs(temp(0, 0)) < pow(10, -250))
+		tempInv = (temp / (pow(10, -250))).inverse()*(pow(10, 250));
+	else if (abs(temp(0, 0)) < pow(10, -200))
+		tempInv = (temp / (pow(10, -200))).inverse()*(pow(10, 200));
+	else if (abs(temp(0, 0)) < pow(10, -150))
+		tempInv = (temp / (pow(10, -150))).inverse()*(pow(10, 150));
+	else if (abs(temp(0, 0)) < pow(10, -100))
 		tempInv = (temp / (pow(10, -100))).inverse()*(pow(10, 100));
+	else if (abs(temp(0, 0)) < pow(10, -50))
+		tempInv = (temp / (pow(10, -50))).inverse()*(pow(10, 50));
+	else if (abs(temp(0, 0)) > pow(10, 300))
+		tempInv = (temp / (pow(10, 300))).inverse()*(pow(10, -300));
+	else if (abs(temp(0, 0)) > pow(10, 250))
+		tempInv = (temp / (pow(10, 250))).inverse()*(pow(10, -250));
+	else if (abs(temp(0, 0)) > pow(10, 200))
+		tempInv = (temp / (pow(10, 200))).inverse()*(pow(10, -200));
+	else if (abs(temp(0, 0)) > pow(10, 150))
+		tempInv = (temp / (pow(10, 150))).inverse()*(pow(10, -150));
+	else if (abs(temp(0, 0)) > pow(10, 100))
+		tempInv = (temp / (pow(10, 100))).inverse()*(pow(10, -100));
+	else if (abs(temp(0, 0)) > pow(10, 50))
+		tempInv = (temp / (pow(10, 50))).inverse()*(pow(10, -50));
 	else
 		tempInv = temp.inverse();
 
@@ -225,8 +249,30 @@ struct BinghamKFResult *bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4l
 	Matrix4ld tempInv;
 
 	// An alternative calculation for preventing overflow
-	if (c*c < pow(10, -100))
+	if (abs(temp(0, 0)) < pow(10, -300))
+		tempInv = (temp / (pow(10, -300))).inverse()*(pow(10, 300));
+	else if (abs(temp(0, 0)) < pow(10, -250))
+		tempInv = (temp / (pow(10, -250))).inverse()*(pow(10, 250));
+	else if (abs(temp(0, 0)) < pow(10, -200))
+		tempInv = (temp / (pow(10, -200))).inverse()*(pow(10, 200));
+	else if (abs(temp(0, 0)) < pow(10, -150))
+		tempInv = (temp / (pow(10, -150))).inverse()*(pow(10, 150));
+	else if (abs(temp(0, 0)) < pow(10, -100))
 		tempInv = (temp / (pow(10, -100))).inverse()*(pow(10, 100));
+	else if (abs(temp(0, 0)) < pow(10, -50))
+		tempInv = (temp / (pow(10, -50))).inverse()*(pow(10, 50));
+	else if (abs(temp(0, 0)) > pow(10, 300))
+		tempInv = (temp / (pow(10, 300))).inverse()*(pow(10, -300));
+	else if (abs(temp(0, 0)) > pow(10, 250))
+		tempInv = (temp / (pow(10, 250))).inverse()*(pow(10, -250));
+	else if (abs(temp(0, 0)) > pow(10, 200))
+		tempInv = (temp / (pow(10, 200))).inverse()*(pow(10, -200));
+	else if (abs(temp(0, 0)) > pow(10, 150))
+		tempInv = (temp / (pow(10, 150))).inverse()*(pow(10, -150));
+	else if (abs(temp(0, 0)) > pow(10, 100))
+		tempInv = (temp / (pow(10, 100))).inverse()*(pow(10, -100));
+	else if (abs(temp(0, 0)) > pow(10, 50))
+		tempInv = (temp / (pow(10, 50))).inverse()*(pow(10, -50));
 	else
 		tempInv = temp.inverse();
 
