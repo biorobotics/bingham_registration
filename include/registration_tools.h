@@ -2,6 +2,8 @@
 #define REGISTRATION_TOOLS
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#include "stdafx.h"
+#include "pch.h"
 #define EXPORT extern "C" __declspec(dllexport)
 #else
 #define EXPORT extern "C"

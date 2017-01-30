@@ -1,5 +1,3 @@
-#include "stdafx.h"
-#include "pch.h"
 #include <registration_tools.h>
 /* call_error:
 * 		Input: error message
