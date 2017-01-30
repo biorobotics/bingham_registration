@@ -5,7 +5,6 @@
         quaternion registration with Bingham distribution-based filtering. It outputs
         the resutl pose (Xreg) and a record of all the intermediate poses as well (Xregsave).
  */
-#include <pch.h>
 #include <iostream>
 #include <iomanip>
 #include <limits>

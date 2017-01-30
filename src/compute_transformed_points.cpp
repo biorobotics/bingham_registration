@@ -1,4 +1,3 @@
-//#include "pch.h"
 /*
  * File Header for compute_transformed_points.cpp:
  * 		compute_transformed_points takes in sensed points and Xreg

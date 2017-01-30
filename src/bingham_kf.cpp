@@ -1,4 +1,3 @@
-#include "pch.h"
 /*
  * File Header for bingham_kf.cpp:
  * 		This file contains functions for performing Bingham quaternion filtering

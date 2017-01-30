@@ -1,4 +1,3 @@
-//#include "pch.h"
 /*
  * File Header for kd_tree.cpp:
  * 		This file contains functions for performing kdtree search on 3-D points 

@@ -127,6 +127,9 @@ class MyWindow(QtGui.QMainWindow):
             mapper.SetInputData(colors.GetOutput())
 
         actor.SetMapper(mapper)
+        transform = vtk.vtkTransform()
+        actor.SetPosition(transform.GetPosition())
+        actor.SetOrientation(transform.GetOrientation())
         size = 4 / len(str(polydata.GetNumberOfPoints())) + 1
         actor.GetProperty().SetPointSize(size)
 

@@ -1,4 +1,3 @@
-#include "pch.h"
 /*
  * File Header for registration_est_bingham_kf_rgbd.cpp
  * 
