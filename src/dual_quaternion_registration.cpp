@@ -28,8 +28,9 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 10; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-//extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char* fixedData) {
-long double* qf_register(char const * movingData, char const * fixedData) {
+long double* qf_register(char const * movingData, char const * fixedData, 
+                         int inlierRatio, int maxIterations, int windowSize,
+                         double toleranceT, double toleranceR) {
 
     long double* returnArray = new long double[6];
 
@@ -237,7 +238,9 @@ long double* qf_register(char const * movingData, char const * fixedData) {
 
             // Run the registration function with normals
             result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
-                                                     &normalMoving, &normalFixed);
+                                                     &normalMoving, &normalFixed,
+													 inlierRatio,maxIterations,
+													 windowSize,toleranceT,toleranceR);
             clock_t end = clock();
             double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
             timeSum += elapsed_secs;
@@ -276,8 +279,9 @@ long double* qf_register(char const * movingData, char const * fixedData) {
         clock_t begin = clock();    // For timing the performance
 
         // Run the registration function without normals
-        result = registration_est_bingham_kf_rgbd(&ptcldMoving, 
-                                                  &ptcldFixed);
+        result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
+                                                  inlierRatio, maxIterations, windowSize,
+                                                  toleranceT, toleranceR);
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     
@@ -371,6 +375,7 @@ int main(int argc, char *argv[]) {
         << std::endl;
         return 1;
     }
-
-    qf_register(movingPointsString.c_str(),fixedPointsString.c_str());
+	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
+	double toleranceT = 0.001; double toleranceR = 0.009;
+	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR);
 }

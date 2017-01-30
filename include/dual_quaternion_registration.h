@@ -5,8 +5,9 @@
 	#else
 		#define EXPORT extern "C"
 	#endif
-		//extern "C" __declspec(dllexport) long double* qf_register(char* movingData, char* fixedData);
-		EXPORT long double* qf_register(char const * movingData, char const * fixedData);
+	EXPORT long double* qf_register(char const * movingData, char const * fixedData,
+									int inlierRatio, int maxIterations, int windowSize,
+									double toleranceT, double toleranceR);
 
-		int main(int argc, char *argv[]);
+	int main(int argc, char *argv[]);
 #endif

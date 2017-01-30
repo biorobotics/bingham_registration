@@ -22,8 +22,10 @@ if os.name == "nt":
 else:
     lib = ctypes.CDLL("./lib_qf_registration_linux.so")
 
-lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p]
+lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
+lib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
 
+print dir(lib)
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
@@ -121,7 +123,9 @@ class MyWindow(QtGui.QMainWindow):
         colors.SetHighPoint(0, 0, bounds[4])
         colors.SetScalarRange(color)
         # Visualization
-        mapper = vtk.vtkPolyDataMapper()
+        mapper = actor.GetMapper()
+        if mapper == None:
+            mapper = vtk.vtkPolyDataMapper()
         if vtk.VTK_MAJOR_VERSION <= 5:
             mapper.SetInput(colors.GetOutput())
         else:
@@ -158,11 +162,8 @@ class MyWindow(QtGui.QMainWindow):
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
         lib.qf_register.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-
-        output = lib.qf_register(b_string1, b_string2)
-        ArrayType = ctypes.c_longdouble*6
-        array_pointer = ctypes.cast(output,ctypes.POINTER(ArrayType))
-        test = np.frombuffer(array_pointer.contents, dtype=np.longdouble)
+        output = lib.qf_register(b_string1, b_string2, 1, 100, 20, ctypes.c_double(0.001), ctypes.c_double(0.009))
+        test = np.frombuffer(output.contents, dtype=np.longdouble)
         transform = vtk.vtkTransform()
         transform.SetMatrix(reg_params_to_transformation_matrix(test))
         self.actor_moving.SetPosition(transform.GetPosition())

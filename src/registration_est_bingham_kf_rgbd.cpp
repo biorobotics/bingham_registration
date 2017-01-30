@@ -39,10 +39,6 @@ using namespace Eigen;
 
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
-#define INLIER_RATIO 1
-#define MAX_ITERATIONS 100
-#define MIN_ITERATIONS 20
-#define WINDOW_SIZE 20
 
 /* 
  *  registration_est_bingham_kf_rgbd: (for registration without normals)
@@ -56,7 +52,12 @@ using namespace Eigen;
  */
 
 RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
-                                                     PointCloud *ptcldFixed) {
+                                                     PointCloud *ptcldFixed,
+                                                     int inlierRatio,
+                                                     int maxIterations,
+                                                     int windowSize,
+                                                     double toleranceT,
+                                                     double toleranceR) {
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -67,7 +68,7 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
 
     KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
     Vector2d tolerance;
-    tolerance << .001 , .009;
+    tolerance << toleranceT , toleranceR;
 
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < sizePtcldFixed; i++) 
@@ -78,9 +79,9 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
     VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
 
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
-    // iteration is stored there (dimension (MAX_ITERATIONS + 1) x 6)
+    // iteration is stored there (dimension (maxIterations + 1) x 6)
     
-    MatrixXld Xregsave = MatrixXld::Zero(6,MAX_ITERATIONS + 1); //Xregsave: 6xn
+    MatrixXld Xregsave = MatrixXld::Zero(6,maxIterations + 1); //Xregsave: 6xn
 
     //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
     
@@ -103,15 +104,15 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
 
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
-    for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / WINDOW_SIZE); i++) {
+    for (int i = 1; i <= min(maxIterations, sizePtcldMoving / windowSize); i++) {
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
         // Send as input a subset of the pftcldMoving points according to window size
-        PointCloud targets(3, WINDOW_SIZE);
+        PointCloud targets(3, windowSize);
         
-        for (int r = WINDOW_SIZE * (iOffset); r < WINDOW_SIZE * i; r++) {
-            int rOffset = r - WINDOW_SIZE * (iOffset);
+        for (int r = windowSize * (iOffset); r < windowSize * i; r++) {
+            int rOffset = r - windowSize * (iOffset);
             for (int n = 0; n < 3; n++) 
                 targets(n,rOffset) = (*ptcldMoving)(n, r);
         }
@@ -120,15 +121,15 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         // from last iteration according to window size 
 
         struct KdResult *searchResult = kd_search(&targets, cloudTree,
-                                        INLIER_RATIO, &Xreg);
+                                        inlierRatio, &Xreg);
 
         PointCloud pc = searchResult->pc;    // set of all closest point
         PointCloud pr = searchResult->pr;    // set of all target points in 
                                              // corresponding order with pc
         long double res = searchResult->res;  // mean of all the distances calculated
 
-        // Truncate the WINDOW_SIZE according to window size and inlier ratio
-        int truncSize = trunc(WINDOW_SIZE * INLIER_RATIO);
+        // Truncate the windowSize according to window size and inlier ratio
+        int truncSize = trunc(windowSize * inlierRatio);
 
         // If truncSize odd, round down to even so pc and pr have same dimension
         int oddEntryNum = truncSize / 2;    // size of p1c/p1
@@ -189,8 +190,8 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         //  Return dR, dT
         struct DeltaTransform *convergenceResult = get_changes_in_transformation_estimate(
                                                    QFResult->Xreg, Xregsave.col(i-1));
-
-        if (i >= MIN_ITERATIONS && convergenceResult->dT <= tolerance(0) && 
+		int minIterations = 20;
+        if (i >= minIterations && convergenceResult->dT <= tolerance(0) && 
             convergenceResult->dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
@@ -217,7 +218,12 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
 extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud *ptcldMoving, 
                                                            PointCloud *ptcldFixed,
                                                            PointCloud *normalMoving, 
-                                                           PointCloud *normalFixed) {
+                                                           PointCloud *normalFixed,
+                                                           int inlierRatio,
+                                                           int maxIterations,
+                                                           int windowSize,
+                                                           double toleranceT,
+                                                           double toleranceR) {
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -238,12 +244,12 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
     for (int i = 0; i < sizePtcldFixed; i++) 
         insert_normal((*ptcldFixed).col(i), i, &cloudTree);
 
-    //int WINDOW_SIZE = sizePtcldMoving / WINDOW_RATIO;
+    //int windowSize = sizePtcldMoving / WINDOW_RATIO;
     VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
 
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
-    // iteration is stored there (dimensionL (MAX_ITERATIONS + 1) x 6)
-    MatrixXld Xregsave = MatrixXld::Zero(6, MAX_ITERATIONS + 1); //Xregsave: 6xn
+    // iteration is stored there (dimensionL (maxIterations + 1) x 6)
+    MatrixXld Xregsave = MatrixXld::Zero(6, maxIterations + 1); //Xregsave: 6xn
     
     // Convert Xk to Vector4ld for later computation
     Vector4ld Xk;          //Xk: 4x1
@@ -262,16 +268,16 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
 
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
-    for (int i = 1; i <= min(MAX_ITERATIONS, sizePtcldMoving / WINDOW_SIZE); i++) {
+    for (int i = 1; i <= min(maxIterations, sizePtcldMoving / windowSize); i++) {
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
         // Send as input a subset of the ptcldMoving and normalMoving points.
-        PointCloud targets(3, WINDOW_SIZE);
-        PointCloud normalTargets(3, WINDOW_SIZE);
+        PointCloud targets(3, windowSize);
+        PointCloud normalTargets(3, windowSize);
 
-        for (int r = WINDOW_SIZE * (iOffset); r < WINDOW_SIZE * i; r++) {
-            int rOffset = r - WINDOW_SIZE * (iOffset);
+        for (int r = windowSize * (iOffset); r < windowSize * i; r++) {
+            int rOffset = r - windowSize * (iOffset);
             for (int n = 0; n < 3; n++) {
                 targets(n,rOffset) = (*ptcldMoving)(n, r);
                 normalTargets(n,rOffset) = (*normalMoving)(n, r);
@@ -282,7 +288,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
          * CAD model points (in kdtree form), normalFixed, and Xreg from last iteration
          */
         struct KDNormalResult *searchResult = kd_search_normals(&targets,
-                                              cloudTree, INLIER_RATIO, 
+                                              cloudTree, inlierRatio, 
                                               &Xreg, &normalTargets, normalFixed);
 
         PointCloud pc = searchResult->pc;    // set of all closest point
@@ -290,7 +296,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
                                              // order with pc
 
         // Truncate the window size according to inlier ratio
-        int truncSize = trunc(WINDOW_SIZE * INLIER_RATIO);
+        int truncSize = trunc(windowSize * inlierRatio);
 
         // If truncSize odd, round down to even so pc and pr have same dimension
         int oddEntryNum = truncSize / 2;    // size of p1c/p1
@@ -353,8 +359,8 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         //  Return dR, dT
         struct DeltaTransform *convergenceResult = get_changes_in_transformation_estimate(
                                                   QFResult->Xreg, Xregsave.col(i-1));
-
-        if (i >= MIN_ITERATIONS && convergenceResult->dT <= tolerance(0) && 
+		int minIterations = 20;
+        if (i >= minIterations && convergenceResult->dT <= tolerance(0) && 
             convergenceResult->dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
