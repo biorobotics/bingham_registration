@@ -152,6 +152,10 @@ class MyWindow(QtGui.QMainWindow):
 
     # Take file path from the lineEdit and perform registration using those dataset
     def qf_register(self):
+        transform = vtk.vtkTransform()
+        self.actor_moving.SetPosition(transform.GetPosition())
+        self.actor_moving.SetOrientation(transform.GetOrientation())
+        self.iren.Render()
         print("Registration starts\n")
         print(str(self.ptcldMovingText.text()))
         print(str(self.ptcldFixedText.text()))
@@ -167,11 +171,11 @@ class MyWindow(QtGui.QMainWindow):
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
         output = lib.qf_register(b_string1, b_string2,
                                  ctypes.c_double(inlierRatio),
-                                 ctypes.c_int(maxIter),                                 ctypes.c_int(windowSize),
+                                 ctypes.c_int(maxIter),
+                                 ctypes.c_int(windowSize),
                                  ctypes.c_double(rotTolerance),
                                  ctypes.c_double(transTolerance))
         test = np.frombuffer(output.contents, dtype=np.longdouble)
-        transform = vtk.vtkTransform()
         transform.SetMatrix(reg_params_to_transformation_matrix(test))
         self.actor_moving.SetPosition(transform.GetPosition())
         self.actor_moving.SetOrientation(transform.GetOrientation())
