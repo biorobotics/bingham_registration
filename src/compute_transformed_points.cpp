@@ -1,13 +1,17 @@
 /*
- * File Header:
- * compute_transformed_points takes in sensed points and Xreg
- * Return transformed sensed points 
+ * File Header for compute_transformed_points.cpp:
+ * 		compute_transformed_points takes in sensed points and Xreg
+ * 		Return transformed sensed points 
  * 		
  */
-#include <compute_transformed_points.h>
-
+#include "compute_transformed_points.h"
+/* eul2rotm:
+ *		Input: euler angle in array (for the use of cos, sin function), in ZYX order
+ 		Output: quaternion after conversion 
+ */
 Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
-	Matrix4ld R = Matrix4ld::Identity(4, 4);	// Since n_slices is just 1, make Matrix4ld instead
+	Matrix4ld R = Matrix4ld::Identity(4, 4);	// Since n_slices is just 1, make 
+												// Matrix4ld instead
 	Array3ld ct = cos(eul);
 	Array3ld st = sin(eul);
 
@@ -30,6 +34,10 @@ Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
 	return R;
 }
 
+/* reg_params_to_transformation_matrix:
+ *		Input: registration parameters in array
+ 		Output: transformation matrix after conversion 
+ */
 Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
 	Matrix4ld R, U, V;
 	Matrix4ld T = Matrix4ld::Identity(4, 4);
@@ -45,7 +53,7 @@ Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
 
 	R = eul2rotm (temp);
 
-	JacobiSVD<Matrix4ld> svd(R, ComputeFullU | ComputeFullV);
+	Eigen::JacobiSVD<Matrix4ld> svd(R, Eigen::ComputeFullU | Eigen::ComputeFullV);
 	
 	R = svd.matrixU()*svd.matrixV().transpose();
 
@@ -57,6 +65,10 @@ Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
 	return T;
 }
 
+/* compute_transformed_points:
+ *		Input: ptcld moving, Xreg from previous iteration
+ 		Output: ptcld moving after being transformed 
+ */
 PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXld Xreg) {
 	Vector3ld point;
 	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
