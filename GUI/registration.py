@@ -81,7 +81,7 @@ def reg_params_to_transformation_matrix(params):
 # Loading dlls only works if we are in the same directory, so move there first
 startPath = os.getcwd()
 functionPath = os.path.dirname(os.path.realpath(__file__))
-path = os.path.join(functionPath,"..","..","precompiled_clibs")
+path = os.path.join(functionPath,"..","precompiled_clibs")
 os.chdir(path)
 # If on windows
 if os.name == "nt":
