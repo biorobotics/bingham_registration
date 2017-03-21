@@ -5,23 +5,10 @@ import vtk
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import numpy as np
 from math import radians, degrees
-
-# Load c library
-import ctypes
+from registration import qf_register, reg_params_to_transformation_matrix
 
 startPath = os.getcwd()
 functionPath = os.path.dirname(os.path.realpath(__file__))
-path = os.path.join(functionPath,"..","..","precompiled_clibs")
-os.chdir(path)
-
-# If on windows
-if os.name == "nt":
-    lib = ctypes.CDLL("./lib_qf_registration_windows.dll")
-else:
-    lib = ctypes.CDLL("./lib_qf_registration_linux.so")
-
-lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
-lib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
 
 class MyWindow(QtGui.QMainWindow):
     def __init__(self):
@@ -35,7 +22,7 @@ class MyWindow(QtGui.QMainWindow):
         # import fixed data  
         self.ptcldFixedButton.clicked.connect(self.import_data)  
         # execute qr_register function                                                                                               
-        self.registrationButton.clicked.connect(self.qf_register)
+        self.registrationButton.clicked.connect(self.register)
 
         self.vl = QtGui.QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.vtkFrame)
@@ -151,7 +138,7 @@ class MyWindow(QtGui.QMainWindow):
         self.iren.Render()
 
     # Take file path from the lineEdit and perform registration using those dataset
-    def qf_register(self):
+    def register(self):
         transform = vtk.vtkTransform()
         self.actor_moving.SetPosition(transform.GetPosition())
         self.actor_moving.SetOrientation(transform.GetOrientation())
@@ -169,96 +156,23 @@ class MyWindow(QtGui.QMainWindow):
 
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
-        output = lib.qf_register(b_string1, b_string2,
-                                 ctypes.c_double(inlierRatio),
-                                 ctypes.c_int(maxIter),
-                                 ctypes.c_int(windowSize),
-                                 ctypes.c_double(rotTolerance),
-                                 ctypes.c_double(transTolerance))
-        test = np.frombuffer(output.contents, dtype=np.longdouble)
-        transform.SetMatrix(reg_params_to_transformation_matrix(test))
+        output = qf_register(b_string1, b_string2, inlierRatio, maxIter,
+                             windowSize, rotTolerance,transTolerance)
+        matrix = npMatrixToVtkMatrix(reg_params_to_transformation_matrix(output))
+        transform.SetMatrix(matrix)
         self.actor_moving.SetPosition(transform.GetPosition())
         self.actor_moving.SetOrientation(transform.GetOrientation())
         self.iren.Render()
-        print "TEST", test
-
-def eul2quat(eul):
-    eulHalf = np.array(eul) / 2
-    c = np.cos(eulHalf)
-    s = np.sin(eulHalf)
-
-    w = c[0] * c[1] * c[2] + s[0] * s[1] * s[2]
-    x = c[0] * c[1] * s[2] - s[0] * s[1] * c[2]
-    y = c[0] * s[1] * c[2] + s[0] * c[1] * s[2]
-    z = s[0] * c[1] * c[2] - c[0] * s[1] * s[2]
-
-    d = np.linalg.norm(np.array([w,x,y,z]))
-
-    w /= d 
-    x /= d 
-    y /= d 
-    z /= d 
-
-    transform = vtk.vtkTransform()
-    transform.RotateWXYZ(w,x,y,z)
-    print transform.GetOrientation()
-    return transform
-
-def eul2rotm(eul):
-    R = np.identity(4)
-    ct = np.cos(eul)
-    st = np.sin(eul)
-
-    #     The rotation matrix R can be construted (as follows by
-    #     ct = [cz cy cx] and st =[sz sy sx]
-    #
-    #       R = [  cy*cz   sy*sx*cz-sz*cx    sy*cx*cz+sz*sx
-    #              cy*sz   sy*sx*sz+cz*cx    sy*cx*sz-cz*sx
-    #                -sy            cy*sx             cy*cx] 
-
-    R[0,0] =ct[1] * ct[0]
-    R[0,1] =st[2] * st[1] * ct[0] - ct[2] * st[0]
-    R[0,2] =ct[2] * st[1] * ct[0] + st[2] * st[0]
-    R[1,0] =ct[1] * st[0]
-    R[1,1] =st[2] * st[1] * st[0] + ct[2] * ct[0]
-    R[1,2] =ct[2] * st[1] * st[0] - st[2] * ct[0]
-    R[2,0] =-st[1]
-    R[2,1] =st[2] * ct[1]
-    R[2,2] =ct[2] * ct[1] 
-    return R
-
-def reg_params_to_transformation_matrix(params):
-    
-    T = np.identity(4)
-
-    for r in range(0,3):
-        T[r, 3] = params[r]
-
-    temp = np.zeros(3)
-    temp[0] = params[3]
-    temp[1] = params[4]
-    temp[2] = params[5]
-
-    R = eul2rotm(temp)
-
-    # Not sure what this is about but it messes everything up
-    #u,s,v = np.linalg.svd(R)
-    #R = np.dot(np.transpose(v),u)
-
-    for r in range(0,3):
-        for c in range(0,3):
-            T[r, c] = R[r, c]
-
+        
+def npMatrixToVtkMatrix(matrix):
     retMat = vtk.vtkMatrix4x4()
     for r in range(0,4):
         for c in range(0,4):
-            retMat.SetElement(r,c,T[r,c])
-
+            retMat.SetElement(r,c,matrix[r,c])
     return retMat
 
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = MyWindow()
-    quat = eul2quat([0.509564, 0.486538, 0.230276])
     sys.exit(app.exec_())
