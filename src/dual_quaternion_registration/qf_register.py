@@ -1,3 +1,4 @@
+__all__ = ["write_txt", "eul2rotm","eul2quat", "reg_params_to_transformation_matrix","qf_register"]
 #!/usr/bin/env python
 import os
 import ctypes
@@ -77,29 +78,38 @@ def reg_params_to_transformation_matrix(params):
 
     return T
 
-# Get registration ctypes funciton
-# Loading dlls only works if we are in the same directory, so move there first
-startPath = os.getcwd()
-functionPath = os.path.dirname(os.path.realpath(__file__))
-path = os.path.join(functionPath,"..","precompiled_clibs")
-os.chdir(path)
-# If on windows
-if os.name == "nt":
-    lib = ctypes.CDLL("./lib_qf_registration_windows.dll")
-# Else on linux
-else:
-    lib = ctypes.CDLL("./lib_qf_registration_linux.so")
-# Set up function
-lib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
-lib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
-os.chdir(startPath)
+_clib = None
+
+def _get_clib():
+    global _clib
+    # Get registration ctypes funciton
+    # Loading dlls only works if we are in the same directory, so move there first
+    startPath = os.getcwd()
+    functionPath = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(functionPath,"..","..","precompiled_clibs")
+    os.chdir(path)
+    # If on windows
+    if os.name == "nt":
+        _clib = ctypes.CDLL("./lib_qf_registration_windows.dll")
+    # Else on linux
+    else:
+        _clib = ctypes.CDLL("./lib_qf_registration_linux.so")
+    # Set up function
+    _clib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
+    _clib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
+    os.chdir(startPath)
+
+_get_clib()
 
 def qf_register(fileNameMoving,fileNameFixed,inlierRatio,maxIter,windowSize,rotTolerance,transTolerance):
-    output = lib.qf_register(fileNameMoving, fileNameFixed,
-                             ctypes.c_double(inlierRatio),
-                             ctypes.c_int(maxIter),
-                             ctypes.c_int(windowSize),
-                             ctypes.c_double(rotTolerance),
-                             ctypes.c_double(transTolerance))
+    '''
+    Registers one point cloud to another
+    '''
+    output = _clib.qf_register(fileNameMoving, fileNameFixed,
+                               ctypes.c_double(inlierRatio),
+                               ctypes.c_int(maxIter),
+                               ctypes.c_int(windowSize),
+                               ctypes.c_double(rotTolerance),
+                               ctypes.c_double(transTolerance))
     regParams = np.frombuffer(output.contents, dtype=np.longdouble)
     return regParams

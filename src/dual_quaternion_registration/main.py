@@ -5,7 +5,7 @@ import vtk
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import numpy as np
 from math import radians, degrees
-from registration import qf_register, reg_params_to_transformation_matrix
+from qf_register import qf_register, reg_params_to_transformation_matrix
 
 startPath = os.getcwd()
 functionPath = os.path.dirname(os.path.realpath(__file__))
