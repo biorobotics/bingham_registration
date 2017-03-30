@@ -37,8 +37,8 @@ struct KdResult{
 };
 
 struct KDNormalResult{
-	long double res1;  // res1 = mean of all the point distances calculated
-	long double res2;  // res2 = mean of all the normal distances calculated
+	long double resPoints;  // resPoints = mean of all the point distances calculated
+	long double resNormals;  // resNormals = mean of all the normal distances calculated
 	PointCloud pc;
 	PointCloud pr;
 	PointCloud normalc;
@@ -75,8 +75,8 @@ struct KdResult* kd_search(PointCloud *targets, KDTree T, long double inlierRati
 				pr = set of all target points in corresponding order with pc
 				normalr = set of the moving normals in corresponding order with searched result
 				normalc = set of the fixed normals in original order
- 				res1 = mean of the sum of all the point distances calculated
-				res2 = mean of the sum of all the normal distances calculated
+ 				resPoints = mean of the sum of all the point distances calculated
+				resNormals = mean of the sum of all the normal distances calculated
  */
 struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T, 
 										long double inlierRatio, VectorXld *Xreg, 

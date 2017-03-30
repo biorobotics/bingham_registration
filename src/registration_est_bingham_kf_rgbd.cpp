@@ -56,7 +56,8 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
                                                      int maxIterations,
                                                      int windowSize,
                                                      double toleranceT,
-                                                     double toleranceR){
+                                                     double toleranceR,
+                                                     double uncertaintyR){
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -92,9 +93,7 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
     Matrix4ld Zk = MatrixXld::Zero(4, 4);
 
     for(int i = 1; i <= 3; i++) 
-        Zk(i, i) = -1 * pow((long double)10, (long double)-300);
-
-    VectorXld Xregprev = VectorXld::Zero(6);
+        Zk(i, i) = -1 * pow((long double)10, (long double)-uncertaintyR);
     
     long double BinghamKFSum = 0;  // for timing Bingham_kf
 
@@ -126,6 +125,7 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         PointCloud pr = searchResult->pr;    // set of all target points in 
                                              // corresponding order with pc
         long double res = searchResult->res;  // mean of all the distances calculated
+        result->error = res;
 
         // Truncate the windowSize according to window size and inlier ratio
         int truncSize = trunc(windowSize * inlierRatio);
@@ -181,16 +181,12 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
                                              // Xregsave(0) is saved for initial value   
         Xreg = QFResult->Xreg;
 
-        result->Xreg = QFResult->Xreg;
-        result->Xregsave = Xregsave;
-        
         //  Check convergence:
         //  Takes in updated Xreg and previous Xreg
         //  Return dR, dT
         struct DeltaTransform *convergenceResult = get_changes_in_transformation_estimate(
                                                    QFResult->Xreg, Xregsave.col(i-1));
-		int minIterations = 20;
-        if (i >= minIterations && convergenceResult->dT <= tolerance(0) && 
+        if (convergenceResult->dT <= tolerance(0) && 
             convergenceResult->dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
@@ -198,7 +194,8 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
     }
 
     //free_tree(cloudTree);
-
+    result->Xreg = Xreg;
+    result->Xregsave = Xregsave;
     return result;
 }
 
@@ -222,7 +219,8 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
                                                            int maxIterations,
                                                            int windowSize,
                                                            double toleranceT,
-                                                           double toleranceR) {
+                                                           double toleranceR,
+                                                           double uncertaintyR) {
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -259,9 +257,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
     Matrix4ld Zk = MatrixXld::Zero(4, 4);
 
     for(int i = 1; i <= 3; i++) 
-        Zk(i, i) = -1 * pow((long double)10, (long double)-300);
-
-    VectorXld Xregprev = VectorXld::Zero(6);
+        Zk(i, i) = -1 * pow((long double)10, (long double)-uncertaintyR);
     
     long double BinghamKFSum = 0;  // for timing Bingham_kf
 
@@ -293,6 +289,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         PointCloud pc = searchResult->pc;    // set of all closest point
         PointCloud pr = searchResult->pr;    // set of all target points in corresponding 
                                              // order with pc
+        result->error = searchResult->resPoints;
 
         // Truncate the window size according to inlier ratio
         int truncSize = trunc(windowSize * inlierRatio);
@@ -306,9 +303,9 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        long double Rmag= .04 + pow(searchResult->res1 / 6, 2);  // Variable that helps 
+        long double Rmag= .04 + pow(searchResult->resPoints / 6, 2);  // Variable that helps 
                                                                  // calculate the noise 
-        long double Qmag = .04 + pow(searchResult->res2 / 6, 2);
+        long double Qmag = .04 + pow(searchResult->resNormals / 6, 2);
 
         int p1Count = 0;
         int p2Count = 0;
@@ -350,16 +347,13 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
                                             // Xregsave(0) is saved for initial value   
         
         Xreg = QFResult->Xreg;
-        result->Xreg = QFResult->Xreg;
-        result->Xregsave = Xregsave;
         
         //  Check convergence:
         //  Takes in updated Xreg and previous Xreg
         //  Return dR, dT
         struct DeltaTransform *convergenceResult = get_changes_in_transformation_estimate(
                                                   QFResult->Xreg, Xregsave.col(i-1));
-		int minIterations = 20;
-        if (i >= minIterations && convergenceResult->dT <= tolerance(0) && 
+        if (convergenceResult->dT <= tolerance(0) && 
             convergenceResult->dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
@@ -367,6 +361,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
     }
 
     //free_tree(cloudTree);
-
+    result->Xreg = Xreg;
+    result->Xregsave = Xregsave;
     return result;
 }

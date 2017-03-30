@@ -29,9 +29,9 @@ const int NUM_OF_RUNS = 10; // # of runs to run the registration for average per
 // Should at least provide the two ptcld datasets
 long double* qf_register(char const * movingData, char const * fixedData, 
                          double inlierRatio, int maxIterations, int windowSize,
-                         double toleranceT, double toleranceR) {
+                         double toleranceT, double toleranceR, double uncertaintyR) {
 
-    long double* returnArray = new long double[6];
+    long double* returnArray = new long double[7];
 
     cout << &movingData << endl;
     char const * movingPointsString = movingData;
@@ -238,8 +238,9 @@ long double* qf_register(char const * movingData, char const * fixedData,
             // Run the registration function with normals
             result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
                                                      &normalMoving, &normalFixed,
-													 inlierRatio,maxIterations,
-													 windowSize,toleranceT,toleranceR);
+													 inlierRatio, maxIterations,
+													 windowSize, toleranceT,
+                                                     toleranceR, uncertaintyR);
             clock_t end = clock();
             double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
             timeSum += elapsed_secs;
@@ -260,7 +261,10 @@ long double* qf_register(char const * movingData, char const * fixedData,
         myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
             << " seconds." << endl;
         myFile.close();
-        Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+        // Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+        for(int i=0; i<6; i++)
+            returnArray[i] = 0;
+        returnArray[6] = result->error;
         return returnArray;
     }
 
@@ -280,7 +284,7 @@ long double* qf_register(char const * movingData, char const * fixedData,
         // Run the registration function without normals
         result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
                                                   inlierRatio, maxIterations, windowSize,
-                                                  toleranceT, toleranceR);
+                                                  toleranceT, toleranceR, uncertaintyR);
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     
@@ -292,7 +296,9 @@ long double* qf_register(char const * movingData, char const * fixedData,
     myFile << "Registration runtime is: " << elapsed_secs
                                                   << " seconds." << endl;
     myFile.close();
-	Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result->Xreg;
+    returnArray[6] = result->error;
+    cout << "Registration error:" << result->error << endl;
     return returnArray;
 }
 
@@ -375,6 +381,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
-	double toleranceT = 0.001; double toleranceR = 0.009;
-	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR);
+	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
+	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
 }

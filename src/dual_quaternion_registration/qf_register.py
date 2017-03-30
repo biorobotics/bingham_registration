@@ -95,21 +95,33 @@ def _get_clib():
     else:
         _clib = ctypes.CDLL("./lib_qf_registration_linux.so")
     # Set up function
-    _clib.qf_register.argtypes = [ctypes.c_char_p,ctypes.c_char_p, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double]
-    _clib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*6)
+    _clib.qf_register.argtypes = [ctypes.c_char_p,  # String for pointcloud that moves
+                                  ctypes.c_char_p,  # String for pointcloud that is fixed
+                                  ctypes.c_double,  # Inlier ratio
+                                  ctypes.c_int,     # Maximum iterations
+                                  ctypes.c_int,     # Window size
+                                  ctypes.c_double,  # Rotation tolerance
+                                  ctypes.c_double,  # Translation tolerance
+                                  ctypes.c_double]  # Initial uncertainty
+
+    _clib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*7)
     os.chdir(startPath)
 
 _get_clib()
 
-def qf_register(fileNameMoving,fileNameFixed,inlierRatio,maxIter,windowSize,rotTolerance,transTolerance):
+def qf_register(fileNameMoving,fileNameFixed,inlierRatio,maxIter,windowSize,transTolerance,rotTolerance, uncertainty=300):
     '''
-    Registers one point cloud to another
+    Registers one point cloud to another. Returns a np.longdouble array of size seven representing
+    [xPos, yPos, zPos, xRot, yRot, zRot] and a double representing the mean error
     '''
     output = _clib.qf_register(fileNameMoving, fileNameFixed,
                                ctypes.c_double(inlierRatio),
                                ctypes.c_int(maxIter),
                                ctypes.c_int(windowSize),
+                               ctypes.c_double(transTolerance),
                                ctypes.c_double(rotTolerance),
-                               ctypes.c_double(transTolerance))
-    regParams = np.frombuffer(output.contents, dtype=np.longdouble)
-    return regParams
+                               ctypes.c_double(uncertainty))
+    outputArray = np.frombuffer(output.contents, dtype=np.longdouble)
+    regParams = outputArray[0:6]
+    error = outputArray[6]
+    return regParams, error

@@ -229,8 +229,8 @@ struct KdResult* kd_search(PointCloud *targets_p, KDTree T, long double inlierRa
 				pr = set of all target points in corresponding order with pc
 				normalr = set of the moving normals in corresponding order with searched result
 				normalc = set of the fixed normals in original order
- 				res1 = mean of the sum of all the point distances calculated
-				res2 = mean of the sum of all the normal distances calculated
+ 				resPoints = mean of the sum of all the point distances calculated
+				resNormals = mean of the sum of all the normal distances calculated
  */
 struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T, 
 									long double inlierRatio, VectorXld *Xreg, 
@@ -315,8 +315,8 @@ struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T,
 	result->normalc = filtered_normalMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result->pr = filtered_resultTargets;
 	result->normalr = filtered_normalTargets;
-	result->res1 = totalPointDistance / inlierSize;
-	result->res2 = totalNormalDistance / inlierSize;
+	result->resPoints = totalPointDistance / inlierSize;
+	result->resNormals = totalNormalDistance / inlierSize;
 
 	return result;
 }
