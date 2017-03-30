@@ -156,8 +156,8 @@ class MyWindow(QtGui.QMainWindow):
 
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
-        output = qf_register(b_string1, b_string2, inlierRatio, maxIter,
-                             windowSize, rotTolerance,transTolerance)
+        output, error = qf_register(b_string1, b_string2, inlierRatio, maxIter,
+                                    windowSize, rotTolerance,transTolerance)
         matrix = npMatrixToVtkMatrix(reg_params_to_transformation_matrix(output))
         transform.SetMatrix(matrix)
         self.actor_moving.SetPosition(transform.GetPosition())

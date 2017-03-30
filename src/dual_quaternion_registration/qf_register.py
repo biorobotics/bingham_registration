@@ -109,7 +109,9 @@ def _get_clib():
 
 _get_clib()
 
-def qf_register(fileNameMoving,fileNameFixed,inlierRatio,maxIter,windowSize,transTolerance,rotTolerance, uncertainty=300):
+def qf_register(fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
+    windowSize = 20, transTolerance = 0.001, rotTolerance = 0.009,
+    uncertainty = 300):
     '''
     Registers one point cloud to another. Returns a np.longdouble array of size seven representing
     [xPos, yPos, zPos, xRot, yRot, zRot] and a double representing the mean error
@@ -121,6 +123,7 @@ def qf_register(fileNameMoving,fileNameFixed,inlierRatio,maxIter,windowSize,tran
                                ctypes.c_double(transTolerance),
                                ctypes.c_double(rotTolerance),
                                ctypes.c_double(uncertainty))
+    
     outputArray = np.frombuffer(output.contents, dtype=np.longdouble)
     regParams = outputArray[0:6]
     error = outputArray[6]
