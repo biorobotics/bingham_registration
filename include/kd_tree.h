@@ -65,7 +65,7 @@ void insert_normal(Vector3ld point, int index, KDNormalTree *T);
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-struct KdResult* kd_search(PointCloud *targets, KDTree T, long double inlierRatio, VectorXld *Xreg);
+KdResult kd_search(PointCloud *targets, KDTree T, long double inlierRatio, VectorXld *Xreg);
 
 /*
  * kd_search_normals:
@@ -78,12 +78,15 @@ struct KdResult* kd_search(PointCloud *targets, KDTree T, long double inlierRati
  				resPoints = mean of the sum of all the point distances calculated
 				resNormals = mean of the sum of all the normal distances calculated
  */
-struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T, 
-										long double inlierRatio, VectorXld *Xreg, 
-										PointCloud *normalMoving, PointCloud *normalFixed);
+KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T, 
+								 long double inlierRatio, VectorXld *Xreg, 
+								 PointCloud *normalMoving, PointCloud *normalFixed);
 
 
 // This function frees the tree
 void free_tree(KDTree T);
+
+// This function frees the tree
+void free_normal_tree(KDNormalTree T);
 
 #endif

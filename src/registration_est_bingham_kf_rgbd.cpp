@@ -50,7 +50,7 @@ using namespace Eigen;
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
+RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
                                                      PointCloud *ptcldFixed,
                                                      double inlierRatio,
                                                      int maxIterations,
@@ -63,6 +63,8 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         call_error("Invalid point dimension");
     
     //************ Initialization **************
+    RegistrationResult result;
+
     int sizePtcldMoving = (*ptcldMoving).cols();
     int sizePtcldFixed = (*ptcldFixed).cols();
 
@@ -96,10 +98,7 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         Zk(i, i) = -1 * pow((long double)10, (long double)-uncertaintyR);
     
     long double BinghamKFSum = 0;  // for timing Bingham_kf
-
-    struct RegistrationResult *result = (struct RegistrationResult*)
-                                        calloc(1,sizeof(struct RegistrationResult));
-
+    
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
     for (int i = 1; i <= min(maxIterations, sizePtcldMoving / windowSize); i++) {
@@ -118,14 +117,13 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration according to window size 
 
-        struct KdResult *searchResult = kd_search(&targets, cloudTree,
-                                        inlierRatio, &Xreg);
+        KdResult searchResult = kd_search(&targets, cloudTree, inlierRatio, &Xreg);
 
-        PointCloud pc = searchResult->pc;    // set of all closest point
-        PointCloud pr = searchResult->pr;    // set of all target points in 
+        PointCloud pc = searchResult.pc;    // set of all closest point
+        PointCloud pr = searchResult.pr;    // set of all target points in 
                                              // corresponding order with pc
-        long double res = searchResult->res;  // mean of all the distances calculated
-        result->error = res;
+        long double res = searchResult.res;  // mean of all the distances calculated
+        result.error = res;
 
         // Truncate the windowSize according to window size and inlier ratio
         int truncSize = trunc(windowSize * inlierRatio);
@@ -170,32 +168,32 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
-        struct BinghamKFResult *QFResult = bingham_kf(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
+        BinghamKFResult QFResult = bingham_kf(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
 
-        Xk = QFResult->Xk;
-        Mk = QFResult->Mk;
-        Zk = QFResult->Zk;
+        Xk = QFResult.Xk;
+        Mk = QFResult.Mk;
+        Zk = QFResult.Zk;
 
         // Store current Xreg in Xregsave
-        Xregsave.col(i) = QFResult->Xreg;    // No offset applied because 
+        Xregsave.col(i) = QFResult.Xreg;    // No offset applied because 
                                              // Xregsave(0) is saved for initial value   
-        Xreg = QFResult->Xreg;
+        Xreg = QFResult.Xreg;
 
         //  Check convergence:
         //  Takes in updated Xreg and previous Xreg
         //  Return dR, dT
-        struct DeltaTransform *convergenceResult = get_changes_in_transformation_estimate(
-                                                   QFResult->Xreg, Xregsave.col(i-1));
-        if (convergenceResult->dT <= tolerance(0) && 
-            convergenceResult->dR <= tolerance(1)) {
+        DeltaTransform convergenceResult = get_changes_in_transformation_estimate(QFResult.Xreg,
+                                                                                  Xregsave.col(i-1));
+        if (convergenceResult.dT <= tolerance(0) && 
+            convergenceResult.dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
         }
     }
 
-    //free_tree(cloudTree);
-    result->Xreg = Xreg;
-    result->Xregsave = Xregsave;
+    free_tree(cloudTree);
+    result.Xreg = Xreg;
+    result.Xregsave = Xregsave;
     return result;
 }
 
@@ -211,7 +209,7 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
             normalMoving (3xn) is one set of normal data. This will represent the sensed normals
             normalFixed (3xn) is another set of point normal data. This will represent CAD model normals 
  */
-extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud *ptcldMoving, 
+extern "C" RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, 
                                                            PointCloud *ptcldFixed,
                                                            PointCloud *normalMoving, 
                                                            PointCloud *normalFixed,
@@ -226,9 +224,7 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         call_error("Invalid point dimension");
     
     //************ Initialization **************
-    struct RegistrationResult *result = (struct RegistrationResult*)
-                                        calloc(1, sizeof(struct RegistrationResult));
-    
+    RegistrationResult result;
     int sizePtcldMoving = (*ptcldMoving).cols();
     int sizePtcldFixed = (*ptcldFixed).cols();
 
@@ -282,14 +278,13 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         /* kd_search takes subset of ptcldMoving, of normalMoving, 
          * CAD model points (in kdtree form), normalFixed, and Xreg from last iteration
          */
-        struct KDNormalResult *searchResult = kd_search_normals(&targets,
-                                              cloudTree, inlierRatio, 
-                                              &Xreg, &normalTargets, normalFixed);
+        KDNormalResult searchResult = kd_search_normals(&targets, cloudTree, inlierRatio, 
+                                                        &Xreg, &normalTargets, normalFixed);
 
-        PointCloud pc = searchResult->pc;    // set of all closest point
-        PointCloud pr = searchResult->pr;    // set of all target points in corresponding 
+        PointCloud pc = searchResult.pc;    // set of all closest point
+        PointCloud pr = searchResult.pr;    // set of all target points in corresponding 
                                              // order with pc
-        result->error = searchResult->resPoints;
+        result.error = searchResult.resPoints;
 
         // Truncate the window size according to inlier ratio
         int truncSize = trunc(windowSize * inlierRatio);
@@ -303,9 +298,9 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        long double Rmag= .04 + pow(searchResult->resPoints / 6, 2);  // Variable that helps 
+        long double Rmag= .04 + pow(searchResult.resPoints / 6, 2);  // Variable that helps 
                                                                  // calculate the noise 
-        long double Qmag = .04 + pow(searchResult->resNormals / 6, 2);
+        long double Qmag = .04 + pow(searchResult.resNormals / 6, 2);
 
         int p1Count = 0;
         int p2Count = 0;
@@ -335,33 +330,31 @@ extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r, normalc, normalr from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
-        struct BinghamKFResult *QFResult = bingham_normal_kf(&Xk, &Mk, &Zk, Rmag, Qmag, 
-                                                 &p1c, &p1r, &p2c, &p2r, &(searchResult->normalc), 
-                                                 &(searchResult->normalr)); 
+        BinghamKFResult QFResult = bingham_normal_kf(&Xk, &Mk, &Zk, Rmag, Qmag, &p1c, &p1r, &p2c, &p2r,
+                                                     &(searchResult.normalc), &(searchResult.normalr)); 
         
-        Xk = QFResult->Xk;
-        Mk = QFResult->Mk;
-        Zk = QFResult->Zk;
+        Xk = QFResult.Xk;
+        Mk = QFResult.Mk;
+        Zk = QFResult.Zk;
         // Store curretn Xreg in Xregsave
-        Xregsave.col(i) = QFResult->Xreg;    // No offset applied because 
+        Xregsave.col(i) = QFResult.Xreg;    // No offset applied because 
                                             // Xregsave(0) is saved for initial value   
         
-        Xreg = QFResult->Xreg;
+        Xreg = QFResult.Xreg;
         
         //  Check convergence:
         //  Takes in updated Xreg and previous Xreg
         //  Return dR, dT
-        struct DeltaTransform *convergenceResult = get_changes_in_transformation_estimate(
-                                                  QFResult->Xreg, Xregsave.col(i-1));
-        if (convergenceResult->dT <= tolerance(0) && 
-            convergenceResult->dR <= tolerance(1)) {
+        DeltaTransform convergenceResult = get_changes_in_transformation_estimate(QFResult.Xreg, 
+                                                                                  Xregsave.col(i-1));
+        if (convergenceResult.dT <= tolerance(0) && 
+            convergenceResult.dR <= tolerance(1)) {
             cout << "CONVERGED" << endl;
             break;  // Break out of loop if convergence met
         }
     }
-
-    //free_tree(cloudTree);
-    result->Xreg = Xreg;
-    result->Xregsave = Xregsave;
+    free_normal_tree(cloudTree);
+    result.Xreg = Xreg;
+    result.Xregsave = Xregsave;
     return result;
 }

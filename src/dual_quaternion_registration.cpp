@@ -26,6 +26,11 @@ const char* const DELIMITER = " ";
 
 const int NUM_OF_RUNS = 1; // # of runs to run the registration for average performance
 
+void free_result(long double *ptr)
+{
+    free(ptr);
+}
+
 // Should at least provide the two ptcld datasets
 long double* qf_register(char const * movingData, char const * fixedData, 
                          double inlierRatio, int maxIterations, int windowSize,
@@ -195,14 +200,14 @@ long double* qf_register(char const * movingData, char const * fixedData,
 
             // Make sure all three were read in correctly
             if(iss.fail())
-                call_error(//fixedNormalsString + 
+                call_error(*fixedNormalsString + 
                             ": Input data doesn't match dimension (too few per line)");
             
             // Make sure there are no more to read
             float eofCheck;
             iss >> eofCheck;
             if(iss.good()) 
-                call_error(//fixedNormalsString + 
+                call_error(*fixedNormalsString + 
                            ": Input data doesn't match dimension (too many per line)");
             
             // Add temp to list of vectors  
@@ -227,7 +232,7 @@ long double* qf_register(char const * movingData, char const * fixedData,
     CADFile.close();
     
     double timeSum = 0;
-    struct RegistrationResult *result;
+    RegistrationResult result;
     for (int i = 0; i < NUM_OF_RUNS; i++) {
         clock_t begin = clock();    // For timing the performance
 
@@ -253,16 +258,17 @@ long double* qf_register(char const * movingData, char const * fixedData,
     // Save results to txt
     ofstream myFile;
     myFile.open("result.txt");
-    myFile << "Xreg:" << endl << result->Xreg.transpose() << endl << endl;
-    myFile << "Xregsave:" << endl << result->Xregsave.transpose() 
+    myFile << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
+    myFile << "Xregsave:" << endl << result.Xregsave.transpose() 
                           << endl << endl;
     myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
            << " seconds." << endl;
-    myFile << "Average Registration error:" << result->error << endl;
+    myFile << "Average Registration error:" << result.error << endl;
     myFile.close();
 
-	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result->Xreg;
-    returnArray[6] = result->error;
+	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result.Xreg;
+    returnArray[6] = result.error;
+
     return returnArray;
 }
 
@@ -346,5 +352,7 @@ int main(int argc, char *argv[]) {
     }
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
 	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
-	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+	long double *result = qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+    free(result);
+    cout << "\nTEST\n\n";
 }

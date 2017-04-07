@@ -56,9 +56,9 @@ Matrix4ld qr_kf_measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
-							long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-							PointCloud *p2c, PointCloud *p2r) {
+BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+						   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
+						   PointCloud *p2c, PointCloud *p2r) {
 	 // Check for input dimensions 
     if ((*Xk).size() != 4) {
         cerr << "Xk has wrong dimension. Should be 4x1\n";
@@ -202,13 +202,12 @@ BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
     Xreg.segment(0,3) = centroidDifference;
     Xreg.segment(3,3) = eulerRotation;
     
-    struct BinghamKFResult *result = (struct BinghamKFResult*)
-    								  calloc(1, sizeof(struct BinghamKFResult));
+    BinghamKFResult result;
 
-    result->Xk = *Xk;
-    result->Xreg = Xreg;
-    result->Mk = *Mk;
-    result->Zk = *Zk;
+    result.Xk = *Xk;
+    result.Xreg = Xreg;
+    result.Mk = *Mk;
+    result.Zk = *Zk;
 
     return result;
 }
@@ -217,7 +216,7 @@ BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
  *		Input: previous Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, p2c, p2r, normalc,
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-struct BinghamKFResult *bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+BinghamKFResult bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 								  long double Rmag, long double Qmag, PointCloud *p1c, 
 								  PointCloud *p1r, PointCloud *p2c, PointCloud *p2r, 
 								  PointCloud *normalc, PointCloud *normalr) {
@@ -372,13 +371,12 @@ struct BinghamKFResult *bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4l
     Xreg.segment(0,3) = centroidDifference;
     Xreg.segment(3,3) = eulerRotation;
     
-    struct BinghamKFResult *result = (struct BinghamKFResult*)
-    									   calloc(1, sizeof(struct BinghamKFResult));
+    BinghamKFResult result;
 
-    result->Xk = (*Xk);
-    result->Xreg = Xreg;
-    result->Mk = (*Mk);
-    result->Zk = (*Zk);
+    result.Xk = (*Xk);
+    result.Xreg = Xreg;
+    result.Mk = (*Mk);
+    result.Zk = (*Zk);
 
     return result;
 }

@@ -5,6 +5,8 @@
 	#else
 		#define EXPORT extern "C"
 	#endif
+	EXPORT void free_result(long double *ptr);
+
 	EXPORT long double* qf_register(char const * movingData, char const * fixedData,
 									double inlierRatio, int maxIterations, int windowSize,
 									double toleranceT, double toleranceR, double uncertaintyR);
