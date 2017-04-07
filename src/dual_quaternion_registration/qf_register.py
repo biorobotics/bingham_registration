@@ -105,6 +105,7 @@ def _get_clib():
                                   ctypes.c_double]  # Initial uncertainty
 
     _clib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*7)
+    _clib.free_result.argtypes = [ctypes.POINTER(ctypes.c_longdouble*7)]
     os.chdir(startPath)
 
 _get_clib()
@@ -125,6 +126,7 @@ def qf_register(fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
                                ctypes.c_double(uncertainty))
     
     outputArray = np.frombuffer(output.contents, dtype=np.longdouble)
-    regParams = outputArray[0:6]
-    error = outputArray[6]
+    regParams = outputArray[0:6].copy()
+    error = outputArray[6].copy()
+    _clib.free_result(output)
     return regParams, error
