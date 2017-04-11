@@ -21,7 +21,7 @@ struct BinghamKFResult {
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+BinghamKFResult *bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 							long double Rmag, PointCloud *p1c, PointCloud *p1r, 
 							PointCloud *p2c, PointCloud *p2r);
 
@@ -29,7 +29,7 @@ BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
  *		Input: previous Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, p2c, p2r, normalc,
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-BinghamKFResult bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+struct BinghamKFResult *bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 								  long double Rmag, long double Qmag, PointCloud *p1c, 
 								  PointCloud *p1r, PointCloud *p2c, PointCloud *p2r, 
 								  PointCloud *normalc, PointCloud *normalr);

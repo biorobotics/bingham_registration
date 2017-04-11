@@ -5,18 +5,18 @@ add_definitions(-std=c++11)
 # Find catkin macros and libraries
 # if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 # is used, also find other catkin packages
-find_package(Eigen3 REQUIRED)
+# find_package(Eigen3 REQUIRED)
 
-if(NOT EIGEN3_FOUND)
-  # Fallback to cmake_modules
-  find_package(cmake_modules REQUIRED)
-  find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
-  # Possibly map additional variables to the EIGEN3_ prefix.
-else()
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
-endif()
+# if(NOT EIGEN3_FOUND)
+  # # Fallback to cmake_modules
+  # find_package(cmake_modules REQUIRED)
+  # find_package(Eigen REQUIRED)
+  # set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
+  # set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
+  # # Possibly map additional variables to the EIGEN3_ prefix.
+# else()
+  # set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+# endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
@@ -32,19 +32,19 @@ include_directories(include ${EIGEN3_INCLUDE_DIRS})
 
 set(CMAKE_BUILD_TYPE Release)
 
-# Add catkin and ros redpendencies if catkin is found
-find_package(catkin QUIET COMPONENTS
-  rospy
-  roscpp
-  std_msgs
-  genmsg
-  geometry_msgs
-  sensor_msgs
-  tf2
-  tf2_ros
-  message_generation
-  cmake_modules
-)
+# # Add catkin and ros redpendencies if catkin is found
+# find_package(catkin QUIET COMPONENTS
+  # rospy
+  # roscpp
+  # std_msgs
+  # genmsg
+  # geometry_msgs
+  # sensor_msgs
+  # tf2
+  # tf2_ros
+  # message_generation
+  # cmake_modules
+# )
 if(catkin_FOUND)
 #   # Declare that this catkin package's runtime dependencies
   catkin_package()

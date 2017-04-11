@@ -143,7 +143,7 @@ void find_nearest_helper(TreeType T, Vector3ld target, int level, TreeType bestN
  		Return: The sub-tree whose node is the best match
  */
 template <class NodeType>
-NodeType *find_nearest(Vector3ld target, NodeType *T) {
+NodeType* find_nearest(Vector3ld target, NodeType *T) {
 	NodeType *bestN = (NodeType*)malloc(sizeof(NodeType));
 	
 	if (!bestN)
@@ -153,7 +153,7 @@ NodeType *find_nearest(Vector3ld target, NodeType *T) {
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
 
-	free(distanceResult);
+	//free(distanceResult);
 	return bestN;
 }
 
@@ -165,7 +165,7 @@ NodeType *find_nearest(Vector3ld target, NodeType *T) {
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, VectorXld *Xreg) {
+struct KdResult* kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, VectorXld *Xreg) {
 	int numTargets = (*targets_p).cols();
 	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numTargets);
@@ -195,8 +195,6 @@ KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, Vec
 		(resultMatches.col(count))(2) = (nearestPoint->value)(2);
 		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, targetsNew.col(count));
 		resultTargets.col(count) = (*targets_p).col(count);	// We want to return the original targets
-
-		free(nearestPoint);
 	}
 
 	// Get distance row and turn into vector for sorting
@@ -214,11 +212,11 @@ KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, Vec
 		totalDistance += filtered_resultMatches(3, count);
 	}
 	
-	KdResult result;
+	struct KdResult *result = (struct KdResult*)calloc(1,sizeof(struct KdResult));
 	// When return, ignore the last column which stores individual distances
-	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result.pr = filtered_resultTargets;
-	result.res = totalDistance / inlierSize;
+	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
+	result->pr = filtered_resultTargets;
+	result->res = totalDistance / inlierSize;
 
 	return result;
 }
@@ -234,7 +232,7 @@ KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, Vec
  				resPoints = mean of the sum of all the point distances calculated
 				resNormals = mean of the sum of all the normal distances calculated
  */
-KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T, 
+struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T, 
 									long double inlierRatio, VectorXld *Xreg, 
 									PointCloud *normalMoving, PointCloud *normalFixed) {
 	int numTargets = (*targets).cols();
@@ -290,8 +288,6 @@ KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T,
 		normalMatches.col(count)(2) = (*normalFixed)(2, nearestPoint->index);
 		(normalMatches.col(count))(3) = find_distance((*normalFixed).col(nearestPoint->index), 
 														normalrNew.col(count));
-
-		free(nearestPoint);
 	}
 
 	// Get distance row and turn into vector for sorting
@@ -313,14 +309,14 @@ KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T,
 	}
 
 
-	KDNormalResult result;
+	struct KDNormalResult *result = (struct KDNormalResult*)calloc(1,sizeof(struct KDNormalResult));
 	// When return, ignore the last column which stores individual distances
-	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result.normalc = filtered_normalMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result.pr = filtered_resultTargets;
-	result.normalr = filtered_normalTargets;
-	result.resPoints = totalPointDistance / inlierSize;
-	result.resNormals = totalNormalDistance / inlierSize;
+	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
+	result->normalc = filtered_normalMatches.topLeftCorner(3,filtered_resultMatches.cols());
+	result->pr = filtered_resultTargets;
+	result->normalr = filtered_normalTargets;
+	result->resPoints = totalPointDistance / inlierSize;
+	result->resNormals = totalNormalDistance / inlierSize;
 
 	return result;
 }
@@ -330,16 +326,6 @@ void free_tree(KDTree T) {
 	if (T) {
 		free_tree(T->left);
 		free_tree(T->right);
-		free(T);
-	}
-	return;
-}
-
-// This function frees the tree
-void free_normal_tree(KDNormalTree T) {
-	if (T) {
-		free_normal_tree(T->left);
-		free_normal_tree(T->right);
 		free(T);
 	}
 	return;

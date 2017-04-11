@@ -14,8 +14,9 @@
 #include <vector>
 #include <stdexcept>
 #include <registration_tools.h>
-#include <registration_est_bingham_kf_rgbd.h>
-#include <dual_quaternion_registration.h>
+#include <registration_est_combined_rgbd.h>
+
+#include <registration.h>
 
 using namespace std;
 
@@ -27,7 +28,7 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 1; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-long double* qf_register(char const * movingData, char const * fixedData, 
+long double* combined_register(int registerOption, char const * movingData, char const * fixedData, 
                          double inlierRatio, int maxIterations, int windowSize,
                          double toleranceT, double toleranceR, double uncertaintyR) {
 
@@ -228,23 +229,27 @@ long double* qf_register(char const * movingData, char const * fixedData,
     
     double timeSum = 0;
     struct RegistrationResult *result;
-    for (int i = 0; i < NUM_OF_RUNS; i++) {
-        clock_t begin = clock();    // For timing the performance
+	for (int i = 0; i < NUM_OF_RUNS; i++) {
+		clock_t begin = clock();    // For timing the performance
 
-        if (useNormal) {
-            // Run the registration function with normals
-            result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
-                                                     &normalMoving, &normalFixed,
-                                                     inlierRatio, maxIterations,
-                                                     windowSize, toleranceT,
-                                                     toleranceR, uncertaintyR);
-        }
-        else {
-            // Run the registration function without normals
-            result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
-                                                      inlierRatio, maxIterations, windowSize,
-                                                      toleranceT, toleranceR, uncertaintyR);
-        }
+		if (registerOption == 1) {
+			// Run the registration function without normals
+			printf("Bingham Registration chosen\n");
+			result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
+				inlierRatio, maxIterations, windowSize,
+				toleranceT, toleranceR, uncertaintyR);
+		}
+		else if (registerOption == 2) {
+			printf("Dual Quaternion Registration chosen\n");
+			result = registration_est_kf_rgbd(&ptcldMoving, &ptcldFixed,
+				inlierRatio, maxIterations, windowSize,
+				toleranceT, toleranceR, uncertaintyR);
+
+		}
+		else {
+			call_error(
+				"Invalid register option");
+		}
 
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -346,5 +351,6 @@ int main(int argc, char *argv[]) {
     }
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
 	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
-	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+	// By default 1 is bingham_register
+	combined_register(1, movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
 }

@@ -10,14 +10,14 @@ struct RegistrationResult{
     double error;
 };
 
-extern "C" RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
-                                                                       double inlierRatio, int maxIterations, int windowSize,
+extern "C" struct RegistrationResult *registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
+                                                                       double inlierRatio, int maxIterations, int minIterations, int windowSize,
                                                                        double toleranceT, double toleranceR,
                                                                        double uncertaintyR);
 
-extern "C" RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
+extern "C" struct RegistrationResult *registration_est_bingham_normal(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
                                                            PointCloud *normalMoving, PointCloud *normalFixed,
-                                                           double inlierRatio, int maxIterations, int windowSize,
+                                                           double inlierRatio, int maxIterations, int minIterations, int windowSize,
                                                            double toleranceT, double toleranceR,
                                                            double uncertaintyR);
 #endif

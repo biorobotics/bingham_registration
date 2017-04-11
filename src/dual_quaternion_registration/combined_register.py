@@ -1,4 +1,4 @@
-__all__ = ["write_txt", "eul2rotm","eul2quat", "reg_params_to_transformation_matrix","qf_register"]
+__all__ = ["write_txt", "eul2rotm","eul2quat", "reg_params_to_transformation_matrix","combined_register"]
 #!/usr/bin/env python
 import os
 import ctypes
@@ -90,34 +90,34 @@ def _get_clib():
     os.chdir(path)
     # If on windows
     if os.name == "nt":
-        _clib = ctypes.CDLL("./lib_qf_registration_windows.dll")
+        _clib = ctypes.CDLL("./lib_qf_registration_windows_1.dll")
     # Else on linux
     else:
         _clib = ctypes.CDLL("./lib_qf_registration_linux.so")
     # Set up function
-    _clib.qf_register.argtypes = [ctypes.c_char_p,  # String for pointcloud that moves
+    _clib.combined_register.argtypes = [ctypes.c_int, #Register option (1 = bingham, 2 = dual quaternion)
+                                  ctypes.c_char_p,  # String for pointcloud that moves
                                   ctypes.c_char_p,  # String for pointcloud that is fixed
                                   ctypes.c_double,  # Inlier ratio
                                   ctypes.c_int,     # Maximum iterations
                                   ctypes.c_int,     # Window size
-                                  ctypes.c_double,  # Rotation tolerance
                                   ctypes.c_double,  # Translation tolerance
+                                  ctypes.c_double,  # Rotation tolerance
                                   ctypes.c_double]  # Initial uncertainty
 
-    _clib.qf_register.restype = ctypes.POINTER(ctypes.c_longdouble*7)
-    _clib.free_result.argtypes = [ctypes.POINTER(ctypes.c_longdouble*7)]
+    _clib.combined_register.restype = ctypes.POINTER(ctypes.c_longdouble*7)
     os.chdir(startPath)
 
 _get_clib()
 
-def qf_register(fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
+def combined_register(registerOption, fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
     windowSize = 20, transTolerance = 0.001, rotTolerance = 0.009,
-    uncertainty = 300):
+    uncertainty = 300.0):
     '''
     Registers one point cloud to another. Returns a np.longdouble array of size seven representing
     [xPos, yPos, zPos, xRot, yRot, zRot] and a double representing the mean error
     '''
-    output = _clib.qf_register(fileNameMoving, fileNameFixed,
+    output = _clib.combined_register(registerOption, fileNameMoving, fileNameFixed,
                                ctypes.c_double(inlierRatio),
                                ctypes.c_int(maxIter),
                                ctypes.c_int(windowSize),
@@ -126,7 +126,6 @@ def qf_register(fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
                                ctypes.c_double(uncertainty))
     
     outputArray = np.frombuffer(output.contents, dtype=np.longdouble)
-    regParams = outputArray[0:6].copy()
-    error = outputArray[6].copy()
-    _clib.free_result(output)
+    regParams = outputArray[0:6]
+    error = outputArray[6]
     return regParams, error
