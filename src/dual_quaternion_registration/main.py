@@ -158,10 +158,13 @@ class MyWindow(QtGui.QMainWindow):
         rotTolerance = self.rotationTolerance.value()
         transTolerance = self.translationTolerance.value()
 
-
+        # Choose a path for exporting the result
+        save_path = QtGui.QFileDialog.getSaveFileName(self, "saveFile", "Result.txt", filter = "txt (*.txt *.)")
+  
+        b_string1 = str(self.ptcldMovingText.text()).encode('utf-8')
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
-        output, error = combined_register(registerChoice, b_string1, b_string2, inlierRatio, maxIter,
+        output, error = combined_register(registerChoice, b_string1, b_string2, str(save_path), inlierRatio, maxIter,
                                     windowSize, rotTolerance,transTolerance)
         matrix = npMatrixToVtkMatrix(reg_params_to_transformation_matrix(output))
         transform.SetMatrix(matrix)

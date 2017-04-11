@@ -49,7 +49,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="text">
-                  <string>QF Registration</string>
+                  <string>DQF Registration</string>
                  </property>
                  <property name="checked">
                   <bool>false</bool>

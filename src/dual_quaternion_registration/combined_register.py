@@ -98,6 +98,7 @@ def _get_clib():
     _clib.combined_register.argtypes = [ctypes.c_int, #Register option (1 = bingham, 2 = dual quaternion)
                                   ctypes.c_char_p,  # String for pointcloud that moves
                                   ctypes.c_char_p,  # String for pointcloud that is fixed
+                                  ctypes.c_char_p,  # String for the result saving path
                                   ctypes.c_double,  # Inlier ratio
                                   ctypes.c_int,     # Maximum iterations
                                   ctypes.c_int,     # Window size
@@ -110,14 +111,14 @@ def _get_clib():
 
 _get_clib()
 
-def combined_register(registerOption, fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
+def combined_register(registerOption, fileNameMoving, fileNameFixed, fileNameSave, inlierRatio = 1.0, maxIter = 100,
     windowSize = 20, transTolerance = 0.001, rotTolerance = 0.009,
     uncertainty = 300.0):
     '''
     Registers one point cloud to another. Returns a np.longdouble array of size seven representing
     [xPos, yPos, zPos, xRot, yRot, zRot] and a double representing the mean error
     '''
-    output = _clib.combined_register(registerOption, fileNameMoving, fileNameFixed,
+    output = _clib.combined_register(registerOption, fileNameMoving, fileNameFixed, fileNameSave,
                                ctypes.c_double(inlierRatio),
                                ctypes.c_int(maxIter),
                                ctypes.c_int(windowSize),

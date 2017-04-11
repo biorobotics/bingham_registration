@@ -28,7 +28,7 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 1; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-long double* combined_register(int registerOption, char const * movingData, char const * fixedData, 
+long double* combined_register(int registerOption, char const * movingData, char const * fixedData, char const * saveDest,
                          double inlierRatio, int maxIterations, int windowSize,
                          double toleranceT, double toleranceR, double uncertaintyR) {
 
@@ -36,6 +36,7 @@ long double* combined_register(int registerOption, char const * movingData, char
 
     char const * movingPointsString = movingData;
     char const * fixedPointsString = fixedData;
+	char const * saveDestString = saveDest;
     char const * movingNormalsString = "";
     char const * fixedNormalsString = "";
 
@@ -257,7 +258,7 @@ long double* combined_register(int registerOption, char const * movingData, char
     }
     // Save results to txt
     ofstream myFile;
-    myFile.open("result.txt");
+    myFile.open(saveDest);
     myFile << "Xreg:" << endl << result->Xreg.transpose() << endl << endl;
     myFile << "Xregsave:" << endl << result->Xregsave.transpose() 
                           << endl << endl;
@@ -275,6 +276,7 @@ int main(int argc, char *argv[]) {
 
     string movingPointsString;
     string fixedPointsString;
+	string saveDestString;
     string movingNormalsString;
     string fixedNormalsString;
     int useNormal = 0;
@@ -309,6 +311,18 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
         }
+		// Parse save destination
+		else if (arg == "-sd") {
+			if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				i++; // Increment 'i' so we don't get the argument as the next argv[i].
+				saveDestString = argv[i];
+			}
+			else { // If there was no argument to the destination option.
+				std::cerr << "-pf option requires filepath for fixed pointcloud."
+					<< std::endl;
+				return 1;
+			}
+		}
         // Parse normal moving from .txt
         else if (arg == "-nm") {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
@@ -350,7 +364,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
-	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
+	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300.0;
 	// By default 1 is bingham_register
-	combined_register(1, movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+	combined_register(1, movingPointsString.c_str(), fixedPointsString.c_str(), saveDestString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
 }
