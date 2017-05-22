@@ -10,7 +10,8 @@
 #include <registration_tools.h>
 
 
-struct BinghamKFResult {
+struct BinghamKFResult {	
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector4ld Xk;  // 4 * 1. Used as an updated Xk in the next loop
     Matrix4ld Mk;  // 4 * 4. Used as an updated Mk in the next loop
     Matrix4ld Zk;    // 4 * 4. Used as an updated Zk in the next loop

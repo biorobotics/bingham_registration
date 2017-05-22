@@ -18,12 +18,15 @@ typedef struct KDNode *KDTree;
 typedef struct KDNormalNode *KDNormalTree;
 
 struct KDNode{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector3ld value;
 	KDTree left;
 	KDTree right;
+
 };
 
 struct KDNormalNode{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector3ld value;
 	KDNormalTree left;
 	KDNormalTree right;
@@ -31,12 +34,14 @@ struct KDNormalNode{
 };
 
 struct KdResult{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	PointCloud pc;
 	PointCloud pr;
 	long double res;
 };
 
 struct KDNormalResult{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	long double resPoints;  // resPoints = mean of all the point distances calculated
 	long double resNormals;  // resNormals = mean of all the normal distances calculated
 	PointCloud pc;
