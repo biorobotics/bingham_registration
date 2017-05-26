@@ -22,7 +22,7 @@ using namespace std;
  * 		Input: two points in Vector3ld type
  *      Return: distance between two points
  */
-long double find_distance(Vector3ld point1, Vector3ld point2) {
+long double find_distance(const Vector3ld& point1, const Vector3ld& point2) {
 	return (point1 - point2).norm();
 }
 
@@ -31,7 +31,7 @@ long double find_distance(Vector3ld point1, Vector3ld point2) {
  			   level that the point should be sorted on
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_helper(Vector3ld point, KDTree *T, int level) {
+void insert_helper(const Vector3ld& point, KDTree *T, int level) {
 	// Right now the tree only works for x, y, z point
 	if (level < 0 || level > 2) 
 		call_error("Invalid search level");
@@ -57,7 +57,7 @@ void insert_helper(Vector3ld point, KDTree *T, int level) {
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(Vector3ld point, KDTree *T) {
+void insert(const Vector3ld& point, KDTree *T) {
 	if (T == NULL)
 		call_error("Invalid pointer for kd-tree in insert");
 	return insert_helper(point, T, 0);
@@ -67,7 +67,7 @@ void insert(Vector3ld point, KDTree *T) {
  * 		"index" into the tree to keep track of where the point was in original 
  *		pointcloud.
  */
-void insert_normal_helper(Vector3ld point, int index, KDNormalTree *T, int level) {
+void insert_normal_helper(const Vector3ld& point, int index, KDNormalTree *T, int level) {
 	// Right now the tree only works for x, y, z point
 	if (level < 0 || level > 2) 
 		call_error("Invalid search level");
@@ -96,8 +96,8 @@ void insert_normal_helper(Vector3ld point, int index, KDNormalTree *T, int level
  * 		"index" into the tree to keep track of where the point was in original 
  *		pointcloud.
  */
-void insert_normal(Vector3ld point, int index, KDNormalTree *T) {
-	if (T == NULL)
+void insert_normal(const Vector3ld& point, int index, KDNormalTree *T) {
+	if (*T == NULL)
 		call_error("Invalid pointer for kd-tree in insert");
 	return insert_normal_helper(point, index, T, 0);
 }
@@ -110,7 +110,7 @@ void insert_normal(Vector3ld point, int index, KDNormalTree *T) {
  		Return: None. Modify the found storages in place
  */
 template <class TreeType>
-void find_nearest_helper(TreeType T, Vector3ld target, int level, TreeType bestN, 
+void find_nearest_helper(const TreeType& T, const Vector3ld& target, int level, const TreeType& bestN, 
 						 long double *bestDistance) {
 	long double distance, diff;
 	// If reaches the leaf of the tree, end search
@@ -143,7 +143,7 @@ void find_nearest_helper(TreeType T, Vector3ld target, int level, TreeType bestN
  		Return: The sub-tree whose node is the best match
  */
 template <class NodeType>
-NodeType *find_nearest(Vector3ld target, NodeType *T) {
+NodeType *find_nearest(const Vector3ld& target, NodeType *T) {
 	NodeType *bestN = (NodeType*)malloc(sizeof(NodeType));
 	
 	if (!bestN)
@@ -165,8 +165,8 @@ NodeType *find_nearest(Vector3ld target, NodeType *T) {
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, VectorXld *Xreg) {
-	int numTargets = (*targets_p).cols();
+KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inlierRatio, const VectorXld& Xreg) {
+	int numTargets = targets_p.cols();
 	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numTargets);
 	MatrixXld resultMatches = MatrixXld(4, numTargets);	// First 3 rows = point, 
@@ -177,11 +177,11 @@ KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, Vec
 	PointCloud targetsNew = PointCloud(3, numTargets);
 
 	// Transform the target points before searching
-	targetsNew = compute_transformed_points(*targets_p, *Xreg);
+	targetsNew = compute_transformed_points(targets_p, Xreg);
 
-	if ((*targets_p).cols() != numTargets) {
+	if (targets_p.cols() != numTargets) {
 		ostringstream errorString;
-		errorString << "Pointcloud (" << (*targets_p).cols()<< ") doesn't match target size (" 
+		errorString << "Pointcloud (" << targets_p.cols()<< ") doesn't match target size (" 
 					<< numTargets << ")\n";
 		call_error(errorString.str());
 	}
@@ -194,7 +194,7 @@ KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, Vec
 		(resultMatches.col(count))(1) = (nearestPoint->value)(1);
 		(resultMatches.col(count))(2) = (nearestPoint->value)(2);
 		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, targetsNew.col(count));
-		resultTargets.col(count) = (*targets_p).col(count);	// We want to return the original targets
+		resultTargets.col(count) = targets_p.col(count);	// We want to return the original targets
 
 		free(nearestPoint);
 	}
@@ -234,10 +234,10 @@ KdResult kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, Vec
  				resPoints = mean of the sum of all the point distances calculated
 				resNormals = mean of the sum of all the normal distances calculated
  */
-KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T, 
-									long double inlierRatio, VectorXld *Xreg, 
-									PointCloud *normalMoving, PointCloud *normalFixed) {
-	int numTargets = (*targets).cols();
+KDNormalResult kd_search_normals(const PointCloud& targets, const KDNormalTree& T, 
+								 long double inlierRatio, const VectorXld& Xreg, 
+								 const PointCloud& normalMoving, const PointCloud& normalFixed) {
+	int numTargets = targets.cols();
 	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
 	MatrixXld resultMatches = MatrixXld(4, numTargets);	// First 3 rows = point, 
 														// 4th row = distance 
@@ -259,18 +259,18 @@ KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T,
 
 	
 	// Transform the target points before searching
-	targetsNew = compute_transformed_points(*targets, *Xreg);
+	targetsNew = compute_transformed_points(targets, Xreg);
 	VectorXld normalrNewTemp = VectorXld::Zero(6);
 
 	for (int i = 3; i < 6; i++) {
-		normalrNewTemp(i) = (*Xreg)(i);
+		normalrNewTemp(i) = Xreg(i);
 	}
 
-	normalrNew = compute_transformed_points(*normalMoving, normalrNewTemp);
+	normalrNew = compute_transformed_points(normalMoving, normalrNewTemp);
 
-	if ((*targets).cols() != numTargets){
+	if (targets.cols() != numTargets){
 		ostringstream errorString;
-		errorString << "Pointcloud (" << (*targets).cols()<< ") doesn't match target size (" 
+		errorString << "Pointcloud (" << targets.cols()<< ") doesn't match target size (" 
 				    << numTargets << ")\n";
 		call_error(errorString.str());
 	}
@@ -285,10 +285,10 @@ KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T,
 		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, 
 													  targetsNew.col(count));
 
-		normalMatches.col(count)(0) = (*normalFixed)(0, nearestPoint->index);
-		normalMatches.col(count)(1) = (*normalFixed)(1, nearestPoint->index);
-		normalMatches.col(count)(2) = (*normalFixed)(2, nearestPoint->index);
-		(normalMatches.col(count))(3) = find_distance((*normalFixed).col(nearestPoint->index), 
+		normalMatches.col(count)(0) = normalFixed(0, nearestPoint->index);
+		normalMatches.col(count)(1) = normalFixed(1, nearestPoint->index);
+		normalMatches.col(count)(2) = normalFixed(2, nearestPoint->index);
+		(normalMatches.col(count))(3) = find_distance(normalFixed.col(nearestPoint->index), 
 														normalrNew.col(count));
 
 		free(nearestPoint);
@@ -305,9 +305,9 @@ KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T,
 	
 	for (int count = 0; count < inlierSize; count++) {
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		filtered_resultTargets.col(count) = (*targets).col(sortIndex[count]);
+		filtered_resultTargets.col(count) = targets.col(sortIndex[count]);
 		filtered_normalMatches.col(count) = normalMatches.col(sortIndex[count]);
-		filtered_normalTargets.col(count) = (*normalMoving).col(sortIndex[count]);
+		filtered_normalTargets.col(count) = normalMoving.col(sortIndex[count]);
 		totalPointDistance += filtered_resultMatches(3, count);
 		totalNormalDistance += filtered_normalMatches(3, count);
 	}
@@ -326,7 +326,7 @@ KDNormalResult kd_search_normals(PointCloud *targets, KDNormalTree T,
 }
 
 // This function frees the tree
-void free_tree(KDTree T) {
+void free_tree(const KDTree& T) {
 	if (T) {
 		free_tree(T->left);
 		free_tree(T->right);
@@ -336,7 +336,7 @@ void free_tree(KDTree T) {
 }
 
 // This function frees the tree
-void free_normal_tree(KDNormalTree T) {
+void free_normal_tree(const KDNormalTree& T) {
 	if (T) {
 		free_normal_tree(T->left);
 		free_normal_tree(T->right);

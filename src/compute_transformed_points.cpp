@@ -9,7 +9,7 @@
  *		Input: euler angle in array (for the use of cos, sin function), in ZYX order
  		Output: quaternion after conversion 
  */
-Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
+Matrix4ld eul2rotm(const Array3ld& eul) { // ZYX order
 	Matrix4ld R = Matrix4ld::Identity(4, 4);	// Since n_slices is just 1, make 
 												// Matrix4ld instead
 	Array3ld ct = cos(eul);
@@ -38,7 +38,7 @@ Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
  *		Input: registration parameters in array
  		Output: transformation matrix after conversion 
  */
-Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
+Matrix4ld reg_params_to_transformation_matrix(const ArrayXld& params) {
 	Matrix4ld R, U, V;
 	Matrix4ld T = Matrix4ld::Identity(4, 4);
 
@@ -69,7 +69,7 @@ Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
  *		Input: ptcld moving, Xreg from previous iteration
  		Output: ptcld moving after being transformed 
  */
-PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXld Xreg) {
+PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& Xreg) {
 	Vector3ld point;
 	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
 	Affine3ld t;

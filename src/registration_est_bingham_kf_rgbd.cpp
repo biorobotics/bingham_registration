@@ -117,7 +117,7 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
         // from last iteration according to window size 
 
-        KdResult searchResult = kd_search(&targets, cloudTree, inlierRatio, &Xreg);
+        KdResult searchResult = kd_search(targets, cloudTree, inlierRatio, Xreg);
 
         PointCloud pc = searchResult.pc;    // set of all closest point
         PointCloud pr = searchResult.pr;    // set of all target points in 
@@ -209,16 +209,16 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
             normalMoving (3xn) is one set of normal data. This will represent the sensed normals
             normalFixed (3xn) is another set of point normal data. This will represent CAD model normals 
  */
-extern "C" RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, 
-                                                           PointCloud *ptcldFixed,
-                                                           PointCloud *normalMoving, 
-                                                           PointCloud *normalFixed,
-                                                           double inlierRatio,
-                                                           int maxIterations,
-                                                           int windowSize,
-                                                           double toleranceT,
-                                                           double toleranceR,
-                                                           double uncertaintyR) {
+RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, 
+                                                   PointCloud *ptcldFixed,
+                                                   PointCloud *normalMoving, 
+                                                   PointCloud *normalFixed,
+                                                   double inlierRatio,
+                                                   int maxIterations,
+                                                   int windowSize,
+                                                   double toleranceT,
+                                                   double toleranceR,
+                                                   double uncertaintyR) {
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -278,8 +278,8 @@ extern "C" RegistrationResult registration_est_bingham_normal(PointCloud *ptcldM
         /* kd_search takes subset of ptcldMoving, of normalMoving, 
          * CAD model points (in kdtree form), normalFixed, and Xreg from last iteration
          */
-        KDNormalResult searchResult = kd_search_normals(&targets, cloudTree, inlierRatio, 
-                                                        &Xreg, &normalTargets, normalFixed);
+        KDNormalResult searchResult = kd_search_normals(targets, cloudTree, inlierRatio, 
+                                                        Xreg, normalTargets, (*normalFixed));
 
         PointCloud pc = searchResult.pc;    // set of all closest point
         PointCloud pr = searchResult.pr;    // set of all target points in corresponding 
