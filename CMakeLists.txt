@@ -68,7 +68,8 @@ target_link_libraries(dual_quaternion_registration ${EIGEN3_LIBRARIES})
 
 ## Declare a C++ executable
 
-add_executable(registration src/dual_quaternion_registration.cpp 
+add_executable(registration src/console_registration_main.cpp
+                            src/dual_quaternion_registration.cpp
                             src/registration_tools.cpp
                             src/registration_est_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
