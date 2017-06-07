@@ -31,59 +31,29 @@ void free_result(long double *ptr)
     free(ptr);
 }
 
-// Should at least provide the two ptcld datasets
-long double* qf_register(char const * movingData, char const * fixedData, 
-                         double inlierRatio, int maxIterations, int windowSize,
-                         double toleranceT, double toleranceR, double uncertaintyR) {
+typedef std::vector<Eigen::Matrix<long double, 3, 1>,
+                    Eigen::aligned_allocator<Eigen::Matrix<long double, 3, 1>>
+                    > PointVector;
 
-    long double* returnArray = new long double[7];
-
-    char const * movingPointsString = movingData;
-    char const * fixedPointsString = fixedData;
-    char const * movingNormalsString = "";
-    char const * fixedNormalsString = "";
-
-    // Read .text files for data points
-    ifstream sensedFile;    // stream for ptcld moving
-    ifstream CADFile;       // stream for ptcld fixed
-    ifstream sensedNormalFile;  // stream for normal moving
-    ifstream CADNormalFile;  // stream for normal fixed
-
-    int useNormal = 0;
-    
-    sensedFile.open(movingPointsString, ifstream::in);
-    CADFile.open(fixedPointsString, ifstream::in);
-    // Check if files are valid
-    if (!sensedFile.good() || !CADFile.good()) {
-        cout << "Files " << fixedPointsString << ", " << movingPointsString << " not found" 
-        << "\n";
-        return returnArray; // exit if file not found
+PointCloud fillPointCloud(char const * filePath){
+    // Vector for appending points
+    PointVector pointVector;
+    ifstream openedFile;
+    openedFile.open(filePath, ifstream::in);
+    if (!openedFile.good()) {
+        std::string err = "File ";
+        err.append(filePath);
+        err.append(" not found \n");
+        call_error(err);
     } 
 
-    // Open the normal-related files if normal option is used
-    if (useNormal)
-    {
-        sensedNormalFile.open(movingNormalsString, ifstream::in);
-        CADNormalFile.open(fixedNormalsString, ifstream::in);
-        if (!sensedNormalFile.good() || !CADNormalFile.good()) {
-            cout << "Files " << fixedNormalsString << ", " << movingNormalsString 
-            << " not found" << "\n";
-            return returnArray; // exit if file not found
-        } 
-    }
-    
-    // Vector for appending points
-    std::vector<Eigen::Matrix<long double, 3, 1>,
-                Eigen::aligned_allocator<Eigen::Matrix<long double, 3, 1>>
-                > pointVector;
-    
-    // read sensedFile into ptcldMoving
-    while (!sensedFile.eof()) {
+    // read openedFile into ptcldMoving
+    while (!openedFile.eof()) {
         // read an entire line into memory
         char buf[MAX_CHARS_PER_LINE];
-        sensedFile.getline(buf, MAX_CHARS_PER_LINE);
+        openedFile.getline(buf, MAX_CHARS_PER_LINE);
         // This extra detection is necessary for preventing bug
-        if (sensedFile.eof())
+        if (openedFile.eof())
             break;
         // store line in a vector temp
         istringstream iss(buf);
@@ -106,131 +76,46 @@ long double* qf_register(char const * movingData, char const * fixedData,
         pointVector.push_back(temp);
     }
 
-    PointCloud ptcldMoving(3,pointVector.size());
 
+    PointCloud ptcld(3,pointVector.size());
     for(int i=0; i<pointVector.size(); i++)
-        ptcldMoving.col(i) = pointVector[i];
+        ptcld.col(i) = pointVector[i];
     
-    pointVector.clear();    // Clear pointVector for the following read
-
-    // read CADFile into ptcldFixed
-    while (!CADFile.eof()) {
-        // read an entire line into memory
-        char buf[MAX_CHARS_PER_LINE];
-        CADFile.getline(buf, MAX_CHARS_PER_LINE);
-        // This extra detection is necessary for preventing bug
-        if (CADFile.eof())
-            break;
-        // store line in a vector
-        std::istringstream iss(buf);
-        Vector3ld temp;
-        iss >> temp(0) >> temp(1) >> temp(2);
-        if(iss.fail()) 
-            call_error(//fixedPointsString + 
-                       ": Input data doesn't match dimension (too few per line)");
-        
-        // Make sure there are no more to read
-        float eofCheck;
-        iss >> eofCheck;
-        if(iss.good()) 
-            call_error(//movingPointsString + 
-                       ": Input data doesn't match dimension (too many per line)");
-        // Add temp to list of vectors
-        pointVector.push_back(temp);
-    }
-
-    PointCloud ptcldFixed(3,pointVector.size());
-
-    for(int i=0; i<pointVector.size(); i++)
-        ptcldFixed.col(i) = pointVector[i];
-    
+    openedFile.close();
+    // Force vector memory to free
     pointVector.clear();
+    pointVector.shrink_to_fit();
+
+    return ptcld;
+}
+
+// Should at least provide the two ptcld datasets
+long double* qf_register(char const * movingData, char const * fixedData, 
+                         double inlierRatio, int maxIterations, int windowSize,
+                         double toleranceT, double toleranceR, double uncertaintyR) {
+
+    long double* returnArray = new long double[7];
+
+    char const * movingPointsString = movingData;
+    char const * fixedPointsString = fixedData;
+    char const * movingNormalsString = "";
+    char const * fixedNormalsString = "";
+
+    int useNormal = 0;
+    
+    PointCloud ptcldMoving = fillPointCloud(movingPointsString);
+    PointCloud ptcldFixed = fillPointCloud(fixedPointsString);
+
     PointCloud normalMoving;
     PointCloud normalFixed;
-    /*** The following registration is performed when normals are used ***/
-    if (useNormal) {
-        // Read sensedNormalFIle into normalMoving
-        while (!sensedNormalFile.eof()) {
-            // read an entire line into memory
-            char buf[MAX_CHARS_PER_LINE];
-            sensedNormalFile.getline(buf, MAX_CHARS_PER_LINE);
-            // This extra detection is necessary for preventing bug
-            if (sensedNormalFile.eof())
-                break;
-            // store line in a vector
-            istringstream iss(buf);
-            Vector3ld temp;
-            iss >> temp(0) >> temp(1) >> temp(2);
 
-            // Make sure all three were read in correctly
-            if(iss.fail())
-                call_error(//movingNormalsString + 
-                           ": Input data doesn't match dimension (too few per line)");
-            
-            // Make sure there are no more to read
-            float eofCheck;
-            iss >> eofCheck;
-            if(iss.good()) 
-                call_error(//movingNormalsString + 
-                           ": Input data doesn't match dimension (too many per line)");
-            
-            // Add temp to list of vectors  
-            pointVector.push_back(temp);
-        }
-
-        normalMoving = PointCloud(3, pointVector.size());
-
-        for(int i=0; i<pointVector.size(); i++)
-            normalMoving.col(i) = pointVector[i];
-        
-        pointVector.clear();
-
-        // Read CADNormalFIle into normalFixed
-        while (!CADNormalFile.eof()) {
-            // read an entire line into memory
-            char buf[MAX_CHARS_PER_LINE];
-            CADNormalFile.getline(buf, MAX_CHARS_PER_LINE);
-            // Extra detection
-            if (CADNormalFile.eof())
-                break;
-            // store line in a vector
-            istringstream iss(buf);
-            Vector3ld temp;
-            iss >> temp(0) >> temp(1) >> temp(2);
-
-            // Make sure all three were read in correctly
-            if(iss.fail())
-                call_error(*fixedNormalsString + 
-                            ": Input data doesn't match dimension (too few per line)");
-            
-            // Make sure there are no more to read
-            float eofCheck;
-            iss >> eofCheck;
-            if(iss.good()) 
-                call_error(*fixedNormalsString + 
-                           ": Input data doesn't match dimension (too many per line)");
-            
-            // Add temp to list of vectors  
-            pointVector.push_back(temp);
-        }
-
-        normalFixed = PointCloud(3, pointVector.size());
-
-        for(int i=0; i<pointVector.size(); i++)
-            normalFixed.col(i) = pointVector[i];
-        
-        pointVector.clear();
-        sensedNormalFile.close();
-        CADNormalFile.close();
+    // Open the normal-related files if normal option is used
+    if (useNormal)
+    {
+        normalMoving = fillPointCloud(movingNormalsString);
+        normalFixed = fillPointCloud(fixedNormalsString);
     }
-
-    /*** The following registration is performed when normals are not used ***/
-    // Force the memory to be freed
-    pointVector.shrink_to_fit();
-    
-    sensedFile.close();
-    CADFile.close();
-    
+        
     double timeSum = 0;
     RegistrationResult result;
     for (int i = 0; i < NUM_OF_RUNS; i++) {
