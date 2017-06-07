@@ -57,7 +57,7 @@ add_library(dual_quaternion_registration MODULE
    src/registration_tools.cpp
    src/compute_transformed_points.cpp
    src/kd_tree.cpp
-   src/registration_est_bingham_kf_rgbd.cpp
+   src/registration_est_kf_rgbd.cpp
    src/get_changes_in_transformation_estimate.cpp
    src/bingham_kf.cpp
    src/dual_quaternion_registration.cpp
@@ -70,7 +70,7 @@ target_link_libraries(dual_quaternion_registration ${EIGEN3_LIBRARIES})
 
 add_executable(registration src/dual_quaternion_registration.cpp 
                             src/registration_tools.cpp
-                            src/registration_est_bingham_kf_rgbd.cpp
+                            src/registration_est_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
                             src/kd_tree.cpp src/bingham_kf.cpp
                             src/get_changes_in_transformation_estimate.cpp
