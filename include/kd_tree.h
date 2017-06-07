@@ -22,14 +22,6 @@ struct KDNode{
 	Vector3ld value;
 	KDTree left;
 	KDTree right;
-
-};
-
-struct KDNormalNode{
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	Vector3ld value;
-	KDNormalTree left;
-	KDNormalTree right;
 	int index;	// Index of the value where it was originally in the ptcldFixed
 };
 
@@ -54,13 +46,7 @@ struct KDNormalResult{
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(const Vector3ld& point, KDTree *T);
-
-/* insert_normal: similar to insert but insert additional information 
- * 		"index" into the tree to keep track of where the point was in original 
- *		pointcloud.
- */
-void insert_normal(const Vector3ld& point, int index, KDNormalTree *T);
+void insert(const Vector3ld& point, int index, KDTree *T);
 
 /*
  * kd_search:
@@ -83,15 +69,12 @@ KdResult kd_search(const PointCloud& targets, const KDTree& T, long double inlie
  				resPoints = mean of the sum of all the point distances calculated
 				resNormals = mean of the sum of all the normal distances calculated
  */
-KDNormalResult kd_search_normals(const PointCloud& targets, const KDNormalTree& T, 
+KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T, 
 								 long double inlierRatio, const VectorXld& Xreg, 
 								 const PointCloud& normalMoving, const PointCloud& normalFixed);
 
 
 // This function frees the tree
 void free_tree(const KDTree& T);
-
-// This function frees the tree
-void free_normal_tree(const KDNormalTree& T);
 
 #endif

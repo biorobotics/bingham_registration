@@ -9,12 +9,6 @@
 #include <Eigen/Dense>
 #include <type_defs.h>
 
-/* reg_params_to_transformation_matrix:
- *		Input: registration parameters in array
- 		Output: transformation matrix after conversion 
- */
-Matrix4ld reg_params_to_transformation_matrix(const ArrayXld& params);
-
 /* compute_transformed_points:
  *		Input: ptcld moving, Xreg from previous iteration
  		Output: ptcld moving after being transformed 

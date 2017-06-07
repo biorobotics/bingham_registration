@@ -31,52 +31,16 @@ long double find_distance(const Vector3ld& point1, const Vector3ld& point2) {
  			   level that the point should be sorted on
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_helper(const Vector3ld& point, KDTree *T, int level) {
-	// Right now the tree only works for x, y, z point
-	if (level < 0 || level > 2) 
-		call_error("Invalid search level");
-	if (*T == NULL) {
-		*T = (KDTree)malloc(sizeof(struct KDNode));
-		if (*T == NULL)
-			call_error("Malloc failed in insert_helper");
-		(*T)->left = NULL;
-		(*T)->right = NULL;
-		((*T)->value)(0) = point(0);
-		((*T)->value)(1) = point(1);
-		((*T)->value)(2) = point(2);
-	}
-	else {
-		if (point(level) < (*T)->value(level)) 
-			insert_helper(point, &((*T)->left), (level+1) % 3);
-		else 
-			insert_helper(point, &((*T)->right), (level+1) % 3);
-	}
-}
-
-/* insert:
- * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
- 		Return: None. Modify the tree in place by inserting the point into the tree
- */
-void insert(const Vector3ld& point, KDTree *T) {
-	if (T == NULL)
-		call_error("Invalid pointer for kd-tree in insert");
-	return insert_helper(point, T, 0);
-}
-
-/* insert_normal_helper: similar to insert_helper but insert additional information 
- * 		"index" into the tree to keep track of where the point was in original 
- *		pointcloud.
- */
-void insert_normal_helper(const Vector3ld& point, int index, KDNormalTree *T, int level) {
+void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
 	// Right now the tree only works for x, y, z point
 	if (level < 0 || level > 2) 
 		call_error("Invalid search level");
 
 	if (*T == NULL)
 	{
-		*T = (KDNormalTree)malloc(sizeof(struct KDNormalNode));
+		*T = (KDTree)malloc(sizeof(struct KDNode));
 		if (*T == NULL)
-			call_error("Malloc failed in insert_normal_helper");
+			call_error("Malloc failed in insert_helper");
 		(*T)->left = NULL;
 		(*T)->right = NULL;
 		((*T)->value)(0) = point(0);
@@ -86,31 +50,29 @@ void insert_normal_helper(const Vector3ld& point, int index, KDNormalTree *T, in
 	}
 	else {
 		if (point(level) < (*T)->value(level)) 
-			insert_normal_helper(point, index, &((*T)->left), (level+1) % 3);
+			insert_helper(point, index, &((*T)->left), (level+1) % 3);
 		else 
-			insert_normal_helper(point, index, &((*T)->right), (level+1) % 3);
+			insert_helper(point, index, &((*T)->right), (level+1) % 3);
 	}
 }
 
-/* insert_normal: similar to insert but insert additional information 
- * 		"index" into the tree to keep track of where the point was in original 
- *		pointcloud.
+/* insert:
+ * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
+ 		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_normal(const Vector3ld& point, int index, KDNormalTree *T) {
-	if (*T == NULL)
+void insert(const Vector3ld& point, int index, KDTree *T) {
+	if (T == NULL)
 		call_error("Invalid pointer for kd-tree in insert");
-	return insert_normal_helper(point, index, T, 0);
+	return insert_helper(point, index, T, 0);
 }
 
 /* find_nearest_helper:
  * 		Input: kd-tree, point (whose closest match needs to be searched in kd-tree), 
  			   the level to search, a storage for current best found, a storage for
  			   current distance
-		Requires TreeType to be KDTree or KDNormalTree
  		Return: None. Modify the found storages in place
  */
-template <class TreeType>
-void find_nearest_helper(const TreeType& T, const Vector3ld& target, int level, const TreeType& bestN, 
+void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, const KDTree& bestN, 
 						 long double *bestDistance) {
 	long double distance, diff;
 	// If reaches the leaf of the tree, end search
@@ -142,9 +104,8 @@ void find_nearest_helper(const TreeType& T, const Vector3ld& target, int level, 
  * 		Input: point (whose closest match needs to be searched in kd-tree), kd-tree
  		Return: The sub-tree whose node is the best match
  */
-template <class NodeType>
-NodeType *find_nearest(const Vector3ld& target, NodeType *T) {
-	NodeType *bestN = (NodeType*)malloc(sizeof(NodeType));
+KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
+	KDNode *bestN = (KDNode*)malloc(sizeof(KDNode));
 	
 	if (!bestN)
 		call_error("Malloc failed in find_nearest");
@@ -234,7 +195,7 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
  				resPoints = mean of the sum of all the point distances calculated
 				resNormals = mean of the sum of all the normal distances calculated
  */
-KDNormalResult kd_search_normals(const PointCloud& targets, const KDNormalTree& T, 
+KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T, 
 								 long double inlierRatio, const VectorXld& Xreg, 
 								 const PointCloud& normalMoving, const PointCloud& normalFixed) {
 	int numTargets = targets.cols();
@@ -277,7 +238,7 @@ KDNormalResult kd_search_normals(const PointCloud& targets, const KDNormalTree& 
 
 	// Find numTargets closet points together with corresponding targets
 	for (int count = 0; count < numTargets; count++) {
-		KDNormalTree nearestPoint = find_nearest(targetsNew.col(count), T);
+		KDTree nearestPoint = find_nearest(targetsNew.col(count), T);
 
 		(resultMatches.col(count))(0) = nearestPoint->value(0);
 		(resultMatches.col(count))(1) = nearestPoint->value(1);
@@ -330,16 +291,6 @@ void free_tree(const KDTree& T) {
 	if (T) {
 		free_tree(T->left);
 		free_tree(T->right);
-		free(T);
-	}
-	return;
-}
-
-// This function frees the tree
-void free_normal_tree(const KDNormalTree& T) {
-	if (T) {
-		free_normal_tree(T->left);
-		free_normal_tree(T->right);
 		free(T);
 	}
 	return;

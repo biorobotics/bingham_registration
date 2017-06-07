@@ -7,8 +7,6 @@
 #define BINGHAM_KF
 
 #include <type_defs.h>
-#include <registration_tools.h>
-
 
 struct BinghamKFResult {	
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -24,14 +22,6 @@ struct BinghamKFResult {
  */
 BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 							long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-							PointCloud *p2c, PointCloud *p2r);
-
-/* bingham_normal_kf: (the version of bingham_kf with the aid of normals)
- *		Input: previous Xk, Mk, Zk, Rmag, Qmag, p1c, p1r, p2c, p2r, normalc,
- 		Output: Updated Xk, Mk, Zk, Xreg
- */
-BinghamKFResult bingham_normal_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
-								  long double Rmag, long double Qmag, PointCloud *p1c, 
-								  PointCloud *p1r, PointCloud *p2c, PointCloud *p2r, 
-								  PointCloud *normalc, PointCloud *normalr);
+							PointCloud *p2c, PointCloud *p2r, long double Qmag = 0,
+							PointCloud *normalc = NULL, PointCloud *normalr = NULL);
 #endif

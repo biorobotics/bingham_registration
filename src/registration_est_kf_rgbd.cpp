@@ -31,7 +31,8 @@
 #include <bingham_kf.h>
 #include <compute_transformed_points.h>
 #include <get_changes_in_transformation_estimate.h>
-#include <registration_est_bingham_kf_rgbd.h>
+#include <registration_est_kf_rgbd.h>
+#include <registration_tools.h>
 
 using namespace std;
 using namespace Eigen;
@@ -74,7 +75,7 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
 
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < sizePtcldFixed; i++) 
-        insert((*ptcldFixed).col(i), &cloudTree);
+        insert((*ptcldFixed).col(i), i, &cloudTree);
 
     //int windowSize = sizePtcldMoving / WINDOW_RATIO;
 
@@ -228,14 +229,14 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
     int sizePtcldMoving = (*ptcldMoving).cols();
     int sizePtcldFixed = (*ptcldFixed).cols();
 
-    KDNormalTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
+    KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
     
     Vector2d tolerance;
     tolerance << .001 , .009;
 
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < sizePtcldFixed; i++) 
-        insert_normal((*ptcldFixed).col(i), i, &cloudTree);
+        insert((*ptcldFixed).col(i), i, &cloudTree);
 
     //int windowSize = sizePtcldMoving / WINDOW_RATIO;
     VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
@@ -330,8 +331,8 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r, normalc, normalr from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
-        BinghamKFResult QFResult = bingham_normal_kf(&Xk, &Mk, &Zk, Rmag, Qmag, &p1c, &p1r, &p2c, &p2r,
-                                                     &(searchResult.normalc), &(searchResult.normalr)); 
+        BinghamKFResult QFResult = bingham_kf(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r, Qmag,
+                                              &(searchResult.normalc), &(searchResult.normalr)); 
         
         Xk = QFResult.Xk;
         Mk = QFResult.Mk;
@@ -353,7 +354,7 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
             break;  // Break out of loop if convergence met
         }
     }
-    free_normal_tree(cloudTree);
+    free_tree(cloudTree);
     result.Xreg = Xreg;
     result.Xregsave = Xregsave;
     return result;

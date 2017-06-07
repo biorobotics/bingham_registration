@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdexcept>
 #include <registration_tools.h>
-#include <registration_est_bingham_kf_rgbd.h>
+#include <registration_est_kf_rgbd.h>
 #include <dual_quaternion_registration.h>
 
 using namespace std;

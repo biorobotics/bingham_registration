@@ -11,7 +11,7 @@
 // Registration includes
 #include <type_defs.h>
 #include <dual_quaternion_registration.h>
-#include <registration_est_bingham_kf_rgbd.h>
+#include <registration_est_kf_rgbd.h>
 using namespace Eigen;
 using namespace std;
 
