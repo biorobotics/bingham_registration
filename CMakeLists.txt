@@ -94,6 +94,16 @@ SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs)
 install(TARGETS dual_quaternion_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
 
 if(catkin_FOUND)
+  if (CATKIN_ENABLE_TESTING)
+    catkin_add_gtest(utest test/utest.cpp
+                           #src/dual_quaternion_registration.cpp 
+                           src/registration_tools.cpp
+                           src/registration_est_kf_rgbd.cpp
+                           src/compute_transformed_points.cpp
+                           src/kd_tree.cpp src/bingham_kf.cpp
+                           src/get_changes_in_transformation_estimate.cpp)
+    target_link_libraries(utest ${catkin_LIBRARIES})
+  endif()
   ## Mark executables and/or libraries for installation
   install(TARGETS dual_quaternion_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 endif()
