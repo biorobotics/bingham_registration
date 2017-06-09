@@ -1,6 +1,4 @@
 #include <iostream>
-#include "registration_tools.h"
-#include "registration_est_kf_rgbd.h"
 #include "dual_quaternion_registration.h"
 
 int main(int argc, char *argv[]) {
@@ -24,8 +22,7 @@ int main(int argc, char *argv[]) {
                 movingPointsString = argv[i];
                 pointFileProvided++;
             } else { // If there was no argument to the destination option.
-                std::cerr << "-pm option requires filepath for moving pointcloud." 
-                << std::endl;
+                std::cerr << "-pm option requires filepath for moving pointcloud." << std::endl;
                 return 1;
             }
         }

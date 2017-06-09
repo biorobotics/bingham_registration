@@ -1,10 +1,6 @@
 #include <gtest/gtest.h>
 #include <ros/package.h>
 #include "dual_quaternion_registration.h"
-#include "registration_tools.h"
-
-
-
 TEST (SquareRootTest, ZeroAndNegativeNos) { 
     ASSERT_EQ (0.0, 0.0);
     ASSERT_EQ (-1, 0);

@@ -5,8 +5,30 @@
 
 #include <iostream>
 #include <limits>
+#include "sort_indexes.h"
 #include "bingham_kf.h"
-#include "registration_tools.h"
+
+/* quat2eul:
+*		Input: quaternion
+Output: euler angle in vector after conversion
+*/
+Vector3ld quat2eul(Quaternionld q) {
+	// Normalize the quaternions
+	Quaternionld temp = q.normalized();
+
+	long double qw = temp.w();
+	long double qx = temp.x();
+	long double qy = temp.y();
+	long double qz = temp.z();
+
+	Vector3ld eul(3);
+
+	eul(0) = atan2(2 * (qx * qy + qw * qz), pow(qw, 2) + pow(qx, 2) - pow(qy, 2) - pow(qz, 2));
+	eul(1) = asin(-2 * (qx * qz - qw * qy));
+	eul(2) = atan2(2 * (qy * qz + qw * qx), pow(qw, 2) - pow(qx, 2) - pow(qy, 2) + pow(qz, 2));
+
+	return eul;
+}
 
 Vector4ld qr_kf_measurementFunction(const Vector4ld& Xk, const Vector3ld& p1, const Vector3ld& p2) {
     /* Xk if size 4x1
@@ -59,15 +81,23 @@ BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 						   PointCloud *p2c, PointCloud *p2r, long double Qmag,
 						   PointCloud *normalc, PointCloud *normalr) {
 	// Check for input dimensions 
-    if ((*Xk).size() != 4)
+    if ((*Xk).size() != 4){
         std::cerr << "Xk has wrong dimension. Should be 4x1\n";
-    if ((*Mk).rows() != 4 || (*Mk).cols() != 4)
+        exit(1);
+    }
+    if ((*Mk).rows() != 4 || (*Mk).cols() != 4){
         std::cerr << "Mk has wrong dimension. Should be 4x4\n";
-    if ((*Zk).rows() != 4 || (*Zk).cols() != 4)
+        exit(1);
+    }
+    if ((*Zk).rows() != 4 || (*Zk).cols() != 4){
         std::cerr << "Mk has wrong dimension. Should be 4x4\n";
+        exit(1);
+    }
     if ((*p1c).cols() != (*p1r).cols() || (*p1c).cols() != (*p2c).cols() 
-    	 || (*p1c).cols() != (*p2c).cols())
+    	 || (*p1c).cols() != (*p2c).cols()) {
         std::cerr << "point clouds are not equal in size\n";
+        exit(1);
+	}
 
 	int i;
 	PointCloud pc = *p1c - *p2c;

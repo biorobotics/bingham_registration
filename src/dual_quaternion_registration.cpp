@@ -13,7 +13,6 @@
 #include <ctime>
 #include <vector>
 #include <stdexcept>
-#include "registration_tools.h"
 #include "registration_est_kf_rgbd.h"
 #include "dual_quaternion_registration.h"
 
@@ -39,10 +38,8 @@ PointCloud fillPointCloud(char const * filePath){
     std::ifstream openedFile;
     openedFile.open(filePath, std::ifstream::in);
     if (!openedFile.good()) {
-        std::string err = "File ";
-        err.append(filePath);
-        err.append(" not found \n");
-        call_error(err);
+        std::cerr << "File " << filePath << " not found \n";
+        exit(1);
     } 
 
     // read openedFile into ptcldMoving
@@ -59,16 +56,18 @@ PointCloud fillPointCloud(char const * filePath){
         iss >> temp(0) >> temp(1) >> temp(2);
 
         // Make sure all three were read in correctly
-        if(iss.fail())
-            call_error(//movingPointsString + 
-                       ": Input data doesn't match dimension (too few per line)");
+        if(iss.fail()) {
+            std::cerr << filePath << ": Input data doesn't match dimension (too few per line)";
+            exit(1);
+        }
         
         // Make sure there are no more to read
         float eofCheck;
         iss >> eofCheck;
-        if(iss.good()) 
-            call_error(//movingPointsString + 
-                       ": Input data doesn't match dimension (too many per line)");
+        if(iss.good()) {
+            std::cerr << filePath << ": Input data doesn't match dimension (too many per line)";
+            exit(1);
+        }
         
         // Add temp to list of vectors  
         pointVector.push_back(temp);

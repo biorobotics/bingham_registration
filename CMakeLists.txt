@@ -54,7 +54,7 @@ endif()
 
 ## Declare a C++ library
 add_library(dual_quaternion_registration MODULE
-   src/registration_tools.cpp
+   src/sort_indexes.cpp
    src/compute_transformed_points.cpp
    src/kd_tree.cpp
    src/registration_est_kf_rgbd.cpp
@@ -70,7 +70,7 @@ target_link_libraries(dual_quaternion_registration ${EIGEN3_LIBRARIES})
 
 add_executable(registration src/console_registration_main.cpp
                             src/dual_quaternion_registration.cpp
-                            src/registration_tools.cpp
+                            src/sort_indexes.cpp
                             src/registration_est_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
                             src/kd_tree.cpp src/bingham_kf.cpp
@@ -98,7 +98,7 @@ if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
     catkin_add_gtest(utest test/utest.cpp
                            #src/dual_quaternion_registration.cpp 
-                           src/registration_tools.cpp
+                           src/sort_indexes.cpp
                            src/registration_est_kf_rgbd.cpp
                            src/compute_transformed_points.cpp
                            src/kd_tree.cpp src/bingham_kf.cpp

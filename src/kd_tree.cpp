@@ -10,8 +10,9 @@
 
  */
 #include <limits>
+#include <iostream>
 #include "kd_tree.h"
-#include "registration_tools.h"
+#include "sort_indexes.h"
 #include "compute_transformed_points.h"
 
 /* find_distance:
@@ -29,14 +30,18 @@ long double find_distance(const Vector3ld& point1, const Vector3ld& point2) {
  */
 void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
 	// Right now the tree only works for x, y, z point
-	if (level < 0 || level > 2) 
-		call_error("Invalid search level");
+	if (level < 0 || level > 2){
+		std::cerr << "Invalid search level";
+		exit(1);
+	}
 
 	if (*T == NULL)
 	{
 		*T = (KDTree)malloc(sizeof(struct KDNode));
-		if (*T == NULL)
-			call_error("Malloc failed in insert_helper");
+		if (*T == NULL){
+			std::cerr << "Malloc failed in insert_helper";
+			exit(1);
+		}
 		(*T)->left = NULL;
 		(*T)->right = NULL;
 		((*T)->value)(0) = point(0);
@@ -57,8 +62,10 @@ void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
 void insert(const Vector3ld& point, int index, KDTree *T) {
-	if (T == NULL)
-		call_error("Invalid pointer for kd-tree in insert");
+	if (T == NULL){
+		std::cerr << "Invalid pointer for kd-tree in insert";
+		exit(1);
+	}
 	return insert_helper(point, index, T, 0);
 }
 
@@ -103,8 +110,10 @@ void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, co
 KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
 	KDNode *bestN = (KDNode*)malloc(sizeof(KDNode));
 	
-	if (!bestN)
-		call_error("Malloc failed in find_nearest");
+	if (!bestN){
+		std::cerr << "Malloc failed in find_nearest";
+		exit(1);
+	}
 	long double *distanceResult = (long double*)malloc(sizeof(long double));
 	*distanceResult = std::numeric_limits<long double>::max();
 
@@ -137,10 +146,9 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
 	targetsNew = compute_transformed_points(targets_p, Xreg);
 
 	if (targets_p.cols() != numTargets) {
-		std::ostringstream errorString;
-		errorString << "Pointcloud (" << targets_p.cols()<< ") doesn't match target size (" 
-					<< numTargets << ")\n";
-		call_error(errorString.str());
+		std::cerr << "Pointcloud (" << targets_p.cols()<< ") doesn't match target size (" 
+				  << numTargets << ")\n";
+		exit(1);
 	}
 
 	// Find numTargets cloest points together with corresponding targets
@@ -226,10 +234,9 @@ KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T,
 	normalrNew = compute_transformed_points(normalMoving, normalrNewTemp);
 
 	if (targets.cols() != numTargets){
-		std::ostringstream errorString;
-		errorString << "Pointcloud (" << targets.cols()<< ") doesn't match target size (" 
-				    << numTargets << ")\n";
-		call_error(errorString.str());
+		std::cerr <<  "Pointcloud (" << targets.cols()<< ") doesn't match target size (" 
+				  << numTargets << ")\n";
+		exit(1);
 	}
 
 	// Find numTargets closet points together with corresponding targets

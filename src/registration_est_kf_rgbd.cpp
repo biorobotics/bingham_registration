@@ -32,7 +32,7 @@
 #include "compute_transformed_points.h"
 #include "get_changes_in_transformation_estimate.h"
 #include "registration_est_kf_rgbd.h"
-#include "registration_tools.h"
+#include "type_defs.h"
 
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
@@ -57,8 +57,10 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
                                                      double toleranceR,
                                                      double uncertaintyR){
     
-    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
-        call_error("Invalid point dimension");
+    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION){
+        std::cerr << "Invalid point dimension";
+        exit(1);
+    }
     
     //************ Initialization **************
     RegistrationResult result;
@@ -146,16 +148,19 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
             int nOffset = n - 1;    // Eigen is 0-index instead of 1-index
             
             if (n % 2) {    // If odd index point
-                if (p1Count >= oddEntryNum) 
-                    call_error("Incorrect number of odd entry.");
-
+                if (p1Count >= oddEntryNum){
+                    std::cerr << "Incorrect number of odd entry.";
+                    exit(1);
+                }
                 p1c.col(p1Count) = pc.col(nOffset);
                 p1r.col(p1Count) = pr.col(nOffset);
                 p1Count++;
             }
             else {  // If even index point
-                if (p2Count >= evenEntryNum)
-                    call_error("Incorrect number of even entry.");
+                if (p2Count >= evenEntryNum) {
+                    std::cerr << "Incorrect number of even entry.";
+                    exit(1);
+                }
                 p2c.col(p2Count) = pc.col(nOffset);
                 p2r.col(p2Count) = pr.col(nOffset);
                 p2Count++;
@@ -218,8 +223,10 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
                                                    double toleranceR,
                                                    double uncertaintyR) {
     
-    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
-        call_error("Invalid point dimension");
+    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION){
+        std::cerr << "Invalid point dimension";
+        exit(1);
+    }
     
     //************ Initialization **************
     RegistrationResult result;
@@ -308,16 +315,19 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
         for (int n = 1; n <= truncSize - truncSize % 2; n++) {
             int nOffset = n - 1;    // Eigen is 0-index instead of 1-index
             if (n % 2) {    // If odd index point
-                if (p1Count >= oddEntryNum) 
-                    call_error("Incorrect number of odd entry.");
-
+                if (p1Count >= oddEntryNum) {
+                    std::cerr << "Incorrect number of odd entry.";
+                    exit(1);
+                }
                 p1c.col(p1Count) = pc.col(nOffset);
                 p1r.col(p1Count) = pr.col(nOffset);
                 p1Count++;
             }
             else {  // If even index point
-                if (p2Count >= evenEntryNum)
-                    call_error("Incorrect number of even entry.");
+                if (p2Count >= evenEntryNum){
+                    std::cerr << "Incorrect number of even entry.";
+                    exit(1);
+                }
                 p2c.col(p2Count) = pc.col(nOffset);
                 p2r.col(p2Count) = pr.col(nOffset);
                 p2Count++;
