@@ -1,5 +1,5 @@
 #include <iostream>
-#include "register_txt.h"
+#include "register_txt_files.h"
 
 int main(int argc, char *argv[]) {
 

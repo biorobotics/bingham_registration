@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 #include "sort_indexes.h"
-#include "bingham_kf.h"
+#include "bingham_filter.h"
 
 /* quat2eul:
 *		Input: quaternion
@@ -76,10 +76,10 @@ Matrix4ld qr_kf_measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld
  		Optional input: Qmag, normalc, normalr
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
-						   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-						   PointCloud *p2c, PointCloud *p2r, long double Qmag,
-						   PointCloud *normalc, PointCloud *normalr) {
+BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+						   	   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
+						   	   PointCloud *p2c, PointCloud *p2r, long double Qmag,
+						   	   PointCloud *normalc, PointCloud *normalr) {
 	// Check for input dimensions 
     if ((*Xk).size() != 4){
         std::cerr << "Xk has wrong dimension. Should be 4x1\n";

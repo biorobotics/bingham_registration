@@ -10,8 +10,7 @@
 #include <iostream>
 // Registration includes
 #include "type_defs.h"
-#include "register_txt.h"
-#include "registration_est_kf_rgbd.h"
+#include "registration_estimation.h"
 using namespace Eigen;
 using namespace std;
 

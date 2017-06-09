@@ -1,10 +1,10 @@
 /*
- * File Header for bingham_kf.h:
+ * File Header for bingham_filter.h:
  * 		This file contains functions for performing Bingham quaternion filtering
  */
 
-#ifndef BINGHAM_KF
-#define BINGHAM_KF
+#ifndef BINGHAM_FILTER
+#define BINGHAM_FILTER
 
 #include "type_defs.h"
 
@@ -16,12 +16,12 @@ struct BinghamKFResult {
     VectorXld Xreg;  // 6 * 1. The updated Xreg 
 };
 
-/* bingham_kf:
+/* bingham_filter:
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Output: Updated Xk, Mk, Zk, Xreg
  */
-BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
-							long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-							PointCloud *p2c, PointCloud *p2r, long double Qmag = 0,
-							PointCloud *normalc = NULL, PointCloud *normalr = NULL);
+BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
+							   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
+							   PointCloud *p2c, PointCloud *p2r, long double Qmag = 0,
+							   PointCloud *normalc = NULL, PointCloud *normalr = NULL);
 #endif

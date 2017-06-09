@@ -13,8 +13,8 @@
 #include <ctime>
 #include <vector>
 #include <stdexcept>
-#include "registration_est_kf_rgbd.h"
-#include "register_txt.h"
+#include "registration_estimation.h"
+#include "register_txt_files.h"
 
 // For .txt file parsing
 const int MAX_CHARS_PER_LINE = 512;     

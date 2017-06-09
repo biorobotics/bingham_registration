@@ -28,10 +28,10 @@
 #include <cstring>
 #include <ctime>
 #include "kd_tree.h"
-#include "bingham_kf.h"
+#include "bingham_filter.h"
 #include "compute_transformed_points.h"
 #include "get_changes_in_transformation_estimate.h"
-#include "registration_est_kf_rgbd.h"
+#include "registration_estimation.h"
 #include "type_defs.h"
 
 //#define WINDOW_RATIO 100     // The constant for deciding window size
@@ -172,7 +172,7 @@ RegistrationResult registration_est_kf_rgbd(PointCloud *ptcldMoving,
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
-        BinghamKFResult QFResult = bingham_kf(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
+        BinghamKFResult QFResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
 
         Xk = QFResult.Xk;
         Mk = QFResult.Mk;
@@ -340,7 +340,7 @@ RegistrationResult registration_est_normal(PointCloud *ptcldMoving,
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r, normalc, normalr from kdsearch
         //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
-        BinghamKFResult QFResult = bingham_kf(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r, Qmag,
+        BinghamKFResult QFResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r, Qmag,
                                               &(searchResult.normalc), &(searchResult.normalr)); 
         
         Xk = QFResult.Xk;

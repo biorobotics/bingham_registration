@@ -57,10 +57,10 @@ add_library(bingham_registration MODULE
    src/sort_indexes.cpp
    src/compute_transformed_points.cpp
    src/kd_tree.cpp
-   src/registration_est_kf_rgbd.cpp
+   src/registration_estimation.cpp
    src/get_changes_in_transformation_estimate.cpp
-   src/bingham_kf.cpp
-   src/register_txt.cpp
+   src/bingham_filter.cpp
+   src/register_txt_files.cpp
 )
 
 ## Specify libraries to link a library or executable target against
@@ -69,11 +69,11 @@ target_link_libraries(bingham_registration ${EIGEN3_LIBRARIES})
 ## Declare a C++ executable
 
 add_executable(registration src/console_registration_main.cpp
-                            src/register_txt.cpp
+                            src/register_txt_files.cpp
                             src/sort_indexes.cpp
-                            src/registration_est_kf_rgbd.cpp
+                            src/registration_estimation.cpp
                             src/compute_transformed_points.cpp
-                            src/kd_tree.cpp src/bingham_kf.cpp
+                            src/kd_tree.cpp src/bingham_filter.cpp
                             src/get_changes_in_transformation_estimate.cpp
 )
 
@@ -97,11 +97,11 @@ install(TARGETS bingham_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
 if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
     catkin_add_gtest(utest test/utest.cpp
-                           #src/register_txt.cpp 
+                           src/register_txt_files.cpp 
                            src/sort_indexes.cpp
-                           src/registration_est_kf_rgbd.cpp
+                           src/registration_estimation.cpp
                            src/compute_transformed_points.cpp
-                           src/kd_tree.cpp src/bingham_kf.cpp
+                           src/kd_tree.cpp src/bingham_filter.cpp
                            src/get_changes_in_transformation_estimate.cpp)
     target_link_libraries(utest ${catkin_LIBRARIES})
   endif()
