@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdexcept>
 #include "registration_est_kf_rgbd.h"
-#include "dual_quaternion_registration.h"
+#include "register_txt.h"
 
 // For .txt file parsing
 const int MAX_CHARS_PER_LINE = 512;     
@@ -87,9 +87,9 @@ PointCloud fillPointCloud(char const * filePath){
 }
 
 // Should at least provide the two ptcld datasets
-long double* qf_register(char const * movingData, char const * fixedData, 
-                         double inlierRatio, int maxIterations, int windowSize,
-                         double toleranceT, double toleranceR, double uncertaintyR) {
+long double* register_txt(char const * movingData, char const * fixedData, 
+                          double inlierRatio, int maxIterations, int windowSize,
+                          double toleranceT, double toleranceR, double uncertaintyR) {
 
     long double* returnArray = new long double[7];
 
@@ -120,17 +120,17 @@ long double* qf_register(char const * movingData, char const * fixedData,
 
         if (useNormal) {
             // Run the registration function with normals
-            result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
-                                                     &normalMoving, &normalFixed,
-                                                     inlierRatio, maxIterations,
-                                                     windowSize, toleranceT,
-                                                     toleranceR, uncertaintyR);
+            result = registration_est_normal(&ptcldMoving, &ptcldFixed, 
+                                             &normalMoving, &normalFixed,
+                                             inlierRatio, maxIterations,
+                                             windowSize, toleranceT,
+                                             toleranceR, uncertaintyR);
         }
         else {
             // Run the registration function without normals
-            result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
-                                                      inlierRatio, maxIterations, windowSize,
-                                                      toleranceT, toleranceR, uncertaintyR);
+            result = registration_est_kf_rgbd(&ptcldMoving, &ptcldFixed,
+                                              inlierRatio, maxIterations, windowSize,
+                                              toleranceT, toleranceR, uncertaintyR);
         }
 
         clock_t end = clock();

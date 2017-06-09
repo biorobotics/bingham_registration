@@ -5,7 +5,7 @@ import vtk
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import numpy as np
 from math import radians, degrees
-from qf_register import qf_register, reg_params_to_transformation_matrix
+from register_txt import register_txt, reg_params_to_transformation_matrix
 
 startPath = os.getcwd()
 functionPath = os.path.dirname(os.path.realpath(__file__))
@@ -156,7 +156,7 @@ class MyWindow(QtGui.QMainWindow):
 
         b_string1 = str(self.ptcldMovingText.text()).encode("utf-8")
         b_string2 = str(self.ptcldFixedText.text()).encode("utf-8")
-        output, error = qf_register(b_string1, b_string2, inlierRatio, maxIter,
+        output, error = register_txt(b_string1, b_string2, inlierRatio, maxIter,
                                     windowSize, rotTolerance,transTolerance)
         matrix = npMatrixToVtkMatrix(reg_params_to_transformation_matrix(output))
         transform.SetMatrix(matrix)

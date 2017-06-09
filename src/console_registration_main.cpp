@@ -1,5 +1,5 @@
 #include <iostream>
-#include "dual_quaternion_registration.h"
+#include "register_txt.h"
 
 int main(int argc, char *argv[]) {
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     }
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
 	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
-	long double *result = qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+	long double *result = register_txt(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
     free(result);
     std::cout << "\nTEST\n\n";
 }

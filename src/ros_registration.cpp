@@ -10,7 +10,7 @@
 #include <iostream>
 // Registration includes
 #include "type_defs.h"
-#include "dual_quaternion_registration.h"
+#include "register_txt.h"
 #include "registration_est_kf_rgbd.h"
 using namespace Eigen;
 using namespace std;
@@ -54,9 +54,8 @@ public:
     cout << ptcldMoving.rows() << ", " << ptcldMoving.cols() << endl << endl;
     // Run the registration function without normals
     RegistrationResult result;
-    result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
-                                              1, 100, 20,
-                                              .00001, .00001, 1);
+    result = registration_est_kf_rgbd(&ptcldMoving, &ptcldFixed,
+                                      1, 100, 20, .00001, .00001, 1);
   }
 
 };

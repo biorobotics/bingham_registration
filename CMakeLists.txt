@@ -60,7 +60,7 @@ add_library(dual_quaternion_registration MODULE
    src/registration_est_kf_rgbd.cpp
    src/get_changes_in_transformation_estimate.cpp
    src/bingham_kf.cpp
-   src/dual_quaternion_registration.cpp
+   src/register_txt.cpp
 )
 
 ## Specify libraries to link a library or executable target against
@@ -69,7 +69,7 @@ target_link_libraries(dual_quaternion_registration ${EIGEN3_LIBRARIES})
 ## Declare a C++ executable
 
 add_executable(registration src/console_registration_main.cpp
-                            src/dual_quaternion_registration.cpp
+                            src/register_txt.cpp
                             src/sort_indexes.cpp
                             src/registration_est_kf_rgbd.cpp
                             src/compute_transformed_points.cpp
@@ -97,7 +97,7 @@ install(TARGETS dual_quaternion_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
 if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
     catkin_add_gtest(utest test/utest.cpp
-                           #src/dual_quaternion_registration.cpp 
+                           #src/register_txt.cpp 
                            src/sort_indexes.cpp
                            src/registration_est_kf_rgbd.cpp
                            src/compute_transformed_points.cpp

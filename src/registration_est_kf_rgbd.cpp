@@ -1,5 +1,5 @@
 /*
- * File Header for registration_est_bingham_kf_rgbd.cpp
+ * File Header for registration_est_kf_rgbd.cpp
  * 
  * This file performs the final registration function for fitting the sensed
  * data points onto the CAD model points
@@ -38,7 +38,7 @@
 #define DIMENSION 3     // Dimension of data point
 
 /* 
- *  registration_est_bingham_kf_rgbd: (for registration without normals)
+ *  registration_est_kf_rgbd: (for registration without normals)
  *
  *  Outputs (Xreg, Xregsave):
             Xreg is a 6x1 vector
@@ -48,7 +48,7 @@
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, 
+RegistrationResult registration_est_kf_rgbd(PointCloud *ptcldMoving, 
                                                      PointCloud *ptcldFixed,
                                                      double inlierRatio,
                                                      int maxIterations,
@@ -57,7 +57,8 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
                                                      double toleranceR,
                                                      double uncertaintyR){
     
-    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION){
+    if ((*ptcldMoving).rows() != DIMENSION ||
+        (*ptcldFixed).rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
     }
@@ -201,7 +202,7 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
 }
 
 /* 
- *  registration_est_bingham_normal: (for registration normals)
+ *  registration_est_normal: (for registration normals)
  *
  *  Outputs (Xreg, Xregsave):
             Xreg is a 6x1 vector
@@ -212,18 +213,19 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
             normalMoving (3xn) is one set of normal data. This will represent the sensed normals
             normalFixed (3xn) is another set of point normal data. This will represent CAD model normals 
  */
-RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving, 
-                                                   PointCloud *ptcldFixed,
-                                                   PointCloud *normalMoving, 
-                                                   PointCloud *normalFixed,
-                                                   double inlierRatio,
-                                                   int maxIterations,
-                                                   int windowSize,
-                                                   double toleranceT,
-                                                   double toleranceR,
-                                                   double uncertaintyR) {
+RegistrationResult registration_est_normal(PointCloud *ptcldMoving, 
+                                           PointCloud *ptcldFixed,
+                                           PointCloud *normalMoving, 
+                                           PointCloud *normalFixed,
+                                           double inlierRatio,
+                                           int maxIterations,
+                                           int windowSize,
+                                           double toleranceT,
+                                           double toleranceR,
+                                           double uncertaintyR) {
     
-    if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION){
+    if ((*ptcldMoving).rows() != DIMENSION ||
+        (*ptcldFixed).rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
     }
