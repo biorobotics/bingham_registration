@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(dual_quaternion_registration)
+project(bingham_registration)
 add_definitions(-std=c++11)
 
 # Find catkin macros and libraries
@@ -53,7 +53,7 @@ endif()
 
 
 ## Declare a C++ library
-add_library(dual_quaternion_registration MODULE
+add_library(bingham_registration MODULE
    src/sort_indexes.cpp
    src/compute_transformed_points.cpp
    src/kd_tree.cpp
@@ -64,7 +64,7 @@ add_library(dual_quaternion_registration MODULE
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(dual_quaternion_registration ${EIGEN3_LIBRARIES})
+target_link_libraries(bingham_registration ${EIGEN3_LIBRARIES})
 
 ## Declare a C++ executable
 
@@ -83,16 +83,16 @@ add_executable(registration src/console_registration_main.cpp
 
 # Set target name based on our operating system
 IF (WIN32)
-set_target_properties(dual_quaternion_registration PROPERTIES OUTPUT_NAME "_qf_registration_windows")
+set_target_properties(bingham_registration PROPERTIES OUTPUT_NAME "_qf_registration_windows")
 ELSE()
-set_target_properties(dual_quaternion_registration PROPERTIES OUTPUT_NAME "_qf_registration_linux")
+set_target_properties(bingham_registration PROPERTIES OUTPUT_NAME "_qf_registration_linux")
 ENDIF()
-set_target_properties(dual_quaternion_registration PROPERTIES SKIP_BUILD_RPATH TRUE)
-set_target_properties(dual_quaternion_registration PROPERTIES PREFIX "lib")
+set_target_properties(bingham_registration PROPERTIES SKIP_BUILD_RPATH TRUE)
+set_target_properties(bingham_registration PROPERTIES PREFIX "lib")
 # Install the library in 'precompiled_clibs' so that the python GUI can find it
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs)
 
-install(TARGETS dual_quaternion_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
+install(TARGETS bingham_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
 
 if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
@@ -106,5 +106,5 @@ if(catkin_FOUND)
     target_link_libraries(utest ${catkin_LIBRARIES})
   endif()
   ## Mark executables and/or libraries for installation
-  install(TARGETS dual_quaternion_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+  install(TARGETS bingham_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 endif()

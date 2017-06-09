@@ -1,5 +1,5 @@
-#ifndef DUAL_QUATERNION_REGISTRATION
-	#define DUAL_QUATERNION_REGISTRATION
+#ifndef BINGHAM_REGISTRATION
+	#define BINGHAM_REGISTRATION
 	#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 		#define EXPORT extern "C" __declspec(dllexport)
 	#else

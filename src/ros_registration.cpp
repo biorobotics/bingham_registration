@@ -63,7 +63,7 @@ public:
 main (int argc, char** argv)
 {
   // Initialize ROS
-  ros::init (argc, argv, "dual_quaternion_registration");
+  ros::init (argc, argv, "bingham_registration");
   ros::NodeHandle nh;
   string filepath = "/home/biomed/registration_ws/src/dvrk_vision/defaults/femur.stl";
   PointCloud stlPoints;
