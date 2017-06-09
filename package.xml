@@ -39,8 +39,13 @@
   <test_depend>gtest</test_depend>
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>pcl_ros</build_depend>
   <build_depend>roscpp</build_depend>
+  <run_depend>pcl_conversions</run_depend>
+  <run_depend>pcl_ros</run_depend>
   <run_depend>roscpp</run_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -11,14 +11,12 @@
 // Registration includes
 #include "type_defs.h"
 #include "registration_estimation.h"
-using namespace Eigen;
-using namespace std;
 
 PointCloud pclToEigen(const pcl::PCLPointCloud2& input)
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromPCLPointCloud2(input, *cloudPtr);
-  MatrixXf mat = cloudPtr->getMatrixXfMap();
+  Eigen::MatrixXf mat = cloudPtr->getMatrixXfMap();
   PointCloud points(3,mat.cols());
   points << mat.topLeftCorner(3,mat.cols()).cast<long double>();
   return points;
@@ -33,7 +31,7 @@ private:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RosRegistration(const string &filePath){
+  RosRegistration(const std::string &filePath){
     // Load in STL file into the ptcldFixed variable
     cout << "Loading stl from " << filePath << endl << endl;
     pcl::PolygonMesh mesh;
@@ -64,7 +62,7 @@ main (int argc, char** argv)
   // Initialize ROS
   ros::init (argc, argv, "bingham_registration");
   ros::NodeHandle nh;
-  string filepath = "/home/biomed/registration_ws/src/dvrk_vision/defaults/femur.stl";
+  std::string filepath = "/home/biomed/registration_ws/src/dvrk_vision/defaults/femur.stl";
   PointCloud stlPoints;
   RosRegistration registration(filepath);
   // Create a ROS subscriber for the input point cloud

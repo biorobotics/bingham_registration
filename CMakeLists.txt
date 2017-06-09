@@ -44,11 +44,16 @@ find_package(catkin QUIET COMPONENTS
   tf2_ros
   message_generation
   cmake_modules
+  pcl_ros
+  pcl_conversions
 )
 if(catkin_FOUND)
 #   # Declare that this catkin package's runtime dependencies
   catkin_package()
   catkin_python_setup()
+  include_directories(
+    include ${EIGEN3_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS}
+  )
 endif()
 
 
@@ -68,13 +73,13 @@ target_link_libraries(bingham_registration ${EIGEN3_LIBRARIES})
 
 ## Declare a C++ executable
 
-add_executable(registration src/console_registration_main.cpp
-                            src/register_txt_files.cpp
-                            src/sort_indexes.cpp
-                            src/registration_estimation.cpp
-                            src/compute_transformed_points.cpp
-                            src/kd_tree.cpp src/bingham_filter.cpp
-                            src/get_changes_in_transformation_estimate.cpp
+add_executable(console_registration src/console_registration_main.cpp
+                                    src/register_txt_files.cpp
+                                    src/sort_indexes.cpp
+                                    src/registration_estimation.cpp
+                                    src/compute_transformed_points.cpp
+                                    src/kd_tree.cpp src/bingham_filter.cpp
+                                    src/get_changes_in_transformation_estimate.cpp
 )
 
 #############
@@ -105,6 +110,15 @@ if(catkin_FOUND)
                            src/get_changes_in_transformation_estimate.cpp)
     target_link_libraries(utest ${catkin_LIBRARIES})
   endif()
+  add_executable(registration_node src/ros_registration.cpp
+                                   src/register_txt_files.cpp
+                                   src/sort_indexes.cpp
+                                   src/registration_estimation.cpp
+                                   src/compute_transformed_points.cpp
+                                   src/kd_tree.cpp src/bingham_filter.cpp
+                                   src/get_changes_in_transformation_estimate.cpp
+  )
+  target_link_libraries(registration_node ${catkin_LIBRARIES})
   ## Mark executables and/or libraries for installation
   install(TARGETS bingham_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 endif()
