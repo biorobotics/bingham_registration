@@ -6,8 +6,7 @@
  */
 #ifndef COMPUTE_TRANSFORMED_POINTS
 #define COMPUTE_TRANSFORMED_POINTS
-#include <Eigen/Dense>
-#include <type_defs.h>
+#include "type_defs.h"
 
 /* compute_transformed_points:
  *		Input: ptcld moving, Xreg from previous iteration

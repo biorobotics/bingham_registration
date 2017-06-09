@@ -5,11 +5,8 @@
 
 #include <iostream>
 #include <limits>
-#include <bingham_kf.h>
-#include <registration_tools.h>
-
-using namespace std;
-using namespace Eigen;
+#include "bingham_kf.h"
+#include "registration_tools.h"
 
 Vector4ld qr_kf_measurementFunction(const Vector4ld& Xk, const Vector3ld& p1, const Vector3ld& p2) {
     /* Xk if size 4x1
@@ -63,14 +60,14 @@ BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 						   PointCloud *normalc, PointCloud *normalr) {
 	// Check for input dimensions 
     if ((*Xk).size() != 4)
-        cerr << "Xk has wrong dimension. Should be 4x1\n";
+        std::cerr << "Xk has wrong dimension. Should be 4x1\n";
     if ((*Mk).rows() != 4 || (*Mk).cols() != 4)
-        cerr << "Mk has wrong dimension. Should be 4x4\n";
+        std::cerr << "Mk has wrong dimension. Should be 4x4\n";
     if ((*Zk).rows() != 4 || (*Zk).cols() != 4)
-        cerr << "Mk has wrong dimension. Should be 4x4\n";
+        std::cerr << "Mk has wrong dimension. Should be 4x4\n";
     if ((*p1c).cols() != (*p1r).cols() || (*p1c).cols() != (*p2c).cols() 
     	 || (*p1c).cols() != (*p2c).cols())
-        cerr << "point clouds are not equal in size\n";
+        std::cerr << "point clouds are not equal in size\n";
 
 	int i;
 	PointCloud pc = *p1c - *p2c;
@@ -123,7 +120,7 @@ BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 
 	Matrix4ld RTmp = Rmag * (Nk.trace()*I - Nk);
 
-	EigenSolver<Matrix4ld> es(RTmp);
+	Eigen::EigenSolver<Matrix4ld> es(RTmp);
 	
 	VectorXld s = es.eigenvalues().real();  // A vector whose entries are eigen values of RTmp
 	MatrixXld U = es.eigenvectors().real();	// A matrix whose column vectors are eigen vectors of RTmp
@@ -171,13 +168,13 @@ BinghamKFResult bingham_kf(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 		MTmp.col(i).norm();
 
 	// Convert ZTmp to std::vector so we can call the sort function
-	vector<long double> ZTmpSTD(ZTmp.data(), ZTmp.data() + ZTmp.size());
+	std::vector<long double> ZTmpSTD(ZTmp.data(), ZTmp.data() + ZTmp.size());
 
-	vector<unsigned int> indx = sort_indexes(ZTmpSTD, false);
+	std::vector<unsigned int> indx = sort_indexes(ZTmpSTD, false);
 	
 	VectorXld ZTmpSorted(ZTmp.size());
 
-	for (i = ZTmp.size()-1; i > 0; i--)
+	for (int i = ZTmp.size()-1; i > 0; i--)
 		ZTmpSorted(i) = ZTmp(indx[i]) - ZTmp(indx[0]);
 
 	// This step should ensure that Zk has first diagonal element = 0

@@ -6,8 +6,7 @@
 #ifndef GET_CHANGES_IN_TRANSFORMATION_ESTIMATE
 #define GET_CHANGES_IN_TRANSFORMATION_ESTIMATE
 
-#include <Eigen/Dense>
-#include <type_defs.h>
+#include "type_defs.h"
 
 struct DeltaTransform{
 	long double dR;

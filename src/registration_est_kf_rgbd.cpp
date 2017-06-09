@@ -27,15 +27,12 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
-#include <kd_tree.h>
-#include <bingham_kf.h>
-#include <compute_transformed_points.h>
-#include <get_changes_in_transformation_estimate.h>
-#include <registration_est_kf_rgbd.h>
-#include <registration_tools.h>
-
-using namespace std;
-using namespace Eigen;
+#include "kd_tree.h"
+#include "bingham_kf.h"
+#include "compute_transformed_points.h"
+#include "get_changes_in_transformation_estimate.h"
+#include "registration_est_kf_rgbd.h"
+#include "registration_tools.h"
 
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
@@ -70,7 +67,7 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
     int sizePtcldFixed = (*ptcldFixed).cols();
 
     KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
-    Vector2d tolerance;
+    Eigen::Vector2d tolerance;
     tolerance << toleranceT , toleranceR;
 
     // Construct the kdtree from ptcldFixed
@@ -102,7 +99,7 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
     
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
-    for (int i = 1; i <= min(maxIterations, sizePtcldMoving / windowSize); i++) {
+    for (int i = 1; i <= std::min(maxIterations, sizePtcldMoving / windowSize); i++) {
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
@@ -187,7 +184,7 @@ RegistrationResult registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
                                                                                   Xregsave.col(i-1));
         if (convergenceResult.dT <= tolerance(0) && 
             convergenceResult.dR <= tolerance(1)) {
-            cout << "CONVERGED" << endl;
+            std::cout << "CONVERGED" << std::endl;
             break;  // Break out of loop if convergence met
         }
     }
@@ -231,7 +228,7 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
 
     KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
     
-    Vector2d tolerance;
+    Eigen::Vector2d tolerance;
     tolerance << .001 , .009;
 
     // Construct the kdtree from ptcldFixed
@@ -260,7 +257,7 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
 
     //********** Loop starts **********
     // If not converge, transform points using Xreg and repeat
-    for (int i = 1; i <= min(maxIterations, sizePtcldMoving / windowSize); i++) {
+    for (int i = 1; i <= std::min(maxIterations, sizePtcldMoving / windowSize); i++) {
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
         // Tree search
@@ -350,7 +347,7 @@ RegistrationResult registration_est_bingham_normal(PointCloud *ptcldMoving,
                                                                                   Xregsave.col(i-1));
         if (convergenceResult.dT <= tolerance(0) && 
             convergenceResult.dR <= tolerance(1)) {
-            cout << "CONVERGED" << endl;
+            std::cout << "CONVERGED" << std::endl;
             break;  // Break out of loop if convergence met
         }
     }

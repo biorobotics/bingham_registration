@@ -6,7 +6,7 @@
 #ifndef BINGHAM_KF
 #define BINGHAM_KF
 
-#include <type_defs.h>
+#include "type_defs.h"
 
 struct BinghamKFResult {	
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW

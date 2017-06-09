@@ -1,20 +1,21 @@
-#include <registration_tools.h>
-#include <registration_est_kf_rgbd.h>
-#include <dual_quaternion_registration.h>
+#include <iostream>
+#include "registration_tools.h"
+#include "registration_est_kf_rgbd.h"
+#include "dual_quaternion_registration.h"
 
 int main(int argc, char *argv[]) {
 
-    string movingPointsString;
-    string fixedPointsString;
-    string movingNormalsString;
-    string fixedNormalsString;
+    std::string movingPointsString;
+	std::string fixedPointsString;
+	std::string movingNormalsString;
+	std::string fixedNormalsString;
     int useNormal = 0;
     int normalFileProvided = 0;
     int pointFileProvided = 0;
 
     // Replace filenames by the arguments
     for (int i = 1; i < argc; ++i) {
-        string arg = argv[i];
+		std::string arg = argv[i];
 
         // Parse ptcld_moving from .txt
         if (arg == "-pm") {
@@ -84,5 +85,5 @@ int main(int argc, char *argv[]) {
 	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
 	long double *result = qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
     free(result);
-    cout << "\nTEST\n\n";
+    std::cout << "\nTEST\n\n";
 }

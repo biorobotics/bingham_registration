@@ -13,11 +13,9 @@
 #include <ctime>
 #include <vector>
 #include <stdexcept>
-#include <registration_tools.h>
-#include <registration_est_kf_rgbd.h>
-#include <dual_quaternion_registration.h>
-
-using namespace std;
+#include "registration_tools.h"
+#include "registration_est_kf_rgbd.h"
+#include "dual_quaternion_registration.h"
 
 // For .txt file parsing
 const int MAX_CHARS_PER_LINE = 512;     
@@ -38,8 +36,8 @@ typedef std::vector<Eigen::Matrix<long double, 3, 1>,
 PointCloud fillPointCloud(char const * filePath){
     // Vector for appending points
     PointVector pointVector;
-    ifstream openedFile;
-    openedFile.open(filePath, ifstream::in);
+    std::ifstream openedFile;
+    openedFile.open(filePath, std::ifstream::in);
     if (!openedFile.good()) {
         std::string err = "File ";
         err.append(filePath);
@@ -56,7 +54,7 @@ PointCloud fillPointCloud(char const * filePath){
         if (openedFile.eof())
             break;
         // store line in a vector temp
-        istringstream iss(buf);
+        std::istringstream iss(buf);
         Vector3ld temp;
         iss >> temp(0) >> temp(1) >> temp(2);
 
@@ -141,14 +139,14 @@ long double* qf_register(char const * movingData, char const * fixedData,
         timeSum += elapsed_secs;
     }
     // Save results to txt
-    ofstream myFile;
+    std::ofstream myFile;
     myFile.open("result.txt");
-    myFile << "Xreg:" << endl << result.Xreg.transpose() << endl << endl;
-    myFile << "Xregsave:" << endl << result.Xregsave.transpose() 
-                          << endl << endl;
+    myFile << "Xreg:" << std::endl << result.Xreg.transpose() << std::endl << std::endl;
+    myFile << "Xregsave:" << std::endl << result.Xregsave.transpose()
+                          << std::endl << std::endl;
     myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
-           << " seconds." << endl;
-    myFile << "Average Registration error:" << result.error << endl;
+           << " seconds." << std::endl;
+    myFile << "Average Registration error:" << result.error << std::endl;
     myFile.close();
 
 	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result.Xreg;

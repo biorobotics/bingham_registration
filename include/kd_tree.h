@@ -6,12 +6,7 @@
 #ifndef KD_TREE
 #define KD_TREE
 
-#include <Eigen/Dense>
-#include <type_defs.h>
-#include <vector>
-
-using std::string;
-using std::vector;
+#include "type_defs.h"
 
 struct KDNode;
 typedef struct KDNode *KDTree;

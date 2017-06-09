@@ -9,14 +9,10 @@
 			return search result
 
  */
-#define NOMINMAX
 #include <limits>
-#include <kd_tree.h>
-#include <registration_tools.h>
-#include <compute_transformed_points.h>
-
-using namespace Eigen;
-using namespace std;
+#include "kd_tree.h"
+#include "registration_tools.h"
+#include "compute_transformed_points.h"
 
 /* find_distance:
  * 		Input: two points in Vector3ld type
@@ -110,7 +106,7 @@ KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
 	if (!bestN)
 		call_error("Malloc failed in find_nearest");
 	long double *distanceResult = (long double*)malloc(sizeof(long double));
-	*distanceResult = numeric_limits<long double>::max();
+	*distanceResult = std::numeric_limits<long double>::max();
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
 
@@ -141,7 +137,7 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
 	targetsNew = compute_transformed_points(targets_p, Xreg);
 
 	if (targets_p.cols() != numTargets) {
-		ostringstream errorString;
+		std::ostringstream errorString;
 		errorString << "Pointcloud (" << targets_p.cols()<< ") doesn't match target size (" 
 					<< numTargets << ")\n";
 		call_error(errorString.str());
@@ -162,12 +158,12 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
 
 	// Get distance row and turn into vector for sorting
 	VectorXld distances = resultMatches.row(3);
-	vector<long double> distancesVector;
+	std::vector<long double> distancesVector;
 	distancesVector.resize(distances.size());
 	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
 
 	// Get indexes sorted by distance
-	vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
+	std::vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
 	
 	for (int count = 0; count < inlierSize; count++) {
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
@@ -230,7 +226,7 @@ KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T,
 	normalrNew = compute_transformed_points(normalMoving, normalrNewTemp);
 
 	if (targets.cols() != numTargets){
-		ostringstream errorString;
+		std::ostringstream errorString;
 		errorString << "Pointcloud (" << targets.cols()<< ") doesn't match target size (" 
 				    << numTargets << ")\n";
 		call_error(errorString.str());
@@ -257,11 +253,11 @@ KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T,
 
 	// Get distance row and turn into vector for sorting
 	VectorXld distances = resultMatches.row(3);
-	vector<long double> distancesVector;
+	std::vector<long double> distancesVector;
 	distancesVector.resize(distances.size());
 	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
 	// Get indexes sorted by distance
-	vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
+	std::vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
 	
 	
 	for (int count = 0; count < inlierSize; count++) {

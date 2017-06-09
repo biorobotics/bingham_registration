@@ -5,10 +5,7 @@
  */
 
 #include <iostream>
-#include <get_changes_in_transformation_estimate.h>
-
-using namespace std;
-using namespace Eigen;
+#include "get_changes_in_transformation_estimate.h"
 
 
 /* eul2quat:

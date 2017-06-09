@@ -1,10 +1,11 @@
-#include <registration_tools.h>
+#include "registration_tools.h"
+#include <iostream>
 /* call_error:
 * 		Input: error message
 *      Return: none. Prints out error message and exit the program
 */
-void call_error(string msg) {
-	cerr << "Error: " << msg << endl;
+void call_error(std::string msg) {
+	std::cerr << "Error: " << msg << std::endl;
 	exit(1);
 }
 
@@ -37,9 +38,9 @@ Return: the sorted results' index in the original vector
 
 * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
 */
-vector<unsigned int> sort_indexes(const vector<long double> &v, bool ascending) {
+std::vector<unsigned int> sort_indexes(const std::vector<long double> &v, bool ascending) {
 	// initialize original index locations
-	vector<unsigned int> idx(v.size());
+	std::vector<unsigned int> idx(v.size());
 	for (unsigned int i = 0; i < idx.size(); i++) idx[i] = i;
 
 	// sort indexes based on comparing values in v

@@ -1,4 +1,4 @@
-#include "ros/ros.h"
+#include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
@@ -9,9 +9,9 @@
 #include <Eigen/Dense>
 #include <iostream>
 // Registration includes
-#include <type_defs.h>
-#include <dual_quaternion_registration.h>
-#include <registration_est_kf_rgbd.h>
+#include "type_defs.h"
+#include "dual_quaternion_registration.h"
+#include "registration_est_kf_rgbd.h"
 using namespace Eigen;
 using namespace std;
 

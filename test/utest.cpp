@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <ros/package.h>
-#include <dual_quaternion_registration.h>
-#include <registration_tools.h>
+#include "dual_quaternion_registration.h"
+#include "registration_tools.h"
 
 
 
