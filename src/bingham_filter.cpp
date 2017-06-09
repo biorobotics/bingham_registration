@@ -114,35 +114,7 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 
 	Matrix4ld tempInv;
 
-	/* An alternate calculation to prevent overflow cases that show up when we
-		 * use dynamically linked library
-		 */
-	if (abs(temp(0, 0)) < pow(10, -300))
-		tempInv = (temp / (pow(10, -300))).inverse()*(pow(10, 300));
-	else if (abs(temp(0, 0)) < pow(10, -250))
-		tempInv = (temp / (pow(10, -250))).inverse()*(pow(10, 250));
-	else if (abs(temp(0, 0)) < pow(10, -200))
-		tempInv = (temp / (pow(10, -200))).inverse()*(pow(10, 200));
-	else if (abs(temp(0, 0)) < pow(10, -150))
-		tempInv = (temp / (pow(10, -150))).inverse()*(pow(10, 150));
-	else if (abs(temp(0, 0)) < pow(10, -100))
-		tempInv = (temp / (pow(10, -100))).inverse()*(pow(10, 100));
-	else if (abs(temp(0, 0)) < pow(10, -50))
-		tempInv = (temp / (pow(10, -50))).inverse()*(pow(10, 50));
-	else if (abs(temp(0, 0)) > pow(10, 300))
-		tempInv = (temp / (pow(10, 300))).inverse()*(pow(10, -300));
-	else if (abs(temp(0, 0)) > pow(10, 250))
-		tempInv = (temp / (pow(10, 250))).inverse()*(pow(10, -250));
-	else if (abs(temp(0, 0)) > pow(10, 200))
-		tempInv = (temp / (pow(10, 200))).inverse()*(pow(10, -200));
-	else if (abs(temp(0, 0)) > pow(10, 150))
-		tempInv = (temp / (pow(10, 150))).inverse()*(pow(10, -150));
-	else if (abs(temp(0, 0)) > pow(10, 100))
-		tempInv = (temp / (pow(10, 100))).inverse()*(pow(10, -100));
-	else if (abs(temp(0, 0)) > pow(10, 50))
-		tempInv = (temp / (pow(10, 50))).inverse()*(pow(10, -50));
-	else
-		tempInv = temp.inverse();
+	tempInv = temp.inverse();
 
 	Matrix4ld Pk = -0.5 * tempInv;
 
