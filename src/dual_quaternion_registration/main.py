@@ -58,6 +58,7 @@ class MyWindow(QtGui.QMainWindow):
     def _readFile(self,filename,color):
         # Takes filename as string and returns polyData
         extension = os.path.splitext(filename)[1]
+        print filename
 
         # Read PLY into vtkPoints
         if extension == ".ply":
