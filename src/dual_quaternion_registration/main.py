@@ -1,8 +1,16 @@
 import sys
 import os
-from PyQt4 import QtGui, uic
 import vtk
-from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+# Which PyQt we use depends on our vtk version. QT4 causes segfaults with vtk > 6
+if(int(vtk.vtkVersion.GetVTKVersion()[0]) >= 6):
+    import PyQt5.QtWidgets as QtGui
+    import PyQt5.uic as uic
+    _QT_VERSION = 5
+    from QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+else:
+    from PyQt4 import QtGui, uic
+    _QT_VERSION = 4
+    from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import numpy as np
 from math import radians, degrees
 from register_txt import register_txt, reg_params_to_transformation_matrix
@@ -43,13 +51,14 @@ class MyWindow(QtGui.QMainWindow):
         self.ren.ResetCamera()
         
         self.vtkFrame.setLayout(self.vl)
-        self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
         self.show()
         self.iren.Initialize()
+        self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
 
     def _readFile(self,filename,color):
         # Takes filename as string and returns polyData
         extension = os.path.splitext(filename)[1]
+        print filename
 
         # Read PLY into vtkPoints
         if extension == ".ply":
@@ -80,7 +89,8 @@ class MyWindow(QtGui.QMainWindow):
                 vertices.InsertCellPoint(i)
 
         else:
-            raise InputError("file must be ply or txt")
+            #raise InputError("file must be ply or txt")
+            pass
 
         # Add all generated data to polydata
         polydata = vtk.vtkPolyData()
@@ -124,6 +134,8 @@ class MyWindow(QtGui.QMainWindow):
     def import_data(self):
         cwd = os.getcwd()
         fname = QtGui.QFileDialog.getOpenFileName(self, "Open file", cwd)
+        if(_QT_VERSION >= 5): # QT5 stores filename in a tuple instead of just a string
+            fname = fname[0]
         fname = str(fname)
         sending_button = str(self.sender().objectName())
         if sending_button == "ptcldMovingButton":
