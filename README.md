@@ -4,6 +4,8 @@ Please download the folder as .zip and extract it on your local machine.
 
 See readme.pdf for instructions on running bingham_registration with GUI
 
+Also check out our video demo at https://youtu.be/kFoTT4B7WLQ
+
 Thank you for trying our GUI out.
 
 We are making this software freely available in the hope that it will be useful to others.  If you use Bingham-filter in your own work for pose estimation, please cite our papers:
