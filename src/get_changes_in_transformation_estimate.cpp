@@ -6,25 +6,7 @@
 
 #include <iostream>
 #include "get_changes_in_transformation_estimate.h"
-
-
-/* eul2quat:
- *		Input: euler angle in vector
- 		Output: quaternion after conversion 
- */
-Quaternionld eul2quat(const Vector3ld& eul) {
-	Array3ld eulHalf = eul.array() / 2;
-
-	Array3ld c = eulHalf.cos();
-	Array3ld s = eulHalf.sin();
-	
-	Quaternionld q;
-	q.w() = c(0) * c(1) * c(2) + s(0) * s(1) * s(2);
-	q.x() = c(0) * c(1) * s(2) - s(0) * s(1) * c(2);
-	q.y() = c(0) * s(1) * c(2) + s(0) * c(1) * s(2);
-	q.z() = s(0) * c(1) * c(2) - c(0) * s(1) * s(2);
-	return q.normalized();
-}
+#include "conversions.h"
 
 /* get_changes_in_transformation_estimate:
  *		Input: pose from last iteration, a record of the poses from earlier iterations

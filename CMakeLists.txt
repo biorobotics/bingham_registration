@@ -60,7 +60,7 @@ endif()
 ## Declare a C++ library
 add_library(bingham_registration MODULE
    src/sort_indexes.cpp
-   src/compute_transformed_points.cpp
+   src/conversions.cpp
    src/kd_tree.cpp
    src/registration_estimation.cpp
    src/get_changes_in_transformation_estimate.cpp
@@ -77,7 +77,7 @@ add_executable(console_registration src/console_registration_main.cpp
                                     src/register_txt_files.cpp
                                     src/sort_indexes.cpp
                                     src/registration_estimation.cpp
-                                    src/compute_transformed_points.cpp
+                                    src/conversions.cpp
                                     src/kd_tree.cpp src/bingham_filter.cpp
                                     src/get_changes_in_transformation_estimate.cpp
 )
@@ -105,7 +105,7 @@ if(catkin_FOUND)
                            src/register_txt_files.cpp 
                            src/sort_indexes.cpp
                            src/registration_estimation.cpp
-                           src/compute_transformed_points.cpp
+                           src/conversions.cpp
                            src/kd_tree.cpp src/bingham_filter.cpp
                            src/get_changes_in_transformation_estimate.cpp)
     target_link_libraries(utest ${catkin_LIBRARIES})
@@ -114,7 +114,7 @@ if(catkin_FOUND)
                                    src/register_txt_files.cpp
                                    src/sort_indexes.cpp
                                    src/registration_estimation.cpp
-                                   src/compute_transformed_points.cpp
+                                   src/conversions.cpp
                                    src/kd_tree.cpp src/bingham_filter.cpp
                                    src/get_changes_in_transformation_estimate.cpp
   )

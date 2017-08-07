@@ -4,7 +4,7 @@
  * 		Return transformed sensed points 
  * 		
  */
-#include "compute_transformed_points.h"
+#include "conversions.h"
 /* eul2rotm:
  *		Input: euler angle in array (for the use of cos, sin function), in ZYX order
  		Output: quaternion after conversion 
@@ -32,6 +32,24 @@ Matrix4ld eul2rotm(const Array3ld& eul) { // ZYX order
 	R(2,1) = st(2) * ct(1);
 	R(2,2) = ct(2) * ct(1);	
 	return R;
+}
+
+/* eul2quat:
+ *		Input: euler angle in vector
+ 		Output: quaternion after conversion 
+ */
+Quaternionld eul2quat(const Vector3ld& eul) {
+	Array3ld eulHalf = eul.array() / 2;
+
+	Array3ld c = eulHalf.cos();
+	Array3ld s = eulHalf.sin();
+	
+	Quaternionld q;
+	q.w() = c(0) * c(1) * c(2) + s(0) * s(1) * s(2);
+	q.x() = c(0) * c(1) * s(2) - s(0) * s(1) * c(2);
+	q.y() = c(0) * s(1) * c(2) + s(0) * c(1) * s(2);
+	q.z() = s(0) * c(1) * c(2) - c(0) * s(1) * s(2);
+	return q.normalized();
 }
 
 /* reg_params_to_transformation_matrix:
@@ -63,22 +81,4 @@ Matrix4ld reg_params_to_transformation_matrix(const ArrayXld& params) {
 	}
 
 	return T;
-}
-
-/* compute_transformed_points:
- *		Input: ptcld moving, Xreg from previous iteration
- 		Output: ptcld moving after being transformed 
- */
-PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& Xreg) {
-	Vector3ld point;
-	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
-	Affine3ld t;
-	t.matrix() = testimated;
-	int numPoints = ptcldMoving.cols();
-	PointCloud ptcldMovingTransformed(3,numPoints);
-	for (int r = 0; r < numPoints; r++) {
-		point = ptcldMoving.col(r);
-		ptcldMovingTransformed.col(r) = t*point;
-	}
-	return ptcldMovingTransformed;
 }

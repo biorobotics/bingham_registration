@@ -13,7 +13,17 @@
 #include <iostream>
 #include "kd_tree.h"
 #include "sort_indexes.h"
-#include "compute_transformed_points.h"
+#include "conversions.h"
+
+/* compute_transformed_points:
+ *		Input: ptcld moving, Xreg from previous iteration
+ 		Output: ptcld moving after being transformed 
+ */
+PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& Xreg) {
+	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
+	Affine3ld t(testimated);
+	return t*ptcldMoving;
+}
 
 /* find_distance:
  * 		Input: two points in Vector3ld type

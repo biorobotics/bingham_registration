@@ -29,7 +29,6 @@
 #include <ctime>
 #include "kd_tree.h"
 #include "bingham_filter.h"
-#include "compute_transformed_points.h"
 #include "get_changes_in_transformation_estimate.h"
 #include "registration_estimation.h"
 #include "type_defs.h"

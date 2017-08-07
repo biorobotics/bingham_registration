@@ -13,13 +13,6 @@ struct DeltaTransform{
 	long double dT;
 };
 
-/* eul2quat:
- *		Input: euler angle in vector
- 		Output: quaternion after conversion 
- */
-Quaternionld eul2quat(const Vector3ld& eul);
-
-
 /* get_changes_in_transformation_estimate:
  *		Input: pose from last iteration, a record of the poses from earlier iterations
  		Output: dR and dT to check wheter to stop the iteration
