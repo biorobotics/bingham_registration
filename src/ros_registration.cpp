@@ -145,7 +145,7 @@ public:
     }
     ptcldFixed = pclToEigen(mesh.cloud) * scale;
 
-    marker.mesh_resource = filePath;
+    marker.mesh_resource = path;
     marker.type = visualization_msgs::Marker::MESH_RESOURCE;
     marker.header.frame_id = "/stereo_camera_frame";
     marker.header.stamp    = ros::Time::now();
@@ -210,9 +210,6 @@ public:
     marker.pose.orientation.y = 0;
     marker.pose.orientation.z = 0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = 1.0;
-    marker.scale.y = 1.0;
-    marker.scale.z = 1.0;
 
     // Find a suitable initial rotation
     if(ptcldMoving.cols() >= 2)
