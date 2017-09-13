@@ -42,18 +42,41 @@ find_package(catkin QUIET COMPONENTS
   sensor_msgs
   tf2
   tf2_ros
+  tf_conversions
   message_generation
   cmake_modules
   pcl_ros
   pcl_conversions
 )
 if(catkin_FOUND)
-#   # Declare that this catkin package's runtime dependencies
-  catkin_package()
   catkin_python_setup()
+
+  # Generate services in the 'srv' folder
+  add_service_files(
+    FILES
+    RegistrationService.srv
+  )
+
+  ## Generate added messages and services with any dependencies listed here
+  generate_messages(
+    DEPENDENCIES
+    std_msgs  
+    geometry_msgs
+    sensor_msgs
+    # and/or other packages containing depended messages
+  )
+
+  # Declare that this catkin package's runtime dependencies
+  catkin_package(
+    CATKIN_DEPENDS message_runtime
+    LIBRARIES bingham_registration
+  )
+
+
   include_directories(
     include ${EIGEN3_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS}
   )
+
 endif()
 
 
@@ -110,6 +133,7 @@ if(catkin_FOUND)
                            src/get_changes_in_transformation_estimate.cpp)
     target_link_libraries(utest ${catkin_LIBRARIES})
   endif()
+
   add_executable(registration_node src/ros_registration.cpp
                                    src/register_txt_files.cpp
                                    src/sort_indexes.cpp
@@ -119,6 +143,7 @@ if(catkin_FOUND)
                                    src/get_changes_in_transformation_estimate.cpp
   )
   target_link_libraries(registration_node ${catkin_LIBRARIES})
+  add_dependencies(registration_node ${PROJECT_NAME}_generate_messages_cpp)
   ## Mark executables and/or libraries for installation
   install(TARGETS bingham_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 endif()
