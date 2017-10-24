@@ -2,18 +2,19 @@
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
-#include <std_msgs/Header.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Bool.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <resource_retriever/retriever.h>
+#include <message_filters/subscriber.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/pcl_config.h>
+#include <pcl/filters/filter.h>
 #include <Eigen/Dense>
 #include <iostream>
-#include <exception>
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
 // Registration includes
@@ -26,13 +27,27 @@ namespace BinghamRegistration
 /* pclToEigen
  *  Converts pcl object to PointCloud (Eigen::Matrix)
  */
+
+void shufflePointCloud(PointCloud &points){
+  Eigen::PermutationMatrix<Eigen::Dynamic,Eigen::Dynamic> perm(points.cols());
+  perm.setIdentity();
+  std::random_shuffle(perm.indices().data(), perm.indices().data()+perm.indices().size());
+  points = points * perm; // permute columns
+}
+
 PointCloud pclToEigen(const pcl::PCLPointCloud2& input)
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromPCLPointCloud2(input, *cloudPtr);
-  Eigen::MatrixXf mat = cloudPtr->getMatrixXfMap(3,4,0); // Get just XYZ point
+  // Filter out NaNs
+  std::vector<int> indices;
+  pcl::removeNaNFromPointCloud (*cloudPtr, *cloudPtr, indices);
+  // Get just XYZ point
+  Eigen::MatrixXf mat = cloudPtr->getMatrixXfMap(3,4,0);
   PointCloud points(3,mat.cols());
   points << mat.cast<long double>();
+  // Randomize points
+  shufflePointCloud(points);
   return points;
 }
 
@@ -77,9 +92,11 @@ private:
   PointCloud ptcldTransformed;
   Affine3ld lastTransform;
   double lastError = 1;
-  visualization_msgs::Marker marker;
+  visualization_msgs::Marker markerMsg;
+  ros::Publisher markerPub;
+  geometry_msgs::PoseStamped poseMsg;
   ros::Publisher posePub;
-  ros::Subscriber cloud_sub;
+  message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub;
   ros::Subscriber reset_sub;
   ros::Subscriber active_sub;
   bool active = false;
@@ -92,9 +109,10 @@ public:
   {
     reset();
     loadMesh(stlPath, stlScale);
-    posePub = nh.advertise<visualization_msgs::Marker>("registration_marker", 5);
+    markerPub = nh.advertise<visualization_msgs::Marker>("registration_marker", 5);
+    posePub = nh.advertise<geometry_msgs::PoseStamped>("registration_pose", 5);
     // Create a ROS subscriber for the input point cloud
-    cloud_sub = nh.subscribe ("point_cloud", 1, &RosRegistration::cloudCB, this);
+    cloud_sub.registerCallback(&RosRegistration::cloudCB, this);
     reset_sub = nh.subscribe ("registration/reset", 10, &RosRegistration::resetCB, this);
     active_sub = nh.subscribe ("registration/toggle", 10, &RosRegistration::activeCB, this);
   }
@@ -132,40 +150,40 @@ public:
 
   void loadMesh(const std::string& path, const double& scale)
   {
-    // Exit if stl_path parameter not set
+    // Exit if mesh_path parameter not set
     // Load in STL file into the ptcldFixed variable
 
     std::string filePath = cleanResourcePath(path);
-    std::cout << "Loading stl from " << filePath << std::endl << std::endl;
+    std::cout << "Loading mesh from " << filePath << std::endl << std::endl;
 
     pcl::PolygonMesh mesh;
-    if (pcl::io::loadPolygonFileSTL(filePath, mesh) == 0)
+    if (pcl::io::loadPolygonFile(filePath, mesh) == 0)
     {
-      PCL_ERROR("Failed to load STL file\n");
+      PCL_ERROR("Failed to load mesh file\n");
     }
     ptcldFixed = pclToEigen(mesh.cloud) * scale;
-
-    marker.mesh_resource = path;
-    marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker.header.frame_id = "/stereo_camera_frame";
-    marker.header.stamp    = ros::Time::now();
-    marker.id = 0;
-    marker.type = 10; // mesh resource
-    marker.action = 0;
-    marker.color.r = 0;
-    marker.color.g = 1.0;
-    marker.color.b = 0;
-    marker.color.a = 1.0;
-    marker.scale.x = scale;
-    marker.scale.y = scale;
-    marker.scale.z = scale;
+    shufflePointCloud(ptcldFixed);
+    // HACK BECAUSE RVIZ DOESN'T USE OBJ
+    size_t idx = path.rfind('.', path.length());
+    std::string stlPath = path.substr(0, idx) + ".stl";
+    markerMsg.mesh_resource = stlPath;
+    markerMsg.type = visualization_msgs::Marker::MESH_RESOURCE;
+    markerMsg.header.frame_id = "/stereo_camera_frame";
+    markerMsg.header.stamp    = ros::Time::now();
+    markerMsg.id = 0;
+    markerMsg.type = 10; // mesh resource
+    markerMsg.action = 0;
+    markerMsg.color.r = 0;
+    markerMsg.color.g = 1.0;
+    markerMsg.color.b = 0;
+    markerMsg.color.a = 1.0;
+    markerMsg.scale.x = scale;
+    markerMsg.scale.y = scale;
+    markerMsg.scale.z = scale;
   }
 
   void cloudCB(const boost::shared_ptr<const sensor_msgs::PointCloud2>& cloud_msg)
   {
-    if(!active)
-      return;
-
     // Container for original & filtered data
     pcl::PCLPointCloud2 pcl_pc2;
     pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
@@ -182,6 +200,9 @@ public:
 
   void activeCB(const std_msgs::Bool::ConstPtr& msg){
     active = msg->data;
+    if(active) cloud_sub.subscribe(nh,"point_cloud", 1);
+    else cloud_sub.unsubscribe();
+
   }
 
   void update()
@@ -194,8 +215,12 @@ public:
                                                          1, 100, 20, .00001, .00001, uncertainty);
     lastError = result.error;
     lastTransform = affineFromXreg(result.Xreg).inverse() * lastTransform;
-    setMarkerPose(lastTransform, marker);
-    posePub.publish(marker);
+    setMarkerPose(lastTransform, markerMsg);
+    poseMsg.header.stamp = markerMsg.header.stamp;
+    poseMsg.header.frame_id = markerMsg.header.frame_id;
+    poseMsg.pose = markerMsg.pose;
+    markerPub.publish(markerMsg);
+    posePub.publish(poseMsg);
   }
 
   void reset()
@@ -203,13 +228,13 @@ public:
     lastTransform = Affine3ld::Identity();
     lastTransform.translate(Vector3ld(0, 0, 1));
     lastError = 1;
-    marker.pose.position.x = 0;
-    marker.pose.position.y = 0;
-    marker.pose.position.z = 0;
-    marker.pose.orientation.x = 0;
-    marker.pose.orientation.y = 0;
-    marker.pose.orientation.z = 0;
-    marker.pose.orientation.w = 1.0;
+    markerMsg.pose.position.x = 0;
+    markerMsg.pose.position.y = 0;
+    markerMsg.pose.position.z = 0;
+    markerMsg.pose.orientation.x = 0;
+    markerMsg.pose.orientation.y = 0;
+    markerMsg.pose.orientation.z = 0;
+    markerMsg.pose.orientation.w = 1.0;
 
     // Find a suitable initial rotation
     if(ptcldMoving.cols() >= 2)
@@ -273,17 +298,17 @@ main (int argc, char** argv)
 
   ros::NodeHandle np("~");
   std::string stlPath;
-  if(!np.getParam("stl_path", stlPath))
+  if(!np.getParam("mesh_path", stlPath))
   {
-    ROS_FATAL( "%s parameter stl_path not set. Exiting.",
+    ROS_FATAL( "%s parameter mesh_path not set. Exiting.",
                ros::this_node::getName().c_str() );
     exit(1);
   }
 
   double stlScale;
-  if(!np.getParam("stl_scale", stlScale))
+  if(!np.getParam("mesh_scale", stlScale))
   {
-    ROS_WARN("%s parameter stl_scale not set. Using default of 1",
+    ROS_WARN("%s parameter mesh_scale not set. Using default of 1",
              ros::this_node::getName().c_str());
   }
 

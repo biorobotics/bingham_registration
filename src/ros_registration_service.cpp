@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <std_msgs/Header.h>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Bool.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
@@ -23,31 +23,34 @@ PointCloud pclToEigen(const pcl::PCLPointCloud2& input)
   return points;
 }
 
-Affine3ld poseMsgToEigen(const geometry_msgs::Pose &msg){
+Affine3ld poseMsgToEigen(const geometry_msgs::PoseStamped &msg){
   Affine3ld tEigen;
   // // Set rotation
-  Quaternionld quat = Quaternionld( msg.orientation.x,
-                                    msg.orientation.y,
-                                    msg.orientation.z,
-                                    msg.orientation.w );
+  Quaternionld quat = Quaternionld( msg.pose.orientation.x,
+                                    msg.pose.orientation.y,
+                                    msg.pose.orientation.z,
+                                    msg.pose.orientation.w );
   tEigen.rotate(quat);
   // Set position
-  tEigen.translate(Vector3ld( msg.position.x, msg.position.y, msg.position.z ));
+  tEigen.translate(Vector3ld( msg.pose.position.x,
+                              msg.pose.position.y,
+                              msg.pose.position.z ));
   return tEigen;
 }
 
 geometry_msgs::Pose eigenToPoseMsg(const Affine3ld &tEigen){
   geometry_msgs::Pose msg;
   // Set position
-  msg.position.x = tEigen.translation().x();
-  msg.position.y = tEigen.translation().y();
-  msg.position.z = tEigen.translation().z();
+  msg.pose.position.x = tEigen.translation().x();
+  msg.pose.position.y = tEigen.translation().y();
+  msg.pose.position.z = tEigen.translation().z();
   // Set rotation
   Quaternionld quat = Quaternionld(tEigen.rotation());
-  msg.orientation.x = quat.x();
-  msg.orientation.y = quat.y();
-  msg.orientation.z = quat.z();
-  msg.orientation.w = quat.w();
+  msg.pose.orientation.x = quat.x();
+  msg.pose.orientation.y = quat.y();
+  msg.pose.orientation.z = quat.z();
+  msg.pose.orientation.w = quat.w();
+  msg.pose.header.stamp = ros::Time::now();
   return msg;
 }
 
