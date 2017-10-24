@@ -81,7 +81,7 @@ endif()
 
 
 ## Declare a C++ library
-add_library(bingham_registration MODULE
+add_library(${PROJECT_NAME} MODULE
    src/sort_indexes.cpp
    src/conversions.cpp
    src/kd_tree.cpp
@@ -92,7 +92,7 @@ add_library(bingham_registration MODULE
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(bingham_registration ${EIGEN3_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${EIGEN3_LIBRARIES})
 
 ## Declare a C++ executable
 
@@ -118,9 +118,8 @@ ENDIF()
 set_target_properties(bingham_registration PROPERTIES SKIP_BUILD_RPATH TRUE)
 set_target_properties(bingham_registration PROPERTIES PREFIX "lib")
 # Install the library in 'precompiled_clibs' so that the python GUI can find it
-SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs)
 
-install(TARGETS bingham_registration DESTINATION ${LIBRARY_OUTPUT_PATH})
+install(TARGETS bingham_registration DESTINATION ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs)
 
 if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
@@ -133,6 +132,8 @@ if(catkin_FOUND)
                            src/get_changes_in_transformation_estimate.cpp)
     target_link_libraries(utest ${catkin_LIBRARIES})
   endif()
+
+  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
   add_executable(registration_node src/ros_registration.cpp
                                    src/register_txt_files.cpp
