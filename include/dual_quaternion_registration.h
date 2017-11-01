@@ -5,9 +5,9 @@
 	#else
 		#define EXPORT extern "C"
 	#endif
-	EXPORT long double* qf_register(char const * movingData, char const * fixedData,
-									double inlierRatio, int maxIterations, int windowSize,
-									double toleranceT, double toleranceR);
+	EXPORT long double* combined_register(int registerOption, char const * movingData, char const * fixedData,
+		double inlierRatio, int maxIterations, int windowSize,
+		double toleranceT, double toleranceR, double uncertaintyR);
 
 	int main(int argc, char *argv[]);
 #endif

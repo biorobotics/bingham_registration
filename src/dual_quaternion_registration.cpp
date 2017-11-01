@@ -24,16 +24,15 @@ const int MAX_CHARS_PER_LINE = 512;
 const int MAX_TOKENS_PER_LINE = 20;
 const char* const DELIMITER = " ";
 
-const int NUM_OF_RUNS = 10; // # of runs to run the registration for average performance
+const int NUM_OF_RUNS = 1; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
 long double* qf_register(char const * movingData, char const * fixedData, 
                          double inlierRatio, int maxIterations, int windowSize,
-                         double toleranceT, double toleranceR) {
+                         double toleranceT, double toleranceR, double uncertaintyR) {
 
-    long double* returnArray = new long double[6];
+    long double* returnArray = new long double[7];
 
-    cout << &movingData << endl;
     char const * movingPointsString = movingData;
     char const * fixedPointsString = fixedData;
     char const * movingNormalsString = "";
@@ -46,9 +45,6 @@ long double* qf_register(char const * movingData, char const * fixedData,
     ifstream CADNormalFile;  // stream for normal fixed
 
     int useNormal = 0;
-
-    cout << "\nStatic point cloud: " << fixedPointsString << "\nMoving point cloud: " 
-    << movingPointsString << endl;
     
     sensedFile.open(movingPointsString, ifstream::in);
     CADFile.open(fixedPointsString, ifstream::in);
@@ -144,7 +140,8 @@ long double* qf_register(char const * movingData, char const * fixedData,
         ptcldFixed.col(i) = pointVector[i];
     
     pointVector.clear();
-
+    PointCloud normalMoving;
+    PointCloud normalFixed;
     /*** The following registration is performed when normals are used ***/
     if (useNormal) {
         // Read sensedNormalFIle into normalMoving
@@ -176,7 +173,7 @@ long double* qf_register(char const * movingData, char const * fixedData,
             pointVector.push_back(temp);
         }
 
-        PointCloud normalMoving(3, pointVector.size());
+        normalMoving = PointCloud(3, pointVector.size());
 
         for(int i=0; i<pointVector.size(); i++)
             normalMoving.col(i) = pointVector[i];
@@ -212,7 +209,7 @@ long double* qf_register(char const * movingData, char const * fixedData,
             pointVector.push_back(temp);
         }
 
-        PointCloud normalFixed(3, pointVector.size());
+        normalFixed = PointCloud(3, pointVector.size());
 
         for(int i=0; i<pointVector.size(); i++)
             normalFixed.col(i) = pointVector[i];
@@ -220,79 +217,52 @@ long double* qf_register(char const * movingData, char const * fixedData,
         pointVector.clear();
         sensedNormalFile.close();
         CADNormalFile.close();
-
-        // Force the memory to be freed
-        pointVector.shrink_to_fit();
-        
-        sensedFile.close();
-        CADFile.close();
-        
-        // For timing and outputing data purpose
-        double timeSum = 0;
-        ofstream myFile;
-        myFile.open("result_normal.txt");
-        struct RegistrationResult *result;
-        for (int i = 0; i < NUM_OF_RUNS; i++) {
-            clock_t begin = clock();    // For timing the performance
-
-            // Run the registration function with normals
-            result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
-                                                     &normalMoving, &normalFixed,
-													 inlierRatio,maxIterations,
-													 windowSize,toleranceT,toleranceR);
-            clock_t end = clock();
-            double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-            timeSum += elapsed_secs;
-        
-            cout << "Xreg:" << endl << result->Xreg.transpose() << endl << endl;
-            cout << "Xregsave:" << endl << result->Xregsave.transpose() << endl;
-            
-            // For pose recording, just record the answer from one run
-            if (i == 9)
-            {
-                myFile << "Xreg:" << endl << result->Xreg.transpose() << endl << endl;
-                myFile << "Xregsave:" << endl << result->Xregsave.transpose() 
-                       << endl << endl;
-            }
-        }
-        cout << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
-            << " seconds." << endl << endl;
-        myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
-            << " seconds." << endl;
-        myFile.close();
-        Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
-        return returnArray;
     }
 
     /*** The following registration is performed when normals are not used ***/
+    // Force the memory to be freed
     pointVector.shrink_to_fit();
     
     sensedFile.close();
     CADFile.close();
     
     double timeSum = 0;
-    ofstream myFile;
     struct RegistrationResult *result;
-    myFile.open("result_no_normal.txt");
-
+    for (int i = 0; i < NUM_OF_RUNS; i++) {
         clock_t begin = clock();    // For timing the performance
 
-        // Run the registration function without normals
-        result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
-                                                  inlierRatio, maxIterations, windowSize,
-                                                  toleranceT, toleranceR);
+        if (useNormal) {
+            // Run the registration function with normals
+            result = registration_est_bingham_normal(&ptcldMoving, &ptcldFixed, 
+                                                     &normalMoving, &normalFixed,
+                                                     inlierRatio, maxIterations,
+                                                     windowSize, toleranceT,
+                                                     toleranceR, uncertaintyR);
+        }
+        else {
+            // Run the registration function without normals
+            result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
+                                                      inlierRatio, maxIterations, windowSize,
+                                                      toleranceT, toleranceR, uncertaintyR);
+        }
+
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    
-        cout << "Xreg:" << endl << result->Xreg.transpose() << endl << endl;
-        cout << "Xregsave:" << endl << result->Xregsave.transpose() << endl;
-
-    cout << "Registration runtime is: " << elapsed_secs
-                                                << " seconds." << endl << endl;
-    myFile << "Registration runtime is: " << elapsed_secs
-                                                  << " seconds." << endl;
+        timeSum += elapsed_secs;
+    }
+    // Save results to txt
+    ofstream myFile;
+    myFile.open("result.txt");
+    myFile << "Xreg:" << endl << result->Xreg.transpose() << endl << endl;
+    myFile << "Xregsave:" << endl << result->Xregsave.transpose() 
+                          << endl << endl;
+    myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
+           << " seconds." << endl;
+    myFile << "Average Registration error:" << result->error << endl;
     myFile.close();
-	Eigen::Map<Eigen::Matrix<long double, 6, 1>>(returnArray,6,1) = result->Xreg;
+
+	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result->Xreg;
+    returnArray[6] = result->error;
     return returnArray;
 }
 
@@ -375,6 +345,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
-	double toleranceT = 0.001; double toleranceR = 0.009;
-	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR);
+	double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
+	qf_register(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
 }
