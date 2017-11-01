@@ -5,7 +5,7 @@
 	#else
 		#define EXPORT extern "C"
 	#endif
-	EXPORT long double* combined_register(int registerOption, char const * providedTable, char const * movingData, char const * fixedData, char const * saveDest, char const * table,
+	EXPORT long double* combined_register(int registerOption, char const * providedTable, char const * tableDest, char const * movingData, char const * fixedData, char const * saveDest, char const * table,
 									double inlierRatio, int maxIterations, int windowSize,
 									double toleranceT, double toleranceR, double uncertaintyR);
 

@@ -61,7 +61,8 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
                                                      double toleranceR,
                                                      double uncertaintyR,
                                                      int registerOption,
-                                                     PointCloud *tableProvided){
+                                                     PointCloud *tableProvided,
+                                                     const char *tableDest){
     
     if ((*ptcldMoving).rows() != DIMENSION || (*ptcldFixed).rows() != DIMENSION)
         call_error("Invalid point dimension");
@@ -117,7 +118,12 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
             clock_t end = clock();
             double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
             ofstream myFile;
-            myFile.open("../tables/Table.txt");
+            if ( tableDest == "") {
+                myFile.open("../tables/Table.txt");
+            }
+            else{
+                myFile.open(tableDest);
+            }
             IOFormat tableFormat(FullPrecision);
             myFile << "Build time: " << elapsed_secs << " seconds." << endl;
             myFile << filledTable.transpose().format(tableFormat) << endl;

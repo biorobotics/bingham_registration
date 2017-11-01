@@ -28,7 +28,7 @@ const char* const DELIMITER = " ";
 const int NUM_OF_RUNS = 1; // # of runs to run the registration for average performance
 
 // Should at least provide the two ptcld datasets
-long double* combined_register(int registerOption, char const * providedTable, char const * movingData, char const * fixedData, char const * saveDest, 
+long double* combined_register(int registerOption, char const * providedTable, char const * tableDest, char const * movingData, char const * fixedData, char const * saveDest, 
                          double inlierRatio, int maxIterations, int windowSize,
                          double toleranceT, double toleranceR, double uncertaintyR) {
 
@@ -60,11 +60,11 @@ long double* combined_register(int registerOption, char const * providedTable, c
         return returnArray; // exit if file not found
     } 
 
-    if (!tableFile.good()) {
+    if (registerOption != 0 && !tableFile.good()) {
         cout << "Table " << tableString << " not found. Will generate new table for this registration" 
         << "\n";
     }
-    else {
+    else if (registerOption != 0) {
         cout << "Table " << tableString << " provided for this registration" 
         << "\n";
         useTable = 1;
@@ -295,7 +295,7 @@ long double* combined_register(int registerOption, char const * providedTable, c
 			printf("Bingham Registration starts with kdtree structure\n");
 			result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
 				inlierRatio, maxIterations, windowSize,
-				toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided);
+				toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided, tableDest);
             printf("Bingham Registration finished\n");
 
 		}
@@ -303,14 +303,14 @@ long double* combined_register(int registerOption, char const * providedTable, c
 			printf("Bingham Registration starts with new table structure\n");
             result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
                 inlierRatio, maxIterations, windowSize,
-                toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided);
+                toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided, tableDest);
             printf("Bingham Registration finished\n");
 		}
         else if (registerOption == 2) {
             printf("Bingham Registration starts with provided table structure\n");
             result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
                 inlierRatio, maxIterations, windowSize,
-                toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided);
+                toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided, tableDest);
             printf("Bingham Registration finished\n");
         }
 		else {
@@ -339,6 +339,7 @@ int main(int argc, char *argv[]) {
     string movingNormalsString;
     string fixedNormalsString;
     string providedTableString = "";
+    string saveTableString = "";
     int useNormal = 0;
     int methodNum = 0;
     int normalFileProvided = 0;
@@ -426,7 +427,18 @@ int main(int argc, char *argv[]) {
                 useNormal = 1;
                 normalFileProvided++;
             } else { // If there was no argument to the destination option.
-                std::cerr << "-nm option requires filepath for moving normals." 
+                std::cerr << "-nf option requires filepath for moving normals." 
+                << std::endl;
+                return 1;
+            }
+        }
+        // Save table to the directory
+        else if (arg == "-td") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++; // Increment 'i' so we don't get the argument as the next argv[i].
+                saveTableString = argv[i];
+            } else { // If there was no argument to the destination option.
+                std::cerr << "-td option requires destination to save table." 
                 << std::endl;
                 return 1;
             }
@@ -455,5 +467,5 @@ int main(int argc, char *argv[]) {
 	int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
 	double toleranceT = 0.0001; double toleranceR = 0.009; double uncertainty = 300.0;
 	// By default 1 is bingham_register
-	combined_register(methodNum, providedTableString.c_str(), movingPointsString.c_str(), fixedPointsString.c_str(), saveDestString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+	combined_register(methodNum, providedTableString.c_str(), saveTableString.c_str(), movingPointsString.c_str(), fixedPointsString.c_str(), saveDestString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
 }

@@ -13,6 +13,6 @@ struct RegistrationResult{
 extern "C" struct RegistrationResult *registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving, PointCloud *ptcldFixed,
                                                                        double inlierRatio, int maxIterations, int minIterations, int windowSize,
                                                                        double toleranceT, double toleranceR,
-                                                                       double uncertaintyR int registerOption, PointCloud *providedTable);
+                                                                       double uncertaintyR int registerOption, PointCloud *providedTable, const char *tableDest);
 
 #endif

@@ -1,0 +1,10 @@
+Under build folder, do:
+
+Example code:
+./registration -pm "../data/lucyTargetNoisy.txt" -pf "../data/ptcld_fixed_1.txt" -mt 1 -sd "../result/Result.txt" -td "../tables/Table1.txt"
+
+-pm requires a directory/fileName of your moving point cloud
+-pf requires a directory/fileName of your fixed point cloud
+-mt requires a registration method. 0 = kdtree, 1 = new table, 2 = use provided table
+-sd requires a directory/fileName for where to save your result
+-td requires a directory/fileName for where to save your table
