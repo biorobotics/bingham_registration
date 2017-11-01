@@ -119,7 +119,7 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
             ofstream myFile;
             myFile.open("../tables/Table.txt");
             IOFormat tableFormat(FullPrecision);
-            myFile << "Build time: " << elapsed_secs << " seconds." << endl << endl;
+            myFile << "Build time: " << elapsed_secs << " seconds." << endl;
             myFile << filledTable.transpose().format(tableFormat) << endl;
             myFile.close();
             cout << "Table exported, dimension: " << tableDim << endl;

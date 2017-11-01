@@ -89,6 +89,10 @@ long double* combined_register(int registerOption, char const * providedTable, c
 
     PointCloud *tableProvided = (PointCloud*)malloc(sizeof(PointCloud));
     if (useTable) {
+        if (!tableFile.eof()) {
+            char buf[MAX_CHARS_PER_LINE];
+            tableFile.getline(buf, MAX_CHARS_PER_LINE);
+        }
         // read tableFile into tableProvided
         while (!tableFile.eof()) {
             // read an entire line into memory
@@ -304,7 +308,7 @@ long double* combined_register(int registerOption, char const * providedTable, c
 		}
         else if (registerOption == 2) {
             printf("Bingham Registration starts with provided table structure\n");
-            result = registration_est_bingham_kf_rgbd(&ptRcldMoving, &ptcldFixed,
+            result = registration_est_bingham_kf_rgbd(&ptcldMoving, &ptcldFixed,
                 inlierRatio, maxIterations, windowSize,
                 toleranceT, toleranceR, uncertaintyR, registerOption, tableProvided);
             printf("Bingham Registration finished\n");
