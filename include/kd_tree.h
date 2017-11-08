@@ -69,6 +69,12 @@ KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T,
 								 const PointCloud& normalMoving, const PointCloud& normalFixed);
 
 
+KDTree tree_from_point_cloud(const PointCloud& ptcld);
+
+long count_leaves(const KDTree& T);
+
+KDTree copy_tree(const KDTree& T);
+
 // This function frees the tree
 void free_tree(const KDTree& T);
 

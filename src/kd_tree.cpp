@@ -25,6 +25,15 @@ PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const Array
 	return t*ptcldMoving;
 }
 
+KDTree tree_from_point_cloud(const PointCloud& ptcld) {
+	KDTree cloudTree = NULL;
+    int size = ptcld.cols();
+    // Construct the kdtree from ptcldFixed
+    for (int i = 0; i < size; i++) 
+        insert(ptcld.col(i), i, &cloudTree);
+    return cloudTree;
+}
+
 /* find_distance:
  * 		Input: two points in Vector3ld type
  *      Return: distance between two points
@@ -47,7 +56,7 @@ void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
 
 	if (*T == NULL)
 	{
-		*T = (KDTree)malloc(sizeof(struct KDNode));
+		*T = new KDNode();
 		if (*T == NULL){
 			std::cerr << "Malloc failed in insert_helper";
 			exit(1);
@@ -87,11 +96,13 @@ void insert(const Vector3ld& point, int index, KDTree *T) {
  */
 void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, const KDTree& bestN, 
 						 long double *bestDistance) {
+
 	long double distance, diff;
 	// If reaches the leaf of the tree, end search
 	if (T == NULL)
 		return;
-	
+
+
 	distance = find_distance(T->value, target);
 	diff = (T->value)(level) - target(level);
 	
@@ -118,7 +129,7 @@ void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, co
  		Return: The sub-tree whose node is the best match
  */
 KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
-	KDNode *bestN = (KDNode*)malloc(sizeof(KDNode));
+	KDNode *bestN = new KDNode();
 	
 	if (!bestN){
 		std::cerr << "Malloc failed in find_nearest";
@@ -194,7 +205,6 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
 	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result.pr = filtered_resultTargets;
 	result.res = totalDistance / inlierSize;
-
 	return result;
 }
 
@@ -297,6 +307,34 @@ KDNormalResult kd_search_normals(const PointCloud& targets, const KDTree& T,
 	result.resNormals = totalNormalDistance / inlierSize;
 
 	return result;
+}
+
+long count_leaves(const KDTree& T) {
+	if(!T){
+		return 0;
+	}
+	long count = 1;
+	count += count_leaves(T->left);
+	count += count_leaves(T->right);
+	return count;
+}
+
+KDTree copy_tree(const KDTree& K) {
+	if(!K){
+		return NULL;
+	}
+	KDNode *T = new KDNode();
+	if (T == NULL){
+		std::cerr << "Malloc failed in insert_helper";
+		exit(1);
+	}
+	T->left = copy_tree(K->left);
+	T->right = copy_tree(K->right);
+	(T->value)(0) = (K->value)(0);
+	(T->value)(1) = (K->value)(1);
+	(T->value)(2) = (K->value)(2);
+	T->index = K->index;
+	return T;
 }
 
 // This function frees the tree
