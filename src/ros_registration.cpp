@@ -20,6 +20,7 @@
 // Registration includes
 #include "type_defs.h"
 #include "registration_estimation.h"
+#include "kd_tree.h"
 #include "conversions.h"
 
 namespace BinghamRegistration
@@ -87,9 +88,15 @@ class RosRegistration
 {
 
 private:
+  double inlier_ratio = 1;
+  int iterations = 100;
+  int window_size = 20;
+  double tolerance_t = 0.00001;
+  double tolerance_r = 0.00001;
   PointCloud ptcldFixed;
   PointCloud ptcldMoving;
   PointCloud ptcldTransformed;
+  KDTree fixedKDTree = NULL;;
   Affine3ld lastTransform;
   double lastError = 1;
   visualization_msgs::Marker markerMsg;
@@ -107,6 +114,13 @@ public:
 
   RosRegistration(const std::string& stlPath, const double& stlScale)
   {
+    ros::NodeHandle np("~");
+    // Get bingham registration parameters
+    np.getParam("inlier_ratio", inlier_ratio);
+    np.getParam("iterations", iterations);
+    np.getParam("window_size", window_size);
+    np.getParam("tolerance_t", tolerance_t);
+    np.getParam("tolerance_r", tolerance_r);
     reset();
     loadMesh(stlPath, stlScale);
     markerPub = nh.advertise<visualization_msgs::Marker>("registration_marker", 5);
@@ -163,6 +177,11 @@ public:
     }
     ptcldFixed = pclToEigen(mesh.cloud) * scale;
     shufflePointCloud(ptcldFixed);
+
+    free_tree(fixedKDTree);
+    fixedKDTree = NULL;
+    fixedKDTree = tree_from_point_cloud(ptcldFixed);
+
     // HACK BECAUSE RVIZ DOESN'T USE OBJ
     size_t idx = path.rfind('.', path.length());
     std::string stlPath = path.substr(0, idx) + ".stl";
@@ -207,15 +226,19 @@ public:
 
   void update()
   {
-    ptcldTransformed = lastTransform*ptcldFixed;
+    ptcldTransformed = lastTransform*ptcldMoving;
     // Add uncertainty
     double uncertainty = 10*std::min(1.0,lastError);
     // Run the registration function without normals
-    RegistrationResult result = registration_est_kf_rgbd(&ptcldMoving, &ptcldTransformed,
-                                                         1, 100, 20, .00001, .00001, uncertainty);
+    ROS_WARN(std::to_string(sizeof(fixedKDTree)).c_str());
+    RegistrationResult result = registration_est_kf_rgbd(ptcldTransformed, ptcldFixed,
+                                                         inlier_ratio, iterations, 
+                                                         window_size, tolerance_t,
+                                                         tolerance_r, uncertainty,
+                                                         fixedKDTree);
     lastError = result.error;
-    lastTransform = affineFromXreg(result.Xreg).inverse() * lastTransform;
-    setMarkerPose(lastTransform, markerMsg);
+    lastTransform = affineFromXreg(result.Xreg) * lastTransform;
+    setMarkerPose(lastTransform.inverse(), markerMsg);
     poseMsg.header.stamp = markerMsg.header.stamp;
     poseMsg.header.frame_id = markerMsg.header.frame_id;
     poseMsg.pose = markerMsg.pose;
@@ -235,6 +258,14 @@ public:
     markerMsg.pose.orientation.y = 0;
     markerMsg.pose.orientation.z = 0;
     markerMsg.pose.orientation.w = 1.0;
+
+    // Wait for a point cloud
+    double secs = ros::Time::now().toSec();
+    ros::Rate r(100); // 10 hz
+    while(ptcldMoving.cols() < 2 && ros::Time::now().toSec() - secs < .5){
+      ros::spinOnce();
+      r.sleep();
+    }
 
     // Find a suitable initial rotation
     if(ptcldMoving.cols() >= 2)
@@ -312,7 +343,8 @@ main (int argc, char** argv)
              ros::this_node::getName().c_str());
   }
 
-  BinghamRegistration::RosRegistration registration(stlPath, stlScale);
+  BinghamRegistration::RosRegistration registration(stlPath,
+                                                    stlScale);
 
   // Spin
   ros::spin ();

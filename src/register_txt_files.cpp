@@ -120,15 +120,15 @@ long double* register_txt(char const * movingData, char const * fixedData,
 
         if (useNormal) {
             // Run the registration function with normals
-            result = registration_est_normal(&ptcldMoving, &ptcldFixed, 
-                                             &normalMoving, &normalFixed,
+            result = registration_est_normal(ptcldMoving, ptcldFixed, 
+                                             normalMoving, normalFixed,
                                              inlierRatio, maxIterations,
                                              windowSize, toleranceT,
                                              toleranceR, uncertaintyR);
         }
         else {
             // Run the registration function without normals
-            result = registration_est_kf_rgbd(&ptcldMoving, &ptcldFixed,
+            result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed,
                                               inlierRatio, maxIterations, windowSize,
                                               toleranceT, toleranceR, uncertaintyR);
         }

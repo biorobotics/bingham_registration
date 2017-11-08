@@ -47,43 +47,46 @@
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-RegistrationResult registration_est_kf_rgbd(PointCloud *ptcldMoving, 
-                                                     PointCloud *ptcldFixed,
-                                                     double inlierRatio,
-                                                     int maxIterations,
-                                                     int windowSize,
-                                                     double toleranceT,
-                                                     double toleranceR,
-                                                     double uncertaintyR){
+RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving, 
+                                            const PointCloud& ptcldFixed,
+                                            double inlierRatio,
+                                            int maxIterations,
+                                            int windowSize,
+                                            double toleranceT,
+                                            double toleranceR,
+                                            double uncertaintyR,
+                                            KDTree tree){
     
-    if ((*ptcldMoving).rows() != DIMENSION ||
-        (*ptcldFixed).rows() != DIMENSION) {
+
+    if (ptcldMoving.rows() != DIMENSION ||
+        ptcldFixed.rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
     }
-    
+
     //************ Initialization **************
     RegistrationResult result;
 
-    int sizePtcldMoving = (*ptcldMoving).cols();
-    int sizePtcldFixed = (*ptcldFixed).cols();
-
-    KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
+    int sizePtcldMoving = ptcldMoving.cols();
+    
     Eigen::Vector2d tolerance;
     tolerance << toleranceT , toleranceR;
 
-    // Construct the kdtree from ptcldFixed
-    for (int i = 0; i < sizePtcldFixed; i++) 
-        insert((*ptcldFixed).col(i), i, &cloudTree);
-
-    //int windowSize = sizePtcldMoving / WINDOW_RATIO;
+    KDTree cloudTree;
+    if(!tree){
+        // Generate kd tree from fixed cloud if none was provided
+        cloudTree = tree_from_point_cloud(ptcldFixed);
+    } else{
+        // Otherwise use the one provided
+        cloudTree = copy_tree(tree);
+    }
 
     VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
 
     // Xregsave.row(0) saves the initialized value. The Xreg output from each
     // iteration is stored there (dimension (maxIterations + 1) x 6)
     
-    MatrixXld Xregsave = MatrixXld::Zero(6,maxIterations + 1); //Xregsave: 6xn
+    MatrixXld Xregsave = MatrixXld::Zero(6, maxIterations + 1); //Xregsave: 6xn
 
     //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
     
@@ -111,7 +114,7 @@ RegistrationResult registration_est_kf_rgbd(PointCloud *ptcldMoving,
         for (int r = windowSize * (iOffset); r < windowSize * i; r++) {
             int rOffset = r - windowSize * (iOffset);
             for (int n = 0; n < 3; n++) 
-                targets(n,rOffset) = (*ptcldMoving)(n, r);
+                targets(n,rOffset) = ptcldMoving(n, r);
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
@@ -193,7 +196,6 @@ RegistrationResult registration_est_kf_rgbd(PointCloud *ptcldMoving,
             break;  // Break out of loop if convergence met
         }
     }
-
     free_tree(cloudTree);
     result.Xreg = Xreg;
     result.Xregsave = Xregsave;
@@ -212,36 +214,39 @@ RegistrationResult registration_est_kf_rgbd(PointCloud *ptcldMoving,
             normalMoving (3xn) is one set of normal data. This will represent the sensed normals
             normalFixed (3xn) is another set of point normal data. This will represent CAD model normals 
  */
-RegistrationResult registration_est_normal(PointCloud *ptcldMoving, 
-                                           PointCloud *ptcldFixed,
-                                           PointCloud *normalMoving, 
-                                           PointCloud *normalFixed,
+RegistrationResult registration_est_normal(const PointCloud& ptcldMoving, 
+                                           const PointCloud& ptcldFixed,
+                                           const PointCloud& normalMoving, 
+                                           const PointCloud& normalFixed,
                                            double inlierRatio,
                                            int maxIterations,
                                            int windowSize,
                                            double toleranceT,
                                            double toleranceR,
-                                           double uncertaintyR) {
+                                           double uncertaintyR
+                                           KDTree tree) {
     
-    if ((*ptcldMoving).rows() != DIMENSION ||
-        (*ptcldFixed).rows() != DIMENSION) {
+    if (ptcldMoving.rows() != DIMENSION ||
+        ptcldFixed.rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
     }
     
     //************ Initialization **************
     RegistrationResult result;
-    int sizePtcldMoving = (*ptcldMoving).cols();
-    int sizePtcldFixed = (*ptcldFixed).cols();
-
-    KDTree cloudTree = NULL;    // Generated kd tree from ptcldFixed
+    int sizePtcldMoving = ptcldMoving.cols();   
     
     Eigen::Vector2d tolerance;
     tolerance << .001 , .009;
 
-    // Construct the kdtree from ptcldFixed
-    for (int i = 0; i < sizePtcldFixed; i++) 
-        insert((*ptcldFixed).col(i), i, &cloudTree);
+    KDTree cloudTree;
+    if(!tree){
+        // Generate kd tree from fixed cloud if none was provided
+        cloudTree = tree_from_point_cloud(ptcldFixed);
+    } else{
+        // Otherwise use the one provided
+        cloudTree = copy_tree(tree);
+    }
 
     //int windowSize = sizePtcldMoving / WINDOW_RATIO;
     VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
@@ -276,8 +281,8 @@ RegistrationResult registration_est_normal(PointCloud *ptcldMoving,
         for (int r = windowSize * (iOffset); r < windowSize * i; r++) {
             int rOffset = r - windowSize * (iOffset);
             for (int n = 0; n < 3; n++) {
-                targets(n,rOffset) = (*ptcldMoving)(n, r);
-                normalTargets(n,rOffset) = (*normalMoving)(n, r);
+                targets(n,rOffset) = ptcldMoving(n, r);
+                normalTargets(n,rOffset) = normalMoving(n, r);
             }
         }
 
@@ -285,7 +290,7 @@ RegistrationResult registration_est_normal(PointCloud *ptcldMoving,
          * CAD model points (in kdtree form), normalFixed, and Xreg from last iteration
          */
         KDNormalResult searchResult = kd_search_normals(targets, cloudTree, inlierRatio, 
-                                                        Xreg, normalTargets, (*normalFixed));
+                                                        Xreg, normalTargets, normalFixed);
 
         PointCloud pc = searchResult.pc;    // set of all closest point
         PointCloud pr = searchResult.pr;    // set of all target points in corresponding 
