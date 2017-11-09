@@ -73,12 +73,13 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
     tolerance << toleranceT , toleranceR;
 
     KDTree cloudTree;
-    if(!tree){
+    bool treeProvided = tree;
+    if(!treeProvided){
         // Generate kd tree from fixed cloud if none was provided
         cloudTree = tree_from_point_cloud(ptcldFixed);
     } else{
         // Otherwise use the one provided
-        cloudTree = copy_tree(tree);
+        cloudTree = tree;
     }
 
     VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
@@ -196,7 +197,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
             break;  // Break out of loop if convergence met
         }
     }
-    free_tree(cloudTree);
+    if(!treeProvided){ free_tree(cloudTree); }
     result.Xreg = Xreg;
     result.Xregsave = Xregsave;
     return result;
@@ -223,7 +224,7 @@ RegistrationResult registration_est_normal(const PointCloud& ptcldMoving,
                                            int windowSize,
                                            double toleranceT,
                                            double toleranceR,
-                                           double uncertaintyR
+                                           double uncertaintyR,
                                            KDTree tree) {
     
     if (ptcldMoving.rows() != DIMENSION ||

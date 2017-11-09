@@ -319,24 +319,6 @@ long count_leaves(const KDTree& T) {
 	return count;
 }
 
-KDTree copy_tree(const KDTree& K) {
-	if(!K){
-		return NULL;
-	}
-	KDNode *T = new KDNode();
-	if (T == NULL){
-		std::cerr << "Malloc failed in insert_helper";
-		exit(1);
-	}
-	T->left = copy_tree(K->left);
-	T->right = copy_tree(K->right);
-	(T->value)(0) = (K->value)(0);
-	(T->value)(1) = (K->value)(1);
-	(T->value)(2) = (K->value)(2);
-	T->index = K->index;
-	return T;
-}
-
 // This function frees the tree
 void free_tree(const KDTree& T) {
 	if (T) {
