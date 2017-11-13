@@ -246,7 +246,7 @@ RegistrationResult registration_est_normal(const PointCloud& ptcldMoving,
         cloudTree = tree_from_point_cloud(ptcldFixed);
     } else{
         // Otherwise use the one provided
-        cloudTree = copy_tree(tree);
+        cloudTree = tree;
     }
 
     //int windowSize = sizePtcldMoving / WINDOW_RATIO;
