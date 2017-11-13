@@ -105,22 +105,7 @@ add_executable(console_registration src/console_registration_main.cpp
                                     src/get_changes_in_transformation_estimate.cpp
 )
 
-#############
-## Install ##
-#############
-
-# Set target name based on our operating system
-IF (WIN32)
-set_target_properties(bingham_registration PROPERTIES OUTPUT_NAME "_qf_registration_windows")
-ELSE()
-set_target_properties(bingham_registration PROPERTIES OUTPUT_NAME "_qf_registration_linux")
-ENDIF()
-set_target_properties(bingham_registration PROPERTIES SKIP_BUILD_RPATH TRUE)
-set_target_properties(bingham_registration PROPERTIES PREFIX "lib")
-# Install the library in 'precompiled_clibs' so that the python GUI can find it
-
-install(TARGETS bingham_registration DESTINATION ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs)
-
+# Catkin specific
 if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
     catkin_add_gtest(utest test/utest.cpp
@@ -145,6 +130,17 @@ if(catkin_FOUND)
   )
   target_link_libraries(registration_node ${catkin_LIBRARIES})
   add_dependencies(registration_node ${PROJECT_NAME}_generate_messages_cpp)
-  ## Mark executables and/or libraries for installation
-  install(TARGETS bingham_registration DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 endif()
+
+# Copy library to precompiled_clibs directory
+IF (WIN32)
+SET(COPY_TO_PATH ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs/lib_qf_registration_windows.so)
+ELSE()
+SET(COPY_TO_PATH ${CMAKE_CURRENT_LIST_DIR}/precompiled_clibs/lib_qf_registration_linux.so)
+ENDIF()
+
+ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       $<TARGET_FILE:${PROJECT_NAME}>
+                       ${COPY_TO_PATH}
+                   COMMENT "Copying 'test' library to '${COPY_TO_PATH}'")
