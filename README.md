@@ -10,14 +10,15 @@ Thank you for trying our GUI out.
 
 We are making this software freely available in the hope that it will be useful to others.  If you use Bingham-filter in your own work for pose estimation, please cite our papers:
 
-@inproceedings{srivatsan2017Bingham,
-title = {Bingham Distribution-Based Linear Filter for Online Pose Estimation},
-author = {Srivatsan, Rangaprasad Arun and Xu, Mengyun. and Zevallos, Nicolas and Choset, Howie},
-booktitle = {Robotics: Science and Systems (RSS)},
-month = July,
-year = {2017},
-address = {Boston, USA},
-}
+@inproceedings{Rangaprasad-RSS-17, 
+    author={Arun Srivatsan Rangaprasad AND Mengyun Xu AND Nicolas Zevallos-Roberts AND Howie Choset}, 
+    title={Bingham Distribution-Based Linear Filter for Online Pose Estimation}, 
+    booktitle={Proceedings of Robotics: Science and Systems}, 
+    year={2017}, 
+    address={Cambridge, Massachusetts}, 
+    month={July}, 
+    doi={10.15607/RSS.2017.XIII.016} 
+} 
 
 @inproceedings{srivatsan2016estimating,
   title={Estimating SE(3) elements using a dual quaternion based linear Kalman filter},
