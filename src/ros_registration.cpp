@@ -1,9 +1,11 @@
 #include <ros/ros.h>
+#include <list>
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <resource_retriever/retriever.h>
 #include <message_filters/subscriber.h>
@@ -96,13 +98,16 @@ private:
   PointCloud ptcldFixed;
   PointCloud ptcldMoving;
   PointCloud ptcldTransformed;
-  KDTree fixedKDTree = NULL;;
+  std_msgs::Float32 errorMsg;
+  KDTree fixedKDTree = NULL;
   Affine3ld lastTransform;
+  std::list<Affine3ld> transformBuffer;
   double lastError = 1;
   visualization_msgs::Marker markerMsg;
   ros::Publisher markerPub;
   geometry_msgs::PoseStamped poseMsg;
   ros::Publisher posePub;
+  ros::Publisher errorPub;
   message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub;
   ros::Subscriber reset_sub;
   ros::Subscriber active_sub;
@@ -125,6 +130,7 @@ public:
     loadMesh(stlPath, stlScale);
     markerPub = nh.advertise<visualization_msgs::Marker>("registration_marker", 5);
     posePub = nh.advertise<geometry_msgs::PoseStamped>("registration_pose", 5);
+    errorPub = nh.advertise<std_msgs::Float32>("rms_error", 5);
     // Create a ROS subscriber for the input point cloud
     cloud_sub.registerCallback(&RosRegistration::cloudCB, this);
     reset_sub = nh.subscribe ("registration/reset", 10, &RosRegistration::resetCB, this);
@@ -228,14 +234,15 @@ public:
   {
     ptcldTransformed = lastTransform*ptcldMoving;
     // Add uncertainty
-    double uncertainty = 10*std::min(1.0,lastError);
+    double uncertainty = 10000*std::min(.0001,lastError);
+    std::cerr << uncertainty << std::endl;
     // Run the registration function without normals
-    ROS_WARN(std::to_string(sizeof(fixedKDTree)).c_str());
     RegistrationResult result = registration_est_kf_rgbd(ptcldTransformed, ptcldFixed,
                                                          inlier_ratio, iterations, 
                                                          window_size, tolerance_t,
                                                          tolerance_r, uncertainty,
                                                          fixedKDTree);
+
     lastError = result.error;
     lastTransform = affineFromXreg(result.Xreg) * lastTransform;
     setMarkerPose(lastTransform.inverse(), markerMsg);
@@ -244,12 +251,14 @@ public:
     poseMsg.pose = markerMsg.pose;
     markerPub.publish(markerMsg);
     posePub.publish(poseMsg);
+    errorMsg.data = lastError;
+    errorPub.publish(errorMsg);
   }
 
   void reset()
   {
     lastTransform = Affine3ld::Identity();
-    lastTransform.translate(Vector3ld(0, 0, 1));
+    lastTransform.translate(Vector3ld(0, 0, 10));
     lastError = 1;
     markerMsg.pose.position.x = 0;
     markerMsg.pose.position.y = 0;
@@ -298,7 +307,7 @@ public:
         {sqrt,sqrt,0,0},
         {sqrt,-sqrt,0,0}
       };
-      double bestError = 1;
+      double bestError = 10000;
       int numTrials = 2;
       Affine3ld bestTransform(Affine3ld::Identity());
       for(int i=0; i<numQuats; i++){
