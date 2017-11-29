@@ -57,10 +57,6 @@ void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
 	if (*T == NULL)
 	{
 		*T = new KDNode();
-		if (*T == NULL){
-			std::cerr << "Malloc failed in insert_helper";
-			exit(1);
-		}
 		(*T)->left = NULL;
 		(*T)->right = NULL;
 		((*T)->value)(0) = point(0);
@@ -130,11 +126,6 @@ void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, co
  */
 KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
 	KDNode *bestN = new KDNode();
-	
-	if (!bestN){
-		std::cerr << "Malloc failed in find_nearest";
-		exit(1);
-	}
 	long double *distanceResult = (long double*)malloc(sizeof(long double));
 	*distanceResult = std::numeric_limits<long double>::max();
 
