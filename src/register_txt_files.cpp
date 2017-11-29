@@ -95,37 +95,15 @@ long double* register_txt(char const * movingData, char const * fixedData,
 
     char const * movingPointsString = movingData;
     char const * fixedPointsString = fixedData;
-    char const * movingNormalsString = "";
-    char const * fixedNormalsString = "";
-
-    int useNormal = 0;
     
     PointCloud ptcldMoving = fillPointCloud(movingPointsString);
     PointCloud ptcldFixed = fillPointCloud(fixedPointsString);
-
-    PointCloud normalMoving;
-    PointCloud normalFixed;
-    
-    // Open the normal-related files if normal option is used
-    if (useNormal)
-    {
-        normalMoving = fillPointCloud(movingNormalsString);
-        normalFixed = fillPointCloud(fixedNormalsString);
-    }
         
     double timeSum = 0;
     RegistrationResult result;
     for (int i = 0; i < NUM_OF_RUNS; i++) {
         clock_t begin = clock();    // For timing the performance
 
-        if (useNormal) {
-            // Run the registration function with normals
-            result = registration_est_normal(ptcldMoving, ptcldFixed, 
-                                             normalMoving, normalFixed,
-                                             inlierRatio, maxIterations,
-                                             windowSize, toleranceT,
-                                             toleranceR, uncertaintyR);
-        }
         else {
             // Run the registration function without normals
             result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed,
