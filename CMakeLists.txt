@@ -2,25 +2,25 @@ cmake_minimum_required(VERSION 2.8.3)
 project(bingham_registration)
 add_definitions(-std=c++11)
 
-# Find catkin macros and libraries
-# if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-# is used, also find other catkin packages
-find_package(Eigen3 REQUIRED)
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+#find_package(Eigen3 REQUIRED)
 
-if(NOT EIGEN3_FOUND)
-  # Fallback to cmake_modules
-  find_package(cmake_modules REQUIRED)
-  find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
-  # Possibly map additional variables to the EIGEN3_ prefix.
-else()
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
-endif()
+#if(NOT EIGEN3_FOUND)
+#  # Fallback to cmake_modules
+#  find_package(cmake_modules REQUIRED)
+#  find_package(Eigen REQUIRED)
+#  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
+#  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
+#  # Possibly map additional variables to the EIGEN3_ prefix.
+#else()
+#  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+#endif()
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
+#set(CMAKE_INCLUDE_CURRENT_DIR ON)
+## Instruct CMake to run moc automatically when needed.
+#set(CMAKE_AUTOMOC ON)
 
 ###########
 ## Build ##
