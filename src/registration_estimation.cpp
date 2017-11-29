@@ -1,5 +1,5 @@
 /*
- * File Header for bingham_registration.cpp
+ * File Header for registration_est_kf_rgbd.cpp
  * 
  * This file performs the final registration function for fitting the sensed
  * data points onto the CAD model points
@@ -37,7 +37,7 @@
 #define DIMENSION 3     // Dimension of data point
 
 /* 
- *  bingham_registration: (for registration without normals)
+ *  registration_est_kf_rgbd: (for registration without normals)
  *
  *  Outputs (Xreg, Xregsave):
             Xreg is a 6x1 vector
@@ -47,7 +47,7 @@
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-RegistrationResult bingham_registration(const PointCloud& ptcldMoving, 
+RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving, 
                                             const PointCloud& ptcldFixed,
                                             double inlierRatio,
                                             int maxIterations,

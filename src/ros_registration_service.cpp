@@ -137,7 +137,7 @@ public:
   void update(){
     double uncertainty = 10*std::min(1.0,lastError);
     // Perform registration
-    RegistrationResult result = bingham_registration(&ptcldSensed,
+    RegistrationResult result = registration_est_kf_rgbd(&ptcldSensed,
                                                          &ptcldTransformed,
                                                          1, 100, 20, .00001,
                                                          .00001, uncertainty);

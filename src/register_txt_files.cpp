@@ -106,7 +106,7 @@ long double* register_txt(char const * movingData, char const * fixedData,
 
         else {
             // Run the registration function without normals
-            result = bingham_registration(ptcldMoving, ptcldFixed,
+            result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed,
                                               inlierRatio, maxIterations, windowSize,
                                               toleranceT, toleranceR, uncertaintyR);
         }
