@@ -75,13 +75,13 @@ void setMarkerPose(const Affine3ld &transform_eigen, visualization_msgs::Marker 
     msg.header.stamp    = ros::Time::now();
 }
 
-/* affineFromXreg:
- *    Input: Xreg 6x1 array containing x,y,z position and x,y,z euler rotation
- *    Output: Eigen::Affine3 representing Xreg
+/* affineFromregParams:
+ *    Input: regParams 6x1 array containing x,y,z position and x,y,z euler rotation
+ *    Output: Eigen::Affine3 representing regParams
  */
-Affine3ld affineFromXreg(const ArrayXld& Xreg)
+Affine3ld affineFromregParams(const ArrayXld& regParams)
 {
-  Matrix4ld tMatrix = reg_params_to_transformation_matrix (Xreg.segment(0,6));
+  Matrix4ld tMatrix = reg_params_to_transformation_matrix (regParams.segment(0,6));
   Affine3ld t(tMatrix);
   return t;
 }
@@ -244,7 +244,7 @@ public:
                                                          fixedKDTree);
 
     lastError = result.error;
-    lastTransform = affineFromXreg(result.Xreg) * lastTransform;
+    lastTransform = affineFromregParams(result.regParams) * lastTransform;
     setMarkerPose(lastTransform.inverse(), markerMsg);
     poseMsg.header.stamp = markerMsg.header.stamp;
     poseMsg.header.frame_id = markerMsg.header.frame_id;

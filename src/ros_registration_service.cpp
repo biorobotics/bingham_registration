@@ -54,12 +54,12 @@ geometry_msgs::Pose eigenToPoseMsg(const Affine3ld &tEigen){
   return msg;
 }
 
-/* affineFromXreg:
- *    Input: Xreg 6x1 array containing x,y,z position and x,y,z euler rotation
- *    Output: Eigen::Affine3 representing Xreg
+/* affineFromregParams:
+ *    Input: regParams 6x1 array containing x,y,z position and x,y,z euler rotation
+ *    Output: Eigen::Affine3 representing regParams
  */
-Affine3ld affineFromXreg(const ArrayXld& Xreg) {
-  Matrix4ld tMatrix = reg_params_to_transformation_matrix (Xreg.segment(0,6));
+Affine3ld affineFromregParams(const ArrayXld& regParams) {
+  Matrix4ld tMatrix = reg_params_to_transformation_matrix (regParams.segment(0,6));
   Affine3ld t(tMatrix);
   return t;
 }
@@ -144,7 +144,7 @@ public:
     // Get error
     lastError = result.error;
     // Get transform
-    lastTransform = affineFromXreg(result.Xreg).inverse() * lastTransform;
+    lastTransform = affineFromregParams(result.regParams).inverse() * lastTransform;
   }
 
   Affine3ld guessBestTransform()

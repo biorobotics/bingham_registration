@@ -16,11 +16,11 @@
 #include "conversions.h"
 
 /* compute_transformed_points:
- *		Input: ptcld moving, Xreg from previous iteration
+ *		Input: ptcld moving, regParams from previous iteration
  		Output: ptcld moving after being transformed 
  */
-PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& Xreg) {
-	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
+PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& regParams) {
+	Matrix4ld testimated = reg_params_to_transformation_matrix (regParams.segment(0,6));
 	Affine3ld t(testimated);
 	return t*ptcldMoving;
 }
@@ -146,13 +146,13 @@ KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
 
 /*
  * kd_search:
- 		Input: target point cloud, kd-tree, inlier ratio, Xreg from last iteration
+ 		Input: target point cloud, kd-tree, inlier ratio, regParams from last iteration
  			   to transform points 
 		Return: pc = set of all closest points
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inlierRatio, const VectorXld& Xreg) {
+KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inlierRatio, const VectorXld& regParams) {
 	int numTargets = targets_p.cols();
 	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numTargets);
@@ -164,7 +164,7 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
 	PointCloud targetsNew = PointCloud(3, numTargets);
 
 	// Transform the target points before searching
-	targetsNew = compute_transformed_points(targets_p, Xreg);
+	targetsNew = compute_transformed_points(targets_p, regParams);
 
 	if (targets_p.cols() != numTargets) {
 		std::cerr << "Pointcloud (" << targets_p.cols()<< ") doesn't match target size (" 

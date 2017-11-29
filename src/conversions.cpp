@@ -1,6 +1,6 @@
 /*
  * File Header for compute_transformed_points.cpp:
- * 		compute_transformed_points takes in sensed points and Xreg
+ * 		compute_transformed_points takes in sensed points and regParams
  * 		Return transformed sensed points 
  * 		
  */

@@ -74,7 +74,7 @@ Matrix4ld qr_kf_measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld
 /* bingham_kf:
  *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
  		Optional input: Qmag, normalc, normalr
- 		Output: Updated Xk, Mk, Zk, Xreg
+ 		Output: Updated Xk, Mk, Zk, regParams
  */
 BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 						   	   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
@@ -196,14 +196,14 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
     Vector3ld eulerRotation = quat2eul(XkQuat);
     Vector3ld centroidDifference = centroid - centroidRotated;
 
-    VectorXld Xreg(6);
-    Xreg.segment(0,3) = centroidDifference;
-    Xreg.segment(3,3) = eulerRotation;
+    VectorXld regParams(6);
+    regParams.segment(0,3) = centroidDifference;
+    regParams.segment(3,3) = eulerRotation;
     
     BinghamKFResult result;
 
     result.Xk = *Xk;
-    result.Xreg = Xreg;
+    result.regParams = regParams;
     result.Mk = *Mk;
     result.Zk = *Zk;
 

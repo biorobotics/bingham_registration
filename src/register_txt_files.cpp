@@ -3,7 +3,7 @@
         Provides the registration function that will be called by the python GUI
  *      The function takes in input data files (.txt form) and performs dual
         quaternion registration with Bingham distribution-based filtering. It outputs
-        the resutl pose (Xreg) and a record of all the intermediate poses as well (Xregsave).
+        the resutl pose (regParams) and a record of all the intermediate poses as well (regHistory).
  */
 #include <iostream>
 #include <iomanip>
@@ -118,15 +118,15 @@ long double* register_txt(char const * movingData, char const * fixedData,
     // Save results to txt
     std::ofstream myFile;
     myFile.open("result.txt");
-    myFile << "Xreg:" << std::endl << result.Xreg.transpose() << std::endl << std::endl;
-    myFile << "Xregsave:" << std::endl << result.Xregsave.transpose()
+    myFile << "regParams:" << std::endl << result.regParams.transpose() << std::endl << std::endl;
+    myFile << "regHistory:" << std::endl << result.regHistory.transpose()
                           << std::endl << std::endl;
     myFile << "Average registration runtime is: " << timeSum / NUM_OF_RUNS 
            << " seconds." << std::endl;
     myFile << "Average Registration error:" << result.error << std::endl;
     myFile.close();
 
-	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result.Xreg;
+	Eigen::Map<Eigen::Matrix<long double, 6, 1 > > (returnArray,6,1) = result.regParams;
     returnArray[6] = result.error;
 
     return returnArray;

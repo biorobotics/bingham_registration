@@ -35,13 +35,13 @@ void insert(const Vector3ld& point, int index, KDTree *T);
 
 /*
  * kd_search:
- 		Input: target point cloud, kd-tree, inlier ratio, Xreg from last iteration
+ 		Input: target point cloud, kd-tree, inlier ratio, regParams from last iteration
  			   to transform points 
 		Return: pc = set of all closest points
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-KdResult kd_search(const PointCloud& targets, const KDTree& T, long double inlierRatio, const VectorXld& Xreg);
+KdResult kd_search(const PointCloud& targets, const KDTree& T, long double inlierRatio, const VectorXld& regParams);
 
 KDTree tree_from_point_cloud(const PointCloud& ptcld);
 

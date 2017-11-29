@@ -2,7 +2,7 @@ bingham_kf --> bingham filter
 
 	Like a kalman filter but uses binghams instead of gaussians
 
-registration_est_kf_rgbd --> registration_est
+bingham_registration --> registration_est
 
 	estimates transformation between two point clouds
 

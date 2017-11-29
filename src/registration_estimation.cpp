@@ -9,7 +9,7 @@
  *       |
  *       v
  * Tree search (inside the function, transform ptcldMoving and normalMoving (if provided)
-                by using Xreg then search)   < --------------------------------
+                by using regParams then search)   < --------------------------------
                                                                                  |
         |
         v                                                                        |
@@ -19,7 +19,7 @@
  * Check for convergence or max iteration reached --------------------------------
  *       |                                   no
  *       v   yes
- * Terminate loop and return current Xreg and Xregsave
+ * Terminate loop and return current regParams and regHistory
  *
  */ 
 
@@ -39,9 +39,9 @@
 /* 
  *  registration_est_kf_rgbd: (for registration without normals)
  *
- *  Outputs (Xreg, Xregsave):
-            Xreg is a 6x1 vector
-            Xregsave is an 6xn matrix (a record of Xreg value at different iteration)
+ *  Outputs (regParams, regHistory):
+            regParams is a 6x1 vector
+            regHistory is an 6xn matrix (a record of regParams value at different iteration)
     Inputs:
             ptcldMoving (3xn) is one set of point cloud data. This will represent the sensed points
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
@@ -82,14 +82,14 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         cloudTree = tree;
     }
 
-    VectorXld Xreg = VectorXld::Zero(6);  //Xreg: 6x1
+    VectorXld regParams = VectorXld::Zero(6);  //regParams: 6x1
 
-    // Xregsave.row(0) saves the initialized value. The Xreg output from each
+    // regHistory.row(0) saves the initialized value. The regParams output from each
     // iteration is stored there (dimension (maxIterations + 1) x 6)
     
-    MatrixXld Xregsave = MatrixXld::Zero(6, maxIterations + 1); //Xregsave: 6xn
+    MatrixXld regHistory = MatrixXld::Zero(6, maxIterations + 1); //regHistory: 6xn
 
-    //Quaterniond Xk_quat = eul2quat(Xreg.segment(3,3));
+    //Quaterniond Xk_quat = eul2quat(regParams.segment(3,3));
     
     Vector4ld Xk;   //Xk: 4x1
     Xk << 1, 0, 0, 0;
@@ -104,7 +104,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
     long double BinghamKFSum = 0;  // for timing Bingham_kf
     
     //********** Loop starts **********
-    // If not converge, transform points using Xreg and repeat
+    // If not converge, transform points using regParams and repeat
     for (int i = 1; i <= std::min(maxIterations, sizePtcldMoving / windowSize); i++) {
         int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
         
@@ -118,10 +118,10 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
                 targets(n,rOffset) = ptcldMoving(n, r);
         }
 
-        // kd_search takes subset of ptcldMovingNew, CAD model points, and Xreg
+        // kd_search takes subset of ptcldMovingNew, CAD model points, and regParams
         // from last iteration according to window size 
 
-        KdResult searchResult = kd_search(targets, cloudTree, inlierRatio, Xreg);
+        KdResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
 
         PointCloud pc = searchResult.pc;    // set of all closest point
         PointCloud pr = searchResult.pr;    // set of all target points in 
@@ -174,23 +174,23 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         //  Quaternion Filtering:
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
-        //  Output updated Xk, Mk, Zk, and Xreg for next iteration. 
+        //  Output updated Xk, Mk, Zk, and regParams for next iteration. 
         BinghamKFResult QFResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
 
         Xk = QFResult.Xk;
         Mk = QFResult.Mk;
         Zk = QFResult.Zk;
 
-        // Store current Xreg in Xregsave
-        Xregsave.col(i) = QFResult.Xreg;    // No offset applied because 
-                                             // Xregsave(0) is saved for initial value   
-        Xreg = QFResult.Xreg;
+        // Store current regParams in regHistory
+        regHistory.col(i) = QFResult.regParams;    // No offset applied because 
+                                             // regHistory(0) is saved for initial value   
+        regParams = QFResult.regParams;
 
         //  Check convergence:
-        //  Takes in updated Xreg and previous Xreg
+        //  Takes in updated regParams and previous regParams
         //  Return dR, dT
-        DeltaTransform convergenceResult = get_changes_in_transformation_estimate(QFResult.Xreg,
-                                                                                  Xregsave.col(i-1));
+        DeltaTransform convergenceResult = get_changes_in_transformation_estimate(QFResult.regParams,
+                                                                                  regHistory.col(i-1));
         if (convergenceResult.dT <= tolerance(0) && 
             convergenceResult.dR <= tolerance(1)) {
             std::cout << "CONVERGED" << std::endl;
@@ -198,7 +198,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         }
     }
     if(!treeProvided){ free_tree(cloudTree); }
-    result.Xreg = Xreg;
-    result.Xregsave = Xregsave;
+    result.regParams = regParams;
+    result.regHistory = regHistory;
     return result;
 }
