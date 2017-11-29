@@ -14,10 +14,4 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving, const
                                             double inlierRatio, int maxIterations, int windowSize,
                                             double toleranceT, double toleranceR,
                                             double uncertaintyR, KDTree tree = NULL);
-
-RegistrationResult registration_est_normal(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
-                                           const PointCloud& normalMoving, const PointCloud& normalFixed,
-                                           double inlierRatio, int maxIterations, int windowSize,
-                                           double toleranceT, double toleranceR,
-                                           double uncertaintyR, KDTree tree = NULL);
 #endif

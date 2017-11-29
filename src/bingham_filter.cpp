@@ -78,8 +78,7 @@ Matrix4ld qr_kf_measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld
  */
 BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 						   	   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-						   	   PointCloud *p2c, PointCloud *p2r, long double Qmag,
-						   	   PointCloud *normalc, PointCloud *normalr) {
+						   	   PointCloud *p2c, PointCloud *p2r, long double Qmag) {
 	// Check for input dimensions 
     if ((*Xk).size() != 4){
         std::cerr << "Xk has wrong dimension. Should be 4x1\n";
@@ -147,15 +146,6 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 	}
 
 	Matrix4ld D2 = MatrixXld::Zero(4,4);	// Initialize D2 to zero matrix
-
-	if(normalc != NULL && normalr != NULL) {
-		Matrix4ld QInvTmp = RInvTmp * Rmag / Qmag;
-		for (i = 0; i < (*normalc).cols(); i++) {
-			Matrix4ld H_tmp = qr_kf_measurementFunctionJacobian((*normalc).col(i), 
-																(*normalr).col(i));
-			D2 = D2 + H_tmp.transpose()*QInvTmp*H_tmp;
-		}
-	}
 
 	Matrix4ld DStar = -0.5*D1 - 0.5*D2 + (*Mk)*(*Zk)*(*Mk).transpose();
 	

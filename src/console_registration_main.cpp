@@ -5,10 +5,6 @@ int main(int argc, char *argv[]) {
 
     std::string movingPointsString;
 	std::string fixedPointsString;
-	std::string movingNormalsString;
-	std::string fixedNormalsString;
-    int useNormal = 0;
-    int normalFileProvided = 0;
     int pointFileProvided = 0;
 
     // Replace filenames by the arguments
@@ -38,43 +34,17 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
         }
-        // Parse normal moving from .txt
-        else if (arg == "-nm") {
-            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                i++; // Increment 'i' so we don't get the argument as the next argv[i].
-                movingNormalsString = argv[i];
-                useNormal = 1; 
-                normalFileProvided++;
-            } else { // If there was no argument to the destination option.
-                std::cerr << "-nm option requires filepath for moving normals." 
-                << std::endl;
-                return 1;
-            }
-        }
-        // Parse normal fixed from .txt
-        else if (arg == "-nf") {
-            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                i++; // Increment 'i' so we don't get the argument as the next argv[i].
-                fixedNormalsString = argv[i];
-                useNormal = 1;
-                normalFileProvided++;
-            } else { // If there was no argument to the destination option.
-                std::cerr << "-nm option requires filepath for moving normals." 
-                << std::endl;
-                return 1;
-            }
-        }
         // If an invalid argument is provided
         else {
-            std::cerr << "Invalid argument. Usage: -pm .. -pv .. (optional) (-nm .. -nv ..)" 
+            std::cerr << "Invalid argument. Usage: -pm .. -pv .." 
              << std::endl;
             return 1;
         }
     }
 
     // Check if enough arguments were entered
-    if (pointFileProvided != 2 || (useNormal && normalFileProvided != 2)) {
-        std::cerr << "Not enough argument. Usage: -pm .. -pv .. (optional) (-nm .. -nv ..)" 
+    if (pointFileProvided != 2) {
+        std::cerr << "Not enough argument. Usage: -pm .. -pv .." 
         << std::endl;
         return 1;
     }

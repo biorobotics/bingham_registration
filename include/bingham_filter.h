@@ -22,6 +22,5 @@ struct BinghamKFResult {
  */
 BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
 							   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-							   PointCloud *p2c, PointCloud *p2r, long double Qmag = 0,
-							   PointCloud *normalc = NULL, PointCloud *normalr = NULL);
+							   PointCloud *p2c, PointCloud *p2r, long double Qmag = 0);
 #endif
