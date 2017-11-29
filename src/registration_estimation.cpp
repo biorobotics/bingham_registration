@@ -100,8 +100,6 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
     for(int i = 1; i <= 3; i++) 
         Zk(i, i) = -1 * pow((long double)10, (long double)-uncertaintyR);
     
-    long double BinghamKFSum = 0;  // for timing Bingham_kf
-    
     //********** Loop starts **********
     // If not converge, transform points using regParams and repeat
     for (int i = 1; i <= std::min(maxIterations, sizePtcldMoving / windowSize); i++) {
@@ -121,12 +119,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         // from last iteration according to window size 
 
         KdResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
-
-        PointCloud pc = searchResult.pc;    // set of all closest point
-        PointCloud pr = searchResult.pr;    // set of all target points in 
-                                             // corresponding order with pc
-        long double res = searchResult.res;  // mean of all the distances calculated
-        result.error = res;
+        result.error = searchResult.res;
 
         // Truncate the windowSize according to window size and inlier ratio
         int truncSize = trunc(windowSize * inlierRatio);
@@ -140,7 +133,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
         PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
         
-        long double Rmag= .04 + pow(res / 6, 2);  // Variable that helps calculate the noise 
+        long double Rmag= .04 + pow(searchResult.res / 6, 2);  // Variable that helps calculate the noise 
         
         int p1Count = 0;
         int p2Count = 0;
@@ -155,8 +148,8 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
                     std::cerr << "Incorrect number of odd entry.";
                     exit(1);
                 }
-                p1c.col(p1Count) = pc.col(nOffset);
-                p1r.col(p1Count) = pr.col(nOffset);
+                p1c.col(p1Count) = searchResult.pc.col(nOffset);
+                p1r.col(p1Count) = searchResult.pr.col(nOffset);
                 p1Count++;
             }
             else {  // If even index point
@@ -164,8 +157,8 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
                     std::cerr << "Incorrect number of even entry.";
                     exit(1);
                 }
-                p2c.col(p2Count) = pc.col(nOffset);
-                p2r.col(p2Count) = pr.col(nOffset);
+                p2c.col(p2Count) = searchResult.pc.col(nOffset);
+                p2r.col(p2Count) = searchResult.pr.col(nOffset);
                 p2Count++;
             }
         }
@@ -174,21 +167,21 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and regParams for next iteration. 
-        BinghamKFResult QFResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
+        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
 
-        Xk = QFResult.Xk;
-        Mk = QFResult.Mk;
-        Zk = QFResult.Zk;
+        Xk = filterResult.Xk;
+        Mk = filterResult.Mk;
+        Zk = filterResult.Zk;
 
         // Store current regParams in regHistory
-        regHistory.col(i) = QFResult.regParams;    // No offset applied because 
+        regHistory.col(i) = filterResult.regParams;    // No offset applied because 
                                              // regHistory(0) is saved for initial value   
-        regParams = QFResult.regParams;
+        regParams = filterResult.regParams;
 
         //  Check convergence:
         //  Takes in updated regParams and previous regParams
         //  Return dR, dT
-        DeltaTransform convergenceResult = get_changes_in_transformation_estimate(QFResult.regParams,
+        DeltaTransform convergenceResult = get_changes_in_transformation_estimate(filterResult.regParams,
                                                                                   regHistory.col(i-1));
         if (convergenceResult.dT <= tolerance(0) && 
             convergenceResult.dR <= tolerance(1)) {
