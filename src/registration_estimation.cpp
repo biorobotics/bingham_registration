@@ -175,7 +175,8 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
 
         // Store current regParams in regHistory
         regHistory.col(i) = filterResult.regParams;    // No offset applied because 
-                                             // regHistory(0) is saved for initial value
+                                             // regHistory(0) is saved for initial value   
+        regParams = filterResult.regParams;
 
         //  Check convergence:
         //  Takes in updated regParams and previous regParams
@@ -189,7 +190,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         }
     }
     if(!treeProvided){ free_tree(cloudTree); }
-    result.regParams = filterResult.regParams;
+    result.regParams = regParams;
     result.regHistory = regHistory;
     return result;
 }
