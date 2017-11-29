@@ -30,20 +30,7 @@ Vector3ld quat2eul(Quaternionld q) {
 	return eul;
 }
 
-Vector4ld qr_kf_measurementFunction(const Vector4ld& Xk, const Vector3ld& p1, const Vector3ld& p2) {
-    /* Xk if size 4x1
-    * p1, p2 is of size 3x1
-    * g is of size 4x1
-    */
-    Vector4ld g = Vector4ld::Zero();
-    g(0) = Xk(1)*(p2(0)-p1(0))+Xk(2)*(p2(1)-p1(1))+Xk(3)*(p2(2)-p1(2));
-    g(1) = Xk(0)*(p1(0)-p2(0))-Xk(2)*(p1(2)+p2(2))+Xk(3)*(p1(1)+p2(1));
-    g(2) = Xk(0)*(p1(1)-p2(1))+Xk(1)*(p1(2)+p2(2))-Xk(3)*(p1(0)+p2(0));
-    g(3) = Xk(0)*(p1(2)-p2(2))-Xk(1)*(p1(1)+p2(1))+Xk(2)*(p1(0)+p2(0));
-    return g;
-}
-
-Matrix4ld qr_kf_measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld& p2) {
+Matrix4ld measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld& p2) {
     /*p1, p2 is of size 1x3
     *H is of size 4x4 */
     Matrix4ld H;
@@ -141,7 +128,7 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 
 	Matrix4ld D1 = MatrixXld::Zero(4,4);	// Initialize D1 to zero matrix
 	for (i = 0; i < pc.cols(); i++) {
-		Matrix4ld G_tmp = qr_kf_measurementFunctionJacobian(pc.col(i), pr.col(i));
+		Matrix4ld G_tmp = measurementFunctionJacobian(pc.col(i), pr.col(i));
 		D1 = D1 + G_tmp.transpose()*RInvTmp*G_tmp;
 	}
 
