@@ -237,7 +237,7 @@ public:
     double uncertainty = 10000*std::min(.0001,lastError);
     std::cerr << uncertainty << std::endl;
     // Run the registration function without normals
-    RegistrationResult result = registration_est_kf_rgbd(ptcldTransformed, ptcldFixed,
+    RegistrationResult result = bingham_registration(ptcldTransformed, ptcldFixed,
                                                          inlier_ratio, iterations, 
                                                          window_size, tolerance_t,
                                                          tolerance_r, uncertainty,

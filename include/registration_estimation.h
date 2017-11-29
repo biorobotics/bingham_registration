@@ -10,7 +10,7 @@ struct RegistrationResult{
     double error;
 };
 
-RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
+RegistrationResult bingham_registration(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
                                             double inlierRatio, int maxIterations, int windowSize,
                                             double toleranceT, double toleranceR,
                                             double uncertaintyR, KDTree tree = NULL);
