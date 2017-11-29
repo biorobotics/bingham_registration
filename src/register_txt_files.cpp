@@ -104,12 +104,10 @@ long double* register_txt(char const * movingData, char const * fixedData,
     for (int i = 0; i < NUM_OF_RUNS; i++) {
         clock_t begin = clock();    // For timing the performance
 
-        else {
-            // Run the registration function without normals
-            result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed,
-                                              inlierRatio, maxIterations, windowSize,
-                                              toleranceT, toleranceR, uncertaintyR);
-        }
+        // Run the registration function without normals
+        result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed,
+                                          inlierRatio, maxIterations, windowSize,
+                                          toleranceT, toleranceR, uncertaintyR);
 
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

@@ -89,9 +89,8 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
     
     MatrixXld regHistory = MatrixXld::Zero(6, maxIterations + 1); //regHistory: 6xn
 
-    //Quaterniond Xk_quat = eul2quat(regParams.segment(3,3));
-    
-    Vector4ld Xk;   //Xk: 4x1
+    // Refer to paper for definition of Xk, Mk and Zk
+    Vector4ld Xk;   //Xk: 4x1 
     Xk << 1, 0, 0, 0;
 
     Matrix4ld Mk= MatrixXld::Identity(4, 4);
