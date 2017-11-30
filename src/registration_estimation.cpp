@@ -121,53 +121,13 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         KdResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
         result.error = searchResult.res;
 
-        // Truncate the windowSize according to window size and inlier ratio
-        int truncSize = trunc(windowSize * inlierRatio);
-
-        // If truncSize odd, round down to even so pc and pr have same dimension
-        int oddEntryNum = truncSize / 2;    // size of p1c/p1
-        int evenEntryNum = oddEntryNum; // size of p2c/p2r
-
-        PointCloud p1c = PointCloud(3, oddEntryNum);    // odd index points of pc
-        PointCloud p2c = PointCloud(3, evenEntryNum);   // even index points of pc
-        PointCloud p1r = PointCloud(3, oddEntryNum);    // odd index points of pr
-        PointCloud p2r = PointCloud(3, evenEntryNum);   // even index points of pr
-        
-        long double Rmag= .04 + pow(searchResult.res / 6, 2);  // Variable that helps calculate the noise 
-        
-        int p1Count = 0;
-        int p2Count = 0;
-        
-        // Store odd entries in pc to p1c, in pr to p1r
-        // Store even entries in pc to p2c, in pr to p2r
-        for (int n = 1; n <= truncSize - truncSize % 2; n++) {
-            int nOffset = n - 1;    // Eigen is 0-index instead of 1-index
-            
-            if (n % 2) {    // If odd index point
-                if (p1Count >= oddEntryNum){
-                    std::cerr << "Incorrect number of odd entry.";
-                    exit(1);
-                }
-                p1c.col(p1Count) = searchResult.pc.col(nOffset);
-                p1r.col(p1Count) = searchResult.pr.col(nOffset);
-                p1Count++;
-            }
-            else {  // If even index point
-                if (p2Count >= evenEntryNum) {
-                    std::cerr << "Incorrect number of even entry.";
-                    exit(1);
-                }
-                p2c.col(p2Count) = searchResult.pc.col(nOffset);
-                p2r.col(p2Count) = searchResult.pr.col(nOffset);
-                p2Count++;
-            }
-        }
+        long double Rmag = .04 + pow(searchResult.res / 6, 2);  // Variable that helps calculate the noise 
         
         //  Quaternion Filtering:
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and regParams for next iteration. 
-        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &p1c, &p1r, &p2c, &p2r); 
+        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &searchResult.pc, &searchResult.pr);
 
         Xk = filterResult.Xk;
         Mk = filterResult.Mk;

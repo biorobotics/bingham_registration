@@ -59,40 +59,71 @@ Matrix4ld measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld& p2) 
 }
 
 /* bingham_kf:
- *		Input: previous Xk, Mk, Zk, Rmag, p1c, p1r, p2c, p2r
- 		Optional input: Qmag, normalc, normalr
+ *		Input: previous Xk, Mk, Zk, Rmag, pointsClosest, pointsTarget,
  		Output: Updated Xk, Mk, Zk, regParams
  */
 BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk, 
-						   	   long double Rmag, PointCloud *p1c, PointCloud *p1r, 
-						   	   PointCloud *p2c, PointCloud *p2r, long double Qmag) {
+						   	   long double Rmag, PointCloud *pointsClosest,
+						   	   PointCloud *pointsTarget) {
+	
 	// Check for input dimensions 
-    if ((*Xk).size() != 4){
+    if (Xk->size() != 4){
         std::cerr << "Xk has wrong dimension. Should be 4x1\n";
         exit(1);
     }
-    if ((*Mk).rows() != 4 || (*Mk).cols() != 4){
+    if (Mk->rows() != 4 || Mk->cols() != 4){
         std::cerr << "Mk has wrong dimension. Should be 4x4\n";
         exit(1);
     }
-    if ((*Zk).rows() != 4 || (*Zk).cols() != 4){
+    if (Zk->rows() != 4 || Zk->cols() != 4){
         std::cerr << "Mk has wrong dimension. Should be 4x4\n";
         exit(1);
     }
-    if ((*p1c).cols() != (*p1r).cols() || (*p1c).cols() != (*p2c).cols() 
-    	 || (*p1c).cols() != (*p2c).cols()) {
+    if (pointsClosest->cols() != pointsTarget->cols()) {
         std::cerr << "point clouds are not equal in size\n";
         exit(1);
 	}
 
-	int i;
-	PointCloud pc = *p1c - *p2c;
-	PointCloud pr = *p1r - *p2r;
+	// Truncate the windowSize according to window size and inlier ratio
+    int truncSize = pointsClosest->cols();
+
+    // If truncSize odd, round down to even so pc and pr have same dimension
+    int oddEntryNum = truncSize / 2;    // size of p1c/p1
+    int evenEntryNum = oddEntryNum; // size of p2c/p2r
+
+    // Separate odd and even rows
+	Eigen::Map<PointCloud,0,Eigen::OuterStride<> >
+		p1c(pointsClosest->data(),
+			pointsClosest->rows(),
+			(pointsClosest->cols())/2,
+			Eigen::OuterStride<>(pointsClosest->outerStride()*2));
+
+	Eigen::Map<PointCloud,0,Eigen::OuterStride<> >
+		p2c(pointsClosest->data() + pointsClosest->rows(),
+			pointsClosest->rows(),
+			(pointsClosest->cols())/2,
+			Eigen::OuterStride<>(pointsClosest->outerStride()*2));
+
+	Eigen::Map<PointCloud,0,Eigen::OuterStride<> >
+		p1r(pointsTarget->data(),
+			pointsTarget->rows(),
+			(pointsTarget->cols())/2,
+			Eigen::OuterStride<>(pointsTarget->outerStride()*2));
+
+	Eigen::Map<PointCloud,0,Eigen::OuterStride<> >
+		p2r(pointsTarget->data() + pointsTarget->rows(),
+			pointsTarget->rows(),
+			(pointsTarget->cols())/2,
+			Eigen::OuterStride<>(pointsTarget->outerStride()*2));
+	
+	// Subtract even and odd to create vectors to align
+	PointCloud pc = p1c - p2c;
+	PointCloud pr = p1r - p2r;
 	
 	/*c is the smallest diagonal value of Zk. remember Zk is a diagonal matrix
 	 with all diagonal elements being negative except for first entry which is
 	 0 */
-	long double c = (*Zk).minCoeff();
+	long double c = Zk->minCoeff();
 
 	Matrix4ld I = MatrixXld::Identity(4,4);
 
@@ -114,11 +145,11 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 	MatrixXld U = es.eigenvectors().real();	// A matrix whose column vectors are eigen vectors of RTmp
 	
 	// Normalize U
-	for (i = 0; i < U.cols(); i++)
+	for (int i = 0; i < U.cols(); i++)
 		U.col(i).norm();
 
 	// If any elements in s <=10^-4, then set it to be equal to 1
-	for (i = 0; i < s.size(); i++) {
+	for (int i = 0; i < s.size(); i++) {
 		if (s(i) <= .0001)
 			s(i) = 1;
 	}
@@ -127,7 +158,7 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 	Matrix4ld RInvTmp = U * ((s.array().pow(-1)).matrix().asDiagonal()) * U.transpose();
 
 	Matrix4ld D1 = MatrixXld::Zero(4,4);	// Initialize D1 to zero matrix
-	for (i = 0; i < pc.cols(); i++) {
+	for (int i = 0; i < pc.cols(); i++) {
 		Matrix4ld G_tmp = measurementFunctionJacobian(pc.col(i), pr.col(i));
 		D1 = D1 + G_tmp.transpose()*RInvTmp*G_tmp;
 	}
@@ -143,7 +174,7 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 												// vectors of RTmp
 	
 	// Normalize MTmp
-	for (i = 0; i < U.cols(); i++)
+	for (int i = 0; i < U.cols(); i++)
 		MTmp.col(i).norm();
 
 	// Convert ZTmp to std::vector so we can call the sort function
@@ -166,7 +197,7 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 	(*Mk).col(0) = MTmp.col(indx[0]);
 	*Xk = (*Mk).col(0);	// Update Xk
 
-	for (i = 1; i < ZTmp.size(); i++)
+	for (int i = 1; i < ZTmp.size(); i++)
 		(*Mk).col(i) = MTmp.col(indx[i]);
 	
 	// Calculate translation vector from rotation estimate
@@ -174,8 +205,8 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
     Vector3ld centroid;
     Vector3ld centroidRotated;
     for(int i=0; i<3; i++) {
-        centroid(i) = ((*p1c).row(i).mean() + (*p2c).row(i).mean()) / 2.0;
-        centroidRotated(i) = ((*p1r).row(i).mean() + (*p2r).row(i).mean()) / 2.0;
+        centroid(i) = (p1c.row(i).mean() + p2c.row(i).mean()) / 2.0;
+        centroidRotated(i) = (p1r.row(i).mean() + p2r.row(i).mean()) / 2.0;
     }
     Quaternionld XkQuat = Quaternionld((*Xk)(0), (*Xk)(1), (*Xk)(2), (*Xk)(3)).normalized();
     
