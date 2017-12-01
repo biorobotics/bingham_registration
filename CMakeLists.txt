@@ -48,6 +48,7 @@ find_package(catkin QUIET COMPONENTS
   pcl_ros
   pcl_conversions
 )
+
 if(catkin_FOUND)
   catkin_python_setup()
 

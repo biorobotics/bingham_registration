@@ -7,6 +7,7 @@
 #define KD_TREE
 
 #include "type_defs.h"
+#include "search_result.h"
 
 struct KDNode;
 typedef struct KDNode *KDTree;
@@ -18,13 +19,6 @@ struct KDNode{
 	KDTree left;
 	KDTree right;
 	int index;	// Index of the value where it was originally in the ptcldFixed
-};
-
-struct KdResult{
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	PointCloud pc;
-	PointCloud pr;
-	long double res;
 };
 
 /* insert:
@@ -41,7 +35,7 @@ void insert(const Vector3ld& point, int index, KDTree *T);
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-KdResult kd_search(const PointCloud& targets, const KDTree& T, long double inlierRatio, const VectorXld& regParams);
+SearchResult kd_search(const PointCloud& targets, const KDTree& T, double inlierRatio, const VectorXld& regParams);
 
 KDTree tree_from_point_cloud(const PointCloud& ptcld);
 

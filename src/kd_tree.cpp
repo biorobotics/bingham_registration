@@ -143,7 +143,7 @@ KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inlierRatio, const VectorXld& regParams) {
+SearchResult kd_search(const PointCloud& targets_p, const KDTree& T, double inlierRatio, const VectorXld& regParams) {
 	int numTargets = targets_p.cols();
 	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numTargets);
@@ -191,7 +191,7 @@ KdResult kd_search(const PointCloud& targets_p, const KDTree& T, long double inl
 		totalDistance += filtered_resultMatches(3, count);
 	}
 	
-	KdResult result;
+	SearchResult result;
 	// When return, ignore the last column which stores individual distances
 	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result.pr = filtered_resultTargets;

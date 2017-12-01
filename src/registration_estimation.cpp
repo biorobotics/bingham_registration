@@ -118,7 +118,7 @@ RegistrationResult registration_est_kf_rgbd(const PointCloud& ptcldMoving,
         // kd_search takes subset of ptcldMovingNew, CAD model points, and regParams
         // from last iteration according to window size 
 
-        KdResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
+        SearchResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
         result.error = searchResult.res;
 
         long double Rmag = .04 + pow(searchResult.res / 6, 2);  // Variable that helps calculate the noise 
