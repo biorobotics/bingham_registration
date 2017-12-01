@@ -171,7 +171,7 @@ SearchResult kd_search(const PointCloud& targets_p, const KDTree& T, double inli
 		(resultMatches.col(count))(1) = (nearestPoint->value)(1);
 		(resultMatches.col(count))(2) = (nearestPoint->value)(2);
 		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, targetsNew.col(count));
-		resultTargets.col(count) = targets_p.col(count);	// We want to return the original targets
+		// resultTargets.col(count) = targets_p.col(count);	// We want to return the original targets
 
 		free(nearestPoint);
 	}
@@ -187,7 +187,7 @@ SearchResult kd_search(const PointCloud& targets_p, const KDTree& T, double inli
 	
 	for (int count = 0; count < inlierSize; count++) {
 		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		filtered_resultTargets.col(count) = resultTargets.col(sortIndex[count]);
+		filtered_resultTargets.col(count) = targets_p.col(sortIndex[count]);
 		totalDistance += filtered_resultMatches(3, count);
 	}
 	
