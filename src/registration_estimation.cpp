@@ -102,15 +102,14 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
     
     //********** Loop starts **********
     // If not converge, transform points using regParams and repeat
-    for (int i = 1; i <= std::min(maxIterations, sizePtcldMoving / windowSize); i++) {
-        int iOffset = i - 1;    // Eigen is 0-index instead of 1-index
+    for (int i = 0; i <= std::min(maxIterations, sizePtcldMoving / windowSize) - 1; i++) {
         
         // Tree search
         // Send as input a subset of the pftcldMoving points according to window size
         PointCloud targets(3, windowSize);
         
-        for (int r = windowSize * (iOffset); r < windowSize * i; r++) {
-            int rOffset = r - windowSize * (iOffset);
+        for (int r = windowSize * i; r < windowSize * (i + 1); r++) {
+            int rOffset = r - windowSize * i;
             for (int n = 0; n < 3; n++) 
                 targets(n,rOffset) = ptcldMoving(n, r);
         }
@@ -134,15 +133,15 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
         Zk = filterResult.Zk;
 
         // Store current regParams in regHistory
-        regHistory.col(i) = filterResult.regParams;    // No offset applied because 
-                                             // regHistory(0) is saved for initial value   
+        regHistory.col(i+1) = filterResult.regParams; // regHistory(0) is saved for initial value
+                                                
         regParams = filterResult.regParams;
 
         //  Check convergence:
         //  Takes in updated regParams and previous regParams
         //  Return dR, dT
         DeltaTransform convergenceResult = get_changes_in_transformation_estimate(filterResult.regParams,
-                                                                                  regHistory.col(i-1));
+                                                                                  regHistory.col(i));
         if (convergenceResult.dT <= tolerance(0) && 
             convergenceResult.dR <= tolerance(1)) {
             std::cout << "CONVERGED" << std::endl;
