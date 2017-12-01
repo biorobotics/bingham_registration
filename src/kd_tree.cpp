@@ -30,7 +30,7 @@ KDTree tree_from_point_cloud(const PointCloud& ptcld) {
     int size = ptcld.cols();
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < size; i++) 
-        insert(ptcld.col(i), i, &cloudTree);
+        insert(ptcld.col(i), i, cloudTree);
     return cloudTree;
 }
 
@@ -47,28 +47,28 @@ long double find_distance(const Vector3ld& point1, const Vector3ld& point2) {
  			   level that the point should be sorted on
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
+void insert_helper(const Vector3ld& point, int index, KDTree& T, int level) {
 	// Right now the tree only works for x, y, z point
 	if (level < 0 || level > 2){
 		std::cerr << "Invalid search level";
 		exit(1);
 	}
 
-	if (*T == NULL)
+	if (T == NULL)
 	{
-		*T = new KDNode();
-		(*T)->left = NULL;
-		(*T)->right = NULL;
-		((*T)->value)(0) = point(0);
-		((*T)->value)(1) = point(1);
-		((*T)->value)(2) = point(2);
-		(*T)->index = index;
+		T = new KDNode();
+		T->left = NULL;
+		T->right = NULL;
+		(T->value)(0) = point(0);
+		(T->value)(1) = point(1);
+		(T->value)(2) = point(2);
+		T->index = index;
 	}
 	else {
-		if (point(level) < (*T)->value(level)) 
-			insert_helper(point, index, &((*T)->left), (level+1) % 3);
+		if (point(level) < T->value(level)) 
+			insert_helper(point, index, T->left, (level+1) % 3);
 		else 
-			insert_helper(point, index, &((*T)->right), (level+1) % 3);
+			insert_helper(point, index, T->right, (level+1) % 3);
 	}
 }
 
@@ -76,11 +76,7 @@ void insert_helper(const Vector3ld& point, int index, KDTree *T, int level) {
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(const Vector3ld& point, int index, KDTree *T) {
-	if (T == NULL){
-		std::cerr << "Invalid pointer for kd-tree in insert";
-		exit(1);
-	}
+void insert(const Vector3ld& point, int index, KDTree& T) {
 	return insert_helper(point, index, T, 0);
 }
 

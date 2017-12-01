@@ -25,7 +25,7 @@ struct KDNode{
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(const Vector3ld& point, int index, KDTree *T);
+void insert(const Vector3ld& point, int index, KDTree& T);
 
 /*
  * kd_search:
