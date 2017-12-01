@@ -97,8 +97,7 @@ target_link_libraries(${PROJECT_NAME} ${EIGEN3_LIBRARIES})
 
 ## Declare a C++ executable
 
-add_executable(console_registration src/console_registration_main.cpp
-                                    src/register_txt_files.cpp
+add_executable(console_registration src/register_txt_files.cpp
                                     src/sort_indexes.cpp
                                     src/registration_estimation.cpp
                                     src/conversions.cpp
@@ -137,7 +136,6 @@ if(catkin_FOUND)
   target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
   add_executable(registration_node src/ros_registration.cpp
-                                   src/register_txt_files.cpp
                                    src/sort_indexes.cpp
                                    src/registration_estimation.cpp
                                    src/conversions.cpp
