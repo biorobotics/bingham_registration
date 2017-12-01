@@ -100,18 +100,24 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
     for(int i = 1; i <= 3; i++) 
         Zk(i, i) = -1 * pow((long double)10, (long double)-uncertaintyR);
     
+    if(windowSize > sizePtcldMoving){
+        windowSize = sizePtcldMoving;
+        std::cout << "Warning: Window size is larger than point cloud. Using window size of ";
+        std::cout << windowSize << std::endl;
+    }
+
     //********** Loop starts **********
     // If not converge, transform points using regParams and repeat
-    for (int i = 0; i <= std::min(maxIterations, sizePtcldMoving / windowSize) - 1; i++) {
+    for (int i = 0; i <= maxIterations - 1; i++) {
         
         // Tree search
         // Send as input a subset of the pftcldMoving points according to window size
         PointCloud targets(3, windowSize);
         
-        for (int r = windowSize * i; r < windowSize * (i + 1); r++) {
-            int rOffset = r - windowSize * i;
+        for (int r = 0; r < windowSize; r++) {
+            int rOffset = windowSize * i;
             for (int n = 0; n < 3; n++) 
-                targets(n,rOffset) = ptcldMoving(n, r);
+                targets(n, r) = ptcldMoving(n, (r + rOffset) % sizePtcldMoving);
         }
 
         // kd_search takes subset of ptcldMovingNew, CAD model points, and regParams

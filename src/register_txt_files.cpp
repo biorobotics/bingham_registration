@@ -89,7 +89,7 @@ PointCloud fillPointCloud(char const * filePath){
 // Should at least provide the two ptcld datasets
 long double* register_txt(char const * movingData, char const * fixedData, 
                           double inlierRatio, int maxIterations, int windowSize,
-                          double toleranceT, double toleranceR, double uncertaintyR) {
+                          double toleranceT, double toleranceR, long double uncertaintyR) {
 
     long double* returnArray = new long double[7];
 
