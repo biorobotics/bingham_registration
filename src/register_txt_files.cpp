@@ -105,7 +105,7 @@ long double* register_txt(char const * movingData, char const * fixedData,
         clock_t begin = clock();    // For timing the performance
 
         // Run the registration function without normals
-        result = registration_est_kf_rgbd(ptcldMoving, ptcldFixed,
+        result = registration_estimation(ptcldMoving, ptcldFixed,
                                           inlierRatio, maxIterations, windowSize,
                                           toleranceT, toleranceR, uncertaintyR);
 

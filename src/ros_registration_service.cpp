@@ -137,7 +137,7 @@ public:
   void update(){
     double uncertainty = 10*std::min(1.0,lastError);
     // Perform registration
-    RegistrationResult result = registration_est_kf_rgbd(&ptcldSensed,
+    RegistrationResult result = registration_estimation(&ptcldSensed,
                                                          &ptcldTransformed,
                                                          1, 100, 20, .00001,
                                                          .00001, uncertainty);
