@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <list>
+#include <limits>
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
@@ -233,11 +234,12 @@ public:
   void update()
   {
     ptcldTransformed = lastTransform*ptcldMoving;
+    double uncertainty = std::numeric_limits<float>::min() * -1 / lastError;
     // Run the registration function without normals
     RegistrationResult result = registration_estimation(ptcldTransformed, ptcldFixed,
                                                          inlier_ratio, iterations, 
                                                          window_size, tolerance_t,
-                                                         tolerance_r, 0,
+                                                         tolerance_r, uncertainty,
                                                          fixedKDTree);
 
     lastError = result.error;
