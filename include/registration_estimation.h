@@ -1,6 +1,7 @@
 #ifndef REGISTRATION_EST_BINGHAM_KF_RGBD
 #define REGISTRATION_EST_BINGHAM_KF_RGBD
 
+#include <limits>
 #include "type_defs.h"
 #include "kd_tree.h"
 
@@ -13,5 +14,5 @@ struct RegistrationResult{
 RegistrationResult registration_estimation(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
                                             double inlierRatio, int maxIterations, int windowSize,
                                             double toleranceT, double toleranceR,
-                                            double uncertaintyR, KDTree tree = NULL);
+                                            double uncertaintyR = 0, KDTree tree = NULL);
 #endif

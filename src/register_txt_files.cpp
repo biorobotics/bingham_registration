@@ -13,6 +13,7 @@
 #include <ctime>
 #include <vector>
 #include <stdexcept>
+#include <limits>
 #include "registration_estimation.h"
 #include "register_txt_files.h"
 
@@ -89,7 +90,7 @@ PointCloud fillPointCloud(char const * filePath){
 // Should at least provide the two ptcld datasets
 long double* register_txt(char const * movingData, char const * fixedData, 
                           double inlierRatio, int maxIterations, int windowSize,
-                          double toleranceT, double toleranceR, long double uncertaintyR) {
+                          double toleranceT, double toleranceR) {
 
     long double* returnArray = new long double[7];
 
@@ -107,7 +108,7 @@ long double* register_txt(char const * movingData, char const * fixedData,
         // Run the registration function without normals
         result = registration_estimation(ptcldMoving, ptcldFixed,
                                           inlierRatio, maxIterations, windowSize,
-                                          toleranceT, toleranceR, uncertaintyR);
+                                          toleranceT, toleranceR);
 
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -179,8 +180,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     int inlierRatio = 1; int maxIterations = 100; int windowSize = 20;
-    double toleranceT = 0.001; double toleranceR = 0.009; double uncertainty = 300;
-    double *result = register_txt(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR, uncertainty);
+    double toleranceT = 0.001; double toleranceR = 0.009;
+    long double *result = register_txt(movingPointsString.c_str(), fixedPointsString.c_str(), inlierRatio, maxIterations, windowSize, toleranceT, toleranceR);
     free(result);
     std::cout << "\nTEST\n\n";
 }

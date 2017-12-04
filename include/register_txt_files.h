@@ -9,6 +9,6 @@
 
 	EXPORT long double* register_txt(char const * movingData, char const * fixedData,
 									 double inlierRatio, int maxIterations, int windowSize,
-									 double toleranceT, double toleranceR, double uncertaintyR);
+									 double toleranceT, double toleranceR);
 	
 #endif

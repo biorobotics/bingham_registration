@@ -57,11 +57,14 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
                                             double uncertaintyR,
                                             KDTree tree){
     
-
+    // Make sure input makes sense
     if (ptcldMoving.rows() != DIMENSION ||
         ptcldFixed.rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
+    }
+    if(uncertaintyR >= 0){
+        uncertaintyR = std::numeric_limits<double>::min() * -1;
     }
 
     //************ Initialization **************
@@ -98,7 +101,7 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
     Matrix4ld Zk = MatrixXld::Zero(4, 4);
 
     for(int i = 1; i <= 3; i++) 
-        Zk(i, i) = -1 * pow((long double)10, (long double)-uncertaintyR);
+        Zk(i, i) = uncertaintyR;
     
     if(windowSize > sizePtcldMoving){
         windowSize = sizePtcldMoving;

@@ -233,14 +233,11 @@ public:
   void update()
   {
     ptcldTransformed = lastTransform*ptcldMoving;
-    // Add uncertainty
-    double uncertainty = 10000*std::min(.0001,lastError);
-    std::cerr << uncertainty << std::endl;
     // Run the registration function without normals
     RegistrationResult result = registration_estimation(ptcldTransformed, ptcldFixed,
                                                          inlier_ratio, iterations, 
                                                          window_size, tolerance_t,
-                                                         tolerance_r, uncertainty,
+                                                         tolerance_r, 0,
                                                          fixedKDTree);
 
     lastError = result.error;

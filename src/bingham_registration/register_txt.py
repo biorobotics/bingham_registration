@@ -101,8 +101,7 @@ def _get_clib():
                                    ctypes.c_int,     # Maximum iterations
                                    ctypes.c_int,     # Window size
                                    ctypes.c_double,  # Rotation tolerance
-                                   ctypes.c_double,  # Translation tolerance
-                                   ctypes.c_double]  # Initial uncertainty
+                                   ctypes.c_double]  # Translation tolerance
 
     _clib.register_txt.restype = ctypes.POINTER(ctypes.c_longdouble*7)
     _clib.free_result.argtypes = [ctypes.POINTER(ctypes.c_longdouble*7)]
@@ -111,8 +110,7 @@ def _get_clib():
 _get_clib()
 
 def register_txt(fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100,
-    windowSize = 20, transTolerance = 0.001, rotTolerance = 0.009,
-    uncertainty = 300):
+    windowSize = 20, transTolerance = 0.001, rotTolerance = 0.009):
     '''
     Registers one point cloud to another. Returns a np.longdouble array of size seven representing
     [xPos, yPos, zPos, xRot, yRot, zRot] and a double representing the mean error
@@ -122,8 +120,7 @@ def register_txt(fileNameMoving, fileNameFixed, inlierRatio = 1.0, maxIter = 100
                                ctypes.c_int(maxIter),
                                ctypes.c_int(windowSize),
                                ctypes.c_double(transTolerance),
-                               ctypes.c_double(rotTolerance),
-                               ctypes.c_double(uncertainty))
+                               ctypes.c_double(rotTolerance))
     
     outputArray = np.frombuffer(output.contents, dtype=np.longdouble)
     regParams = outputArray[0:6].copy()
