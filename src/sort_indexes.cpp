@@ -8,16 +8,16 @@ Return: the sorted results' index in the original vector
 
 * Taken from http://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
 */
-std::vector<unsigned int> sort_indexes(const std::vector<long double> &v, bool ascending) {
+Eigen::VectorXi sort_indexes(const VectorXld &v, bool ascending) {
 	// initialize original index locations
-	std::vector<unsigned int> idx(v.size());
+	Eigen::VectorXi  idx(v.size());
 	for (unsigned int i = 0; i < idx.size(); i++) idx[i] = i;
 
 	// sort indexes based on comparing values in v
 	if (ascending)
-		std::sort(idx.begin(), idx.end(), [&v](unsigned int i1, unsigned int i2) {return v[i1] < v[i2]; });
+		std::sort(idx.data(), idx.data() + idx.size(), [&v](unsigned int i1, unsigned int i2) {return v[i1] < v[i2]; });
 	else
-		std::sort(idx.begin(), idx.end(), [&v](unsigned int i1, unsigned int i2) {return v[i1] > v[i2]; });
+		std::sort(idx.data(), idx.data() + idx.size(), [&v](unsigned int i1, unsigned int i2) {return v[i1] > v[i2]; });
 
 	return idx;
 }

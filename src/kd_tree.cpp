@@ -139,59 +139,44 @@ KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-SearchResult kd_search(const PointCloud& targets_p, const KDTree& T, double inlierRatio, const VectorXld& regParams) {
-	int numTargets = targets_p.cols();
+SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T, double inlierRatio, const VectorXld& regParams) {
+	int numTargets = targetPoints.cols();
 	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
 	PointCloud resultTargets = PointCloud(3, numTargets);
-	MatrixXld resultMatches = MatrixXld(4, numTargets);	// First 3 rows = point, 
-														// 4th row = distance 
-	PointCloud filtered_resultTargets = PointCloud(3, inlierSize);
-	MatrixXld filtered_resultMatches = MatrixXld(4, inlierSize);
-	long double totalDistance = 0;
+	PointCloud resultMatches = PointCloud(3, numTargets);	// First 3 rows = point, 
+															// 4th row = distance
+
+	PointCloud sortedResultTargets = PointCloud(3, inlierSize);
+	PointCloud sortedResultMatches = PointCloud(3, inlierSize);
+	double totalDistance = 0;
 	PointCloud targetsNew = PointCloud(3, numTargets);
 
 	// Transform the target points before searching
-	targetsNew = compute_transformed_points(targets_p, regParams);
-
-	if (targets_p.cols() != numTargets) {
-		std::cerr << "Pointcloud (" << targets_p.cols()<< ") doesn't match target size (" 
-				  << numTargets << ")\n";
-		exit(1);
-	}
+	targetsNew = compute_transformed_points(targetPoints, regParams);
 
 	// Find numTargets cloest points together with corresponding targets
 	for (int count = 0; count < numTargets; count++) {
 		KDTree nearestPoint = find_nearest(targetsNew.col(count), T);
-
-		(resultMatches.col(count))(0) = (nearestPoint->value)(0);
-		(resultMatches.col(count))(1) = (nearestPoint->value)(1);
-		(resultMatches.col(count))(2) = (nearestPoint->value)(2);
-		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, targetsNew.col(count));
-		// resultTargets.col(count) = targets_p.col(count);	// We want to return the original targets
-
+		resultMatches.col(count) = nearestPoint->value;
 		free(nearestPoint);
 	}
 
 	// Get distance row and turn into vector for sorting
-	VectorXld distances = resultMatches.row(3);
-	std::vector<long double> distancesVector;
-	distancesVector.resize(distances.size());
-	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
+	VectorXld distances = (resultMatches - targetsNew).colwise().norm();
 
 	// Get indexes sorted by distance
-	std::vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
+	Eigen::VectorXi sortIndex = sort_indexes(distances, true);
 	
 	for (int count = 0; count < inlierSize; count++) {
-		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		filtered_resultTargets.col(count) = targets_p.col(sortIndex[count]);
-		totalDistance += filtered_resultMatches(3, count);
+		sortedResultMatches.col(count) = resultMatches.col(sortIndex[count]);
+		sortedResultTargets.col(count) = targetPoints.col(sortIndex[count]);
 	}
 	
 	SearchResult result;
 	// When return, ignore the last column which stores individual distances
-	result.pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result.pr = filtered_resultTargets;
-	result.res = totalDistance / inlierSize;
+	result.pc = sortedResultMatches;
+	result.pr = sortedResultTargets;
+	result.res = distances.sum() / inlierSize;
 	return result;
 }
 

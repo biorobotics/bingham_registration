@@ -177,13 +177,10 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 	for (int i = 0; i < U.cols(); i++)
 		MTmp.col(i).norm();
 
-	// Convert ZTmp to std::vector so we can call the sort function
-	std::vector<long double> ZTmpSTD(ZTmp.data(), ZTmp.data() + ZTmp.size());
-
-	std::vector<unsigned int> indx = sort_indexes(ZTmpSTD, false);
-	
+	// Sort ZTmp
+	Eigen::VectorXi indx = sort_indexes(ZTmp, false);
 	VectorXld ZTmpSorted(ZTmp.size());
-
+	
 	for (int i = ZTmp.size()-1; i > 0; i--)
 		ZTmpSorted(i) = ZTmp(indx[i]) - ZTmp(indx[0]);
 
