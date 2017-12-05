@@ -165,7 +165,7 @@ SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T, double i
 	VectorXld distances = (resultMatches - targetsNew).colwise().norm();
 
 	// Get indexes sorted by distance
-	Eigen::VectorXi sortIndex = sort_indexes(distances, true);
+	Eigen::VectorXi sortIndex = sort_indexes<VectorXld>(distances, true);
 	
 	for (int count = 0; count < inlierSize; count++) {
 		sortedResultMatches.col(count) = resultMatches.col(sortIndex[count]);

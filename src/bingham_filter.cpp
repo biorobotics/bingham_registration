@@ -178,7 +178,7 @@ BinghamKFResult bingham_filter(Vector4ld *Xk, Matrix4ld *Mk, Matrix4ld *Zk,
 		MTmp.col(i).norm();
 
 	// Sort ZTmp
-	Eigen::VectorXi indx = sort_indexes(ZTmp, false);
+	Eigen::VectorXi indx = sort_indexes<VectorXld>(ZTmp, false);
 	VectorXld ZTmpSorted(ZTmp.size());
 	
 	for (int i = ZTmp.size()-1; i > 0; i--)

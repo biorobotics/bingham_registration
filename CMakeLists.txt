@@ -83,7 +83,6 @@ endif()
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME} MODULE
-   src/sort_indexes.cpp
    src/conversions.cpp
    src/kd_tree.cpp
    src/registration_estimation.cpp
@@ -98,7 +97,6 @@ target_link_libraries(${PROJECT_NAME} ${EIGEN3_LIBRARIES})
 ## Declare a C++ executable
 
 add_executable(console_registration src/register_txt_files.cpp
-                                    src/sort_indexes.cpp
                                     src/registration_estimation.cpp
                                     src/conversions.cpp
                                     src/kd_tree.cpp src/bingham_filter.cpp
@@ -125,7 +123,6 @@ if(catkin_FOUND)
   if (CATKIN_ENABLE_TESTING)
     catkin_add_gtest(utest test/utest.cpp
                            src/register_txt_files.cpp 
-                           src/sort_indexes.cpp
                            src/registration_estimation.cpp
                            src/conversions.cpp
                            src/kd_tree.cpp src/bingham_filter.cpp
@@ -136,7 +133,6 @@ if(catkin_FOUND)
   target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
   add_executable(registration_node src/ros_registration.cpp
-                                   src/sort_indexes.cpp
                                    src/registration_estimation.cpp
                                    src/conversions.cpp
                                    src/kd_tree.cpp src/bingham_filter.cpp
