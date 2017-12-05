@@ -30,7 +30,7 @@ Vector3ld quat2eul(Quaternionld q) {
 	return eul;
 }
 
-Matrix4ld measurementFunctionJacobian(const Vector3ld& p1, const Vector3ld& p2) {
+Matrix4ld measurementFunctionJacobian(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2) {
     /*p1, p2 is of size 1x3
     *H is of size 4x4 */
     Matrix4ld H;

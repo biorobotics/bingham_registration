@@ -49,7 +49,7 @@ PointCloud pclToEigen(const pcl::PCLPointCloud2& input)
   // Get just XYZ point
   Eigen::MatrixXf mat = cloudPtr->getMatrixXfMap(3,4,0);
   PointCloud points(3,mat.cols());
-  points << mat.cast<long double>();
+  points << mat;
   // Randomize points
   shufflePointCloud(points);
   return points;
@@ -233,8 +233,8 @@ public:
 
   void update()
   {
-    ptcldTransformed = lastTransform*ptcldMoving;
-    double uncertainty = std::numeric_limits<float>::min() * -1 / lastError;
+    ptcldTransformed = lastTransform.cast<float>()*ptcldMoving;
+    double uncertainty = std::numeric_limits<float>::min() * -1;
     // Run the registration function without normals
     RegistrationResult result = registration_estimation(ptcldTransformed, ptcldFixed,
                                                          inlier_ratio, iterations, 

@@ -15,7 +15,7 @@ typedef struct KDNormalNode *KDNormalTree;
 
 struct KDNode{
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	Vector3ld value;
+	Eigen::Vector3f value;
 	KDTree left;
 	KDTree right;
 	int index;	// Index of the value where it was originally in the ptcldFixed
@@ -25,7 +25,7 @@ struct KDNode{
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(const Vector3ld& point, int index, KDTree& T);
+void insert(const Eigen::Vector3f& point, int index, KDTree& T);
 
 /*
  * kd_search:

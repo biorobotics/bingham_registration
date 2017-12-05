@@ -1,7 +1,7 @@
 #ifndef TYPE_DEFS
 #define TYPE_DEFS
 #include <Eigen/Dense>
-typedef Eigen::Matrix<long double, 3, Eigen::Dynamic> PointCloud;
+typedef Eigen::Matrix<float, 3, Eigen::Dynamic> PointCloud;
 typedef Eigen::Matrix<long double, Eigen::Dynamic, Eigen::Dynamic> MatrixXld;
 typedef Eigen::Matrix<long double, 4, 4> Matrix4ld;
 typedef Eigen::Matrix<long double, 3, 3> Matrix3ld;

@@ -22,7 +22,7 @@
 PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& regParams) {
 	Matrix4ld testimated = reg_params_to_transformation_matrix (regParams.segment(0,6));
 	Affine3ld t(testimated);
-	return t*ptcldMoving;
+	return t.cast<float>()*ptcldMoving;
 }
 
 KDTree tree_from_point_cloud(const PointCloud& ptcld) {
@@ -38,7 +38,7 @@ KDTree tree_from_point_cloud(const PointCloud& ptcld) {
  * 		Input: two points in Vector3ld type
  *      Return: distance between two points
  */
-long double find_distance(const Vector3ld& point1, const Vector3ld& point2) {
+double find_distance(const Eigen::Vector3f& point1, const Eigen::Vector3f& point2) {
 	return (point1 - point2).norm();
 }
 
@@ -47,7 +47,7 @@ long double find_distance(const Vector3ld& point1, const Vector3ld& point2) {
  			   level that the point should be sorted on
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_helper(const Vector3ld& point, int index, KDTree& T, int level) {
+void insert_helper(const Eigen::Vector3f& point, int index, KDTree& T, int level) {
 	// Right now the tree only works for x, y, z point
 	if (level < 0 || level > 2){
 		std::cerr << "Invalid search level";
@@ -76,7 +76,7 @@ void insert_helper(const Vector3ld& point, int index, KDTree& T, int level) {
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(const Vector3ld& point, int index, KDTree& T) {
+void insert(const Eigen::Vector3f& point, int index, KDTree& T) {
 	return insert_helper(point, index, T, 0);
 }
 
@@ -86,10 +86,10 @@ void insert(const Vector3ld& point, int index, KDTree& T) {
  			   current distance
  		Return: None. Modify the found storages in place
  */
-void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, const KDTree& bestN, 
-						 long double *bestDistance) {
+void find_nearest_helper(const KDTree& T, const Eigen::Vector3f& target, int level, const KDTree& bestN, 
+						 double *bestDistance) {
 
-	long double distance, diff;
+	double distance, diff;
 	// If reaches the leaf of the tree, end search
 	if (T == NULL)
 		return;
@@ -120,9 +120,9 @@ void find_nearest_helper(const KDTree& T, const Vector3ld& target, int level, co
  * 		Input: point (whose closest match needs to be searched in kd-tree), kd-tree
  		Return: The sub-tree whose node is the best match
  */
-KDNode *find_nearest(const Vector3ld& target, KDNode *T) {
+KDNode *find_nearest(const Eigen::Vector3f& target, KDNode *T) {
 	KDNode *bestN = new KDNode();
-	long double *distanceResult = (long double*)malloc(sizeof(long double));
+	double *distanceResult = (double*)malloc(sizeof(double));
 	*distanceResult = std::numeric_limits<long double>::max();
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
@@ -162,7 +162,7 @@ SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T, double i
 	}
 
 	// Get distance row and turn into vector for sorting
-	VectorXld distances = (resultMatches - targetsNew).colwise().norm();
+	Eigen::VectorXf distances = (resultMatches - targetsNew).colwise().norm();
 
 	// Get indexes sorted by distance
 	Eigen::VectorXi sortIndex = sort_indexes<VectorXld>(distances, true);

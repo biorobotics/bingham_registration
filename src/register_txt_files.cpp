@@ -29,8 +29,8 @@ void free_result(long double *ptr)
     free(ptr);
 }
 
-typedef std::vector<Eigen::Matrix<long double, 3, 1>,
-                    Eigen::aligned_allocator<Eigen::Matrix<long double, 3, 1>>
+typedef std::vector<Eigen::Matrix<float, 3, 1>,
+                    Eigen::aligned_allocator<Eigen::Matrix<float, 3, 1>>
                     > PointVector;
 
 PointCloud fillPointCloud(char const * filePath){
@@ -53,7 +53,7 @@ PointCloud fillPointCloud(char const * filePath){
             break;
         // store line in a vector temp
         std::istringstream iss(buf);
-        Vector3ld temp;
+        Eigen::Vector3f temp;
         iss >> temp(0) >> temp(1) >> temp(2);
 
         // Make sure all three were read in correctly
