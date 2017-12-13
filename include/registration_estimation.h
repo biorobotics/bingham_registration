@@ -11,8 +11,13 @@ struct RegistrationResult{
     double error;
 };
 
+RegistrationResult registration_estimation(const PointCloud& ptcldMoving, SearchTree tree,
+                                           double inlierRatio, int maxIterations, int windowSize,
+                                           double toleranceT, double toleranceR,
+                                           double uncertaintyR = 0);
+
 RegistrationResult registration_estimation(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
-                                            double inlierRatio, int maxIterations, int windowSize,
-                                            double toleranceT, double toleranceR,
-                                            double uncertaintyR = 0, KDTree tree = NULL);
+                                           double inlierRatio, int maxIterations, int windowSize,
+                                           double toleranceT, double toleranceR,
+                                           double uncertaintyR = 0);
 #endif

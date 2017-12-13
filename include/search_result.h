@@ -5,9 +5,8 @@
 
 struct SearchResult{
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	PointCloud pc;
-	PointCloud pr;
-	long double res;
+	PointCloud matches;
+	Eigen::VectorXf distances;
 };
 
 #endif
