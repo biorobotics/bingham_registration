@@ -35,7 +35,7 @@ void insert(const Eigen::Vector3f& point, int index, KDTree& T);
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-SearchResult kd_search(const PointCloud& targets, const KDTree& T, double inlierRatio, const VectorXld& regParams);
+SearchResult kd_search(const PointCloud& targets, const KDTree& T);
 
 KDTree tree_from_point_cloud(const PointCloud& ptcld);
 

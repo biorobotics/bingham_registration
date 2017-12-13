@@ -12,18 +12,6 @@
 #include <limits>
 #include <iostream>
 #include "kd_tree.h"
-#include "sort_indexes.h"
-#include "conversions.h"
-
-/* compute_transformed_points:
- *		Input: ptcld moving, regParams from previous iteration
- 		Output: ptcld moving after being transformed 
- */
-PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& regParams) {
-	Matrix4ld testimated = reg_params_to_transformation_matrix (regParams.segment(0,6));
-	Affine3ld t(testimated);
-	return t.cast<float>()*ptcldMoving;
-}
 
 KDTree tree_from_point_cloud(const PointCloud& ptcld) {
 	KDTree cloudTree = NULL;
@@ -139,44 +127,25 @@ KDNode *find_nearest(const Eigen::Vector3f& target, KDNode *T) {
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T, double inlierRatio, const VectorXld& regParams) {
+SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T) {
 	int numTargets = targetPoints.cols();
-	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
-	PointCloud resultTargets = PointCloud(3, numTargets);
 	PointCloud resultMatches = PointCloud(3, numTargets);	// First 3 rows = point, 
 															// 4th row = distance
 
-	PointCloud sortedResultTargets = PointCloud(3, inlierSize);
-	PointCloud sortedResultMatches = PointCloud(3, inlierSize);
-	double totalDistance = 0;
-	PointCloud targetsNew = PointCloud(3, numTargets);
-
-	// Transform the target points before searching
-	targetsNew = compute_transformed_points(targetPoints, regParams);
-
 	// Find numTargets cloest points together with corresponding targets
 	for (int count = 0; count < numTargets; count++) {
-		KDTree nearestPoint = find_nearest(targetsNew.col(count), T);
+		KDTree nearestPoint = find_nearest(targetPoints.col(count), T);
 		resultMatches.col(count) = nearestPoint->value;
 		free(nearestPoint);
 	}
 
 	// Get distance row and turn into vector for sorting
-	Eigen::VectorXf distances = (resultMatches - targetsNew).colwise().norm();
-
-	// Get indexes sorted by distance
-	Eigen::VectorXi sortIndex = sort_indexes<Eigen::VectorXf>(distances, true);
-	
-	for (int count = 0; count < inlierSize; count++) {
-		sortedResultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		sortedResultTargets.col(count) = targetPoints.col(sortIndex[count]);
-	}
+	Eigen::VectorXf distances = (resultMatches - targetPoints).colwise().norm();
 	
 	SearchResult result;
 	// When return, ignore the last column which stores individual distances
-	result.pc = sortedResultMatches;
-	result.pr = sortedResultTargets;
-	result.res = distances.sum() / inlierSize;
+	result.matches = resultMatches;
+	result.distances = distances;
 	return result;
 }
 

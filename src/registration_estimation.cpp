@@ -31,10 +31,22 @@
 #include "bingham_filter.h"
 #include "get_changes_in_transformation_estimate.h"
 #include "registration_estimation.h"
+#include "conversions.h"
+#include "sort_indexes.h"
 #include "type_defs.h"
 
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
+
+/* compute_transformed_points:
+ *      Input: ptcld moving, regParams from previous iteration
+        Output: ptcld moving after being transformed 
+ */
+PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& regParams) {
+    Matrix4ld testimated = reg_params_to_transformation_matrix (regParams.segment(0,6));
+    Affine3ld t(testimated);
+    return t.cast<float>()*ptcldMoving;
+}
 
 /* 
  *  registration_estimation: (for registration without normals)
@@ -109,6 +121,14 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
         std::cout << windowSize << std::endl;
     }
 
+        
+    int inlierSize = trunc(windowSize * inlierRatio);   // Round down to int
+    
+    PointCloud sortedResultTargets(3, inlierSize);
+    PointCloud sortedResultMatches(3, inlierSize);
+    PointCloud targetsTransformed(3, windowSize);
+
+
     //********** Loop starts **********
     // If not converge, transform points using regParams and repeat
     for (int i = 0; i <= maxIterations - 1; i++) {
@@ -126,16 +146,28 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
         // kd_search takes subset of ptcldMovingNew, CAD model points, and regParams
         // from last iteration according to window size 
 
-        SearchResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
-        result.error = searchResult.res;
+        // Transform the target points before searching
+        targetsTransformed = compute_transformed_points(targets, regParams);
 
-        long double Rmag = .04 + pow(searchResult.res / 6, 2);  // Variable that helps calculate the noise 
+        SearchResult searchResult = kd_search(targetsTransformed, cloudTree);
+
+        // Get indexes sorted by distance
+        Eigen::VectorXi sortIndex = sort_indexes<Eigen::VectorXf>(searchResult.distances, true);
+        
+        for (int count = 0; count < inlierSize; count++) {
+            sortedResultMatches.col(count) = searchResult.matches.col(sortIndex[count]);
+            sortedResultTargets.col(count) = targets.col(sortIndex[count]);
+        }
+
+        result.error = searchResult.distances.sum() / searchResult.distances.cols();
+
+        long double Rmag = .04 + pow(result.error / 6, 2);  // Variable that helps calculate the noise 
         
         //  Quaternion Filtering:
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and regParams for next iteration. 
-        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &searchResult.pc, &searchResult.pr);
+        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &sortedResultMatches, &sortedResultTargets);
 
         Xk = filterResult.Xk;
         Mk = filterResult.Mk;
