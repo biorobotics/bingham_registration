@@ -194,34 +194,18 @@ RegistrationResult* registration_est_bingham_kf_rgbd(PointCloud *ptcldMoving,
 
         PointCloud pc;
         PointCloud pr;
-         PointCloud pcUnsorted;
-          PointCloud prUnsorted;
+
         long double res;
         if (useTable == 1) {
             pc = tableSearchResult->pc;    // set of all closest point
-             pcUnsorted = tableSearchResult->pcUnsorted;    // set of all closest point
             pr = tableSearchResult->pr;    // set of all target points in corresponding order with pc
-             prUnsorted = tableSearchResult->prUnsorted;    // set of all closest point
             res = tableSearchResult->res;  // mean of all the distances calculated
-/*    ofstream myFile;
-    myFile.open("./tableResult.txt");
-    myFile << "pcUnsorted\n" << pcUnsorted.transpose() << endl;
-    myFile << "prUnsorted\n" << prUnsorted.transpose() << endl;
-    myFile << "res\n" << res << endl;
-    myFile.close();*/
         }
         else {
             pc = kdSearchResult->pc;    // set of all closest point
             pr = kdSearchResult->pr;    // set of all target points in corresponding order with pc
-            pcUnsorted = kdSearchResult->pcUnsorted;    // set of all closest point
-            prUnsorted = kdSearchResult->prUnsorted;    // set of all target points in corresponding order with pc
             res = kdSearchResult->res;  // mean of all the distances calculated
             ofstream myFile;
-/*                myFile.open("./treeResult.txt");
-    myFile << "pcUnsorted\n" << pcUnsorted.transpose() << endl;
-    myFile << "prUnsorted\n" << prUnsorted.transpose() << endl;
-    myFile << "res\n" << res << endl;
-    myFile.close();*/
         }
         result->error = res;
 

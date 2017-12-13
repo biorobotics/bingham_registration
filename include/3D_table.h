@@ -30,8 +30,6 @@ struct bound3D{
 struct TableResult{
 	PointCloud pc;
 	PointCloud pr;
-	PointCloud pcUnsorted;
-	PointCloud prUnsorted;
 	long double res;
 };
 

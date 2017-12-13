@@ -320,8 +320,6 @@ struct TableResult* table_search(PointCloud *targets_p, PointCloud *T, long doub
 	// When return, ignore the last column which stores individual distances
 	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
 	result->pr = filtered_resultTargets;
-	result->pcUnsorted = resultMatches.topLeftCorner(3,resultMatches.cols());
-	result->prUnsorted = resultTargets;
 	result->res = totalDistance / inlierSize;
 
 	return result;
