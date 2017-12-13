@@ -13,8 +13,8 @@
 #include <iostream>
 #include "kd_tree.h"
 
-KDTree tree_from_point_cloud(const PointCloud& ptcld) {
-	KDTree cloudTree = NULL;
+SearchTree tree_from_point_cloud(const PointCloud& ptcld) {
+	SearchTree cloudTree = NULL;
     int size = ptcld.cols();
     // Construct the kdtree from ptcldFixed
     for (int i = 0; i < size; i++) 
@@ -35,7 +35,7 @@ double find_distance(const Eigen::Vector3f& point1, const Eigen::Vector3f& point
  			   level that the point should be sorted on
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_helper(const Eigen::Vector3f& point, int index, KDTree& T, int level) {
+void insert_helper(const Eigen::Vector3f& point, int index, SearchTree& T, int level) {
 	// Right now the tree only works for x, y, z point
 	if (level < 0 || level > 2){
 		std::cerr << "Invalid search level";
@@ -64,7 +64,7 @@ void insert_helper(const Eigen::Vector3f& point, int index, KDTree& T, int level
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(const Eigen::Vector3f& point, int index, KDTree& T) {
+void insert(const Eigen::Vector3f& point, int index, SearchTree& T) {
 	return insert_helper(point, index, T, 0);
 }
 
@@ -74,7 +74,7 @@ void insert(const Eigen::Vector3f& point, int index, KDTree& T) {
  			   current distance
  		Return: None. Modify the found storages in place
  */
-void find_nearest_helper(const KDTree& T, const Eigen::Vector3f& target, int level, const KDTree& bestN, 
+void find_nearest_helper(const SearchTree& T, const Eigen::Vector3f& target, int level, const SearchTree& bestN, 
 						 double *bestDistance) {
 
 	double distance, diff;
@@ -108,35 +108,33 @@ void find_nearest_helper(const KDTree& T, const Eigen::Vector3f& target, int lev
  * 		Input: point (whose closest match needs to be searched in kd-tree), kd-tree
  		Return: The sub-tree whose node is the best match
  */
-KDNode *find_nearest(const Eigen::Vector3f& target, KDNode *T) {
+Eigen::Vector3f find_nearest(const Eigen::Vector3f& target, KDNode *T) {
 	KDNode *bestN = new KDNode();
 	double *distanceResult = (double*)malloc(sizeof(double));
-	*distanceResult = std::numeric_limits<long double>::max();
+	*distanceResult = std::numeric_limits<double>::max();
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
-
+	Eigen::Vector3f point = bestN->value;
 	free(distanceResult);
-	return bestN;
+	free(bestN);
+	return point;
 }
 
-/*
- * kd_search:
+/* tree_search:
  		Input: target point cloud, kd-tree, inlier ratio, regParams from last iteration
  			   to transform points 
 		Return: pc = set of all closest points
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T) {
+SearchResult tree_search(const PointCloud& targetPoints, const SearchTree& Tree) {
 	int numTargets = targetPoints.cols();
 	PointCloud resultMatches = PointCloud(3, numTargets);	// First 3 rows = point, 
 															// 4th row = distance
 
 	// Find numTargets cloest points together with corresponding targets
 	for (int count = 0; count < numTargets; count++) {
-		KDTree nearestPoint = find_nearest(targetPoints.col(count), T);
-		resultMatches.col(count) = nearestPoint->value;
-		free(nearestPoint);
+		resultMatches.col(count) = find_nearest(targetPoints.col(count), Tree);
 	}
 
 	// Get distance row and turn into vector for sorting
@@ -149,7 +147,7 @@ SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T) {
 	return result;
 }
 
-long count_leaves(const KDTree& T) {
+long count_leaves(const SearchTree& T) {
 	if(!T){
 		return 0;
 	}
@@ -160,7 +158,7 @@ long count_leaves(const KDTree& T) {
 }
 
 // This function frees the tree
-void free_tree(const KDTree& T) {
+void free_tree(const SearchTree& T) {
 	if (T) {
 		free_tree(T->left);
 		free_tree(T->right);

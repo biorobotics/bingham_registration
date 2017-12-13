@@ -59,19 +59,17 @@ PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const Array
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-RegistrationResult registration_estimation(const PointCloud& ptcldMoving, 
-                                            const PointCloud& ptcldFixed,
+RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
+                                            SearchTree cloudTree,
                                             double inlierRatio,
                                             int maxIterations,
                                             int windowSize,
                                             double toleranceT,
                                             double toleranceR,
-                                            double uncertaintyR,
-                                            KDTree tree){
+                                            double uncertaintyR){
     
     // Make sure input makes sense
-    if (ptcldMoving.rows() != DIMENSION ||
-        ptcldFixed.rows() != DIMENSION) {
+    if (ptcldMoving.rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
     }
@@ -86,16 +84,6 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
     
     Eigen::Vector2d tolerance;
     tolerance << toleranceT , toleranceR;
-
-    KDTree cloudTree;
-    bool treeProvided = tree;
-    if(!treeProvided){
-        // Generate kd tree from fixed cloud if none was provided
-        cloudTree = tree_from_point_cloud(ptcldFixed);
-    } else{
-        // Otherwise use the one provided
-        cloudTree = tree;
-    }
 
     VectorXld regParams = VectorXld::Zero(6);  //regParams: 6x1
 
@@ -143,13 +131,13 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
                 targets(n, r) = ptcldMoving(n, (r + rOffset) % sizePtcldMoving);
         }
 
-        // kd_search takes subset of ptcldMovingNew, CAD model points, and regParams
+        // tree_search takes subset of ptcldMovingNew, CAD model points, and regParams
         // from last iteration according to window size 
 
         // Transform the target points before searching
         targetsTransformed = compute_transformed_points(targets, regParams);
 
-        SearchResult searchResult = kd_search(targetsTransformed, cloudTree);
+        SearchResult searchResult = tree_search(targetsTransformed, cloudTree);
 
         // Get indexes sorted by distance
         Eigen::VectorXi sortIndex = sort_indexes<Eigen::VectorXf>(searchResult.distances, true);
@@ -189,8 +177,18 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
             break;  // Break out of loop if convergence met
         }
     }
-    if(!treeProvided){ free_tree(cloudTree); }
     result.regParams = regParams;
     result.regHistory = regHistory;
+    return result;
+}
+
+RegistrationResult registration_estimation(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
+                                           double inlierRatio, int maxIterations, int windowSize,
+                                           double toleranceT, double toleranceR, double uncertaintyR){
+    SearchTree cloudTree = tree_from_point_cloud(ptcldFixed);
+    RegistrationResult result = registration_estimation(ptcldMoving, cloudTree, inlierRatio,
+                                                        maxIterations, windowSize,
+                                                        toleranceT, toleranceR, uncertaintyR);
+    free_tree(cloudTree);
     return result;
 }
