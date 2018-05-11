@@ -87,9 +87,9 @@ void insert(const Eigen::Vector3f& point, int index, KDTree& T) {
  		Return: None. Modify the found storages in place
  */
 void find_nearest_helper(const KDTree& T, const Eigen::Vector3f& target, int level, const KDTree& bestN, 
-						 double *bestDistance) {
+						 float *bestDistance) {
 
-	double distance, diff;
+	float distance, diff;
 	// If reaches the leaf of the tree, end search
 	if (T == NULL)
 		return;
@@ -122,8 +122,8 @@ void find_nearest_helper(const KDTree& T, const Eigen::Vector3f& target, int lev
  */
 KDNode *find_nearest(const Eigen::Vector3f& target, KDNode *T) {
 	KDNode *bestN = new KDNode();
-	double *distanceResult = (double*)malloc(sizeof(double));
-	*distanceResult = std::numeric_limits<long double>::max();
+	float *distanceResult = (float*)malloc(sizeof(float));
+	*distanceResult = std::numeric_limits<float>::max();
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
 
@@ -165,7 +165,7 @@ SearchResult kd_search(const PointCloud& targetPoints, const KDTree& T, double i
 	Eigen::VectorXf distances = (resultMatches - targetsNew).colwise().norm();
 
 	// Get indexes sorted by distance
-	Eigen::VectorXi sortIndex = sort_indexes<VectorXld>(distances, true);
+	Eigen::VectorXi sortIndex = sort_indexes<Eigen::VectorXf>(distances, true);
 	
 	for (int count = 0; count < inlierSize; count++) {
 		sortedResultMatches.col(count) = resultMatches.col(sortIndex[count]);
