@@ -55,47 +55,43 @@ class MyWindow(QtGui.QMainWindow):
         self.iren.Initialize()
         self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
 
-    def _readFile(self,filename,color):
+    def _readFile(self,filename):
         # Takes filename as string and returns polyData
-        extension = os.path.splitext(filename)[1]
+        extension = os.path.splitext(filename)[1].lower()
         print filename
 
-        # Read PLY into vtkPoints
-        if extension == ".ply":
-            reader = vtk.vtkPLYReader()
-            reader.SetFileName(filename)
-            reader.Update()
-            points = reader.GetOutput().GetPoints()
-            vertices = vtk.vtkCellArray()
-            for i in range(0,reader.GetOutput().GetNumberOfPoints()):
-                vertices.InsertNextCell(1)
-                vertices.InsertCellPoint(i)
+        # # Read PLY into vtkPoints
+        # if extension == ".ply" or extension == ".obj" or extension == ".stl":
+        #     if (extension == ".ply"):
+        #         reader = vtk.vtkPLYReader()
+        #     if (extension == ".obj"):
+        #         reader = vtk.vtkOBJReader()
+        #     if (extension == ".stl"):
+        #         reader = vtk.vtkSTLReader()
+        #     reader.SetFileName(filename)
+        #     reader.Update()
+        #     points = reader.GetOutput().GetPoints()
+        #     vertices = vtk.vtkCellArray()
+        #     for i in range(0,reader.GetOutput().GetNumberOfPoints()):
+        #         vertices.InsertNextCell(1)
+        #         vertices.InsertCellPoint(i)
+        #     # Add all generated data to polydata
+        #     polydata = vtk.vtkPolyData()
+        #     polydata.SetPoints(points)
+        #     polydata.SetVerts(vertices)
 
         # Read TXT into vtkPoints
-        elif extension == ".txt":
-            textReader = vtk.vtkDelimitedTextReader()
+        if extension == ".txt":
+            textReader = vtk.vtkSimplePointsReader()
             textReader.SetFileName(filename)
-            textReader.SetFieldDelimiterCharacters('\t ')
-            textReader.DetectNumericColumnsOn()
             textReader.Update()
-            table = textReader.GetOutput()
-            points = vtk.vtkPoints()
-            vertices = vtk.vtkCellArray()
-            for i in range(0,table.GetNumberOfRows()):
-                points.InsertNextPoint(table.GetValue(i,0).ToDouble(),
-                                       table.GetValue(i,1).ToDouble(),
-                                       table.GetValue(i,2).ToDouble())
-                vertices.InsertNextCell(1)
-                vertices.InsertCellPoint(i)
-
+            polydata = textReader.GetOutput()
         else:
-            #raise InputError("file must be ply or txt")
-            pass
+            print("input must be a .txt file")
+            return None
+            # raise InputError("file must be ply, stl, obj or txt")
 
-        # Add all generated data to polydata
-        polydata = vtk.vtkPolyData()
-        polydata.SetPoints(points)
-        polydata.SetVerts(vertices)
+        print("Bounds: ", polydata.GetBounds())
 
         return polydata
 
@@ -137,14 +133,19 @@ class MyWindow(QtGui.QMainWindow):
         if(_QT_VERSION >= 5): # QT5 stores filename in a tuple instead of just a string
             fname = fname[0]
         filename = str(fname)
+        if fname == "":
+            print("Using previous file")
+            return
         sending_button = str(self.sender().objectName())
+        polydata = self._readFile(filename)
+        if polydata == None:
+            print "File not readable"
+            return
         if sending_button == "ptcldMovingButton":
             self.ptcldMovingText.setText(filename)
-            polydata = self._readFile(filename,(.8,1))
             self._updateActorPolydata(self.actor_moving,polydata,self.moving_color)
         elif sending_button == "ptcldFixedButton":
             self.ptcldFixedText.setText(filename)
-            polydata = self._readFile(filename,(.8,1))
             self._updateActorPolydata(self.actor_fixed,polydata,self.fixed_color)
         self.ren.ResetCamera()
         self.iren.Render()
