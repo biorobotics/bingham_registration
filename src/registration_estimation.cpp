@@ -31,10 +31,22 @@
 #include "bingham_filter.h"
 #include "get_changes_in_transformation_estimate.h"
 #include "registration_estimation.h"
+#include "conversions.h"
+#include "sort_indexes.h"
 #include "type_defs.h"
 
 //#define WINDOW_RATIO 100     // The constant for deciding window size
 #define DIMENSION 3     // Dimension of data point
+
+/* compute_transformed_points:
+ *      Input: ptcld moving, regParams from previous iteration
+        Output: ptcld moving after being transformed 
+ */
+PointCloud compute_transformed_points(const PointCloud& ptcldMoving, const ArrayXld& regParams) {
+    Matrix4ld testimated = reg_params_to_transformation_matrix (regParams.segment(0,6));
+    Affine3ld t(testimated);
+    return t.cast<float>()*ptcldMoving;
+}
 
 /* 
  *  registration_estimation: (for registration without normals)
@@ -47,19 +59,17 @@
             ptcldFixed (3xn) is another set of point cloud data. This will represent CAD model points 
  */
 
-RegistrationResult registration_estimation(const PointCloud& ptcldMoving, 
-                                            const PointCloud& ptcldFixed,
+RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
+                                            SearchTree cloudTree,
                                             double inlierRatio,
                                             int maxIterations,
                                             int windowSize,
                                             double toleranceT,
                                             double toleranceR,
-                                            double uncertaintyR,
-                                            KDTree tree){
+                                            double uncertaintyR){
     
     // Make sure input makes sense
-    if (ptcldMoving.rows() != DIMENSION ||
-        ptcldFixed.rows() != DIMENSION) {
+    if (ptcldMoving.rows() != DIMENSION) {
         std::cerr << "Invalid point dimension";
         exit(1);
     }
@@ -74,16 +84,6 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
     
     Eigen::Vector2d tolerance;
     tolerance << toleranceT , toleranceR;
-
-    KDTree cloudTree;
-    bool treeProvided = tree;
-    if(!treeProvided){
-        // Generate kd tree from fixed cloud if none was provided
-        cloudTree = tree_from_point_cloud(ptcldFixed);
-    } else{
-        // Otherwise use the one provided
-        cloudTree = tree;
-    }
 
     VectorXld regParams = VectorXld::Zero(6);  //regParams: 6x1
 
@@ -109,6 +109,14 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
         std::cout << windowSize << std::endl;
     }
 
+        
+    int inlierSize = trunc(windowSize * inlierRatio);   // Round down to int
+    
+    PointCloud sortedResultTargets(3, inlierSize);
+    PointCloud sortedResultMatches(3, inlierSize);
+    PointCloud targetsTransformed(3, windowSize);
+
+
     //********** Loop starts **********
     // If not converge, transform points using regParams and repeat
     for (int i = 0; i <= maxIterations - 1; i++) {
@@ -123,19 +131,31 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
                 targets(n, r) = ptcldMoving(n, (r + rOffset) % sizePtcldMoving);
         }
 
-        // kd_search takes subset of ptcldMovingNew, CAD model points, and regParams
+        // tree_search takes subset of ptcldMovingNew, CAD model points, and regParams
         // from last iteration according to window size 
 
-        SearchResult searchResult = kd_search(targets, cloudTree, inlierRatio, regParams);
-        result.error = searchResult.res;
+        // Transform the target points before searching
+        targetsTransformed = compute_transformed_points(targets, regParams);
 
-        long double Rmag = .04 + pow(searchResult.res / 6, 2);  // Variable that helps calculate the noise 
+        SearchResult searchResult = tree_search(targetsTransformed, cloudTree);
+
+        // Get indexes sorted by distance
+        Eigen::VectorXi sortIndex = sort_indexes<Eigen::VectorXf>(searchResult.distances, true);
+        
+        for (int count = 0; count < inlierSize; count++) {
+            sortedResultMatches.col(count) = searchResult.matches.col(sortIndex[count]);
+            sortedResultTargets.col(count) = targets.col(sortIndex[count]);
+        }
+
+        result.error = searchResult.distances.sum() / searchResult.distances.cols();
+
+        long double Rmag = .04 + pow(result.error / 6, 2);  // Variable that helps calculate the noise 
         
         //  Quaternion Filtering:
         //  Takes updated Xk, Mk, Zk from last QF, updated Rmag, p1c, p1r, p2c,
         //  p2r from kdsearch
         //  Output updated Xk, Mk, Zk, and regParams for next iteration. 
-        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &searchResult.pc, &searchResult.pr);
+        BinghamKFResult filterResult = bingham_filter(&Xk, &Mk, &Zk, Rmag, &sortedResultMatches, &sortedResultTargets);
 
         Xk = filterResult.Xk;
         Mk = filterResult.Mk;
@@ -157,8 +177,18 @@ RegistrationResult registration_estimation(const PointCloud& ptcldMoving,
             break;  // Break out of loop if convergence met
         }
     }
-    if(!treeProvided){ free_tree(cloudTree); }
     result.regParams = regParams;
     result.regHistory = regHistory;
+    return result;
+}
+
+RegistrationResult registration_estimation(const PointCloud& ptcldMoving, const PointCloud& ptcldFixed,
+                                           double inlierRatio, int maxIterations, int windowSize,
+                                           double toleranceT, double toleranceR, double uncertaintyR){
+    SearchTree cloudTree = tree_from_point_cloud(ptcldFixed);
+    RegistrationResult result = registration_estimation(ptcldMoving, cloudTree, inlierRatio,
+                                                        maxIterations, windowSize,
+                                                        toleranceT, toleranceR, uncertaintyR);
+    free_tree(cloudTree);
     return result;
 }

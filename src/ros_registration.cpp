@@ -100,7 +100,7 @@ private:
   PointCloud ptcldMoving;
   PointCloud ptcldTransformed;
   std_msgs::Float32 errorMsg;
-  KDTree fixedKDTree = NULL;
+  SearchTree fixedSearchTree = NULL;
   Affine3ld lastTransform;
   std::list<Affine3ld> transformBuffer;
   double lastError = 1;
@@ -185,9 +185,9 @@ public:
     ptcldFixed = pclToEigen(mesh.cloud) * scale;
     shufflePointCloud(ptcldFixed);
 
-    free_tree(fixedKDTree);
-    fixedKDTree = NULL;
-    fixedKDTree = tree_from_point_cloud(ptcldFixed);
+    free_tree(fixedSearchTree);
+    fixedSearchTree = NULL;
+    fixedSearchTree = tree_from_point_cloud(ptcldFixed);
 
     // HACK BECAUSE RVIZ DOESN'T USE OBJ
     size_t idx = path.rfind('.', path.length());
@@ -236,11 +236,10 @@ public:
     ptcldTransformed = lastTransform.cast<float>()*ptcldMoving;
     double uncertainty = std::numeric_limits<float>::min() * -1;
     // Run the registration function without normals
-    RegistrationResult result = registration_estimation(ptcldTransformed, ptcldFixed,
-                                                         inlier_ratio, iterations, 
-                                                         window_size, tolerance_t,
-                                                         tolerance_r, uncertainty,
-                                                         fixedKDTree);
+    RegistrationResult result = registration_estimation(ptcldTransformed, fixedSearchTree,
+                                                        inlier_ratio, iterations, 
+                                                        window_size, tolerance_t,
+                                                        tolerance_r, uncertainty);
 
     lastError = result.error;
     lastTransform = affineFromregParams(result.regParams) * lastTransform;
