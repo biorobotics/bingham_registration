@@ -134,8 +134,8 @@ public:
     errorPub = nh.advertise<std_msgs::Float32>("rms_error", 5);
     // Create a ROS subscriber for the input point cloud
     cloud_sub.registerCallback(&RosRegistration::cloudCB, this);
-    reset_sub = nh.subscribe ("registration/reset", 10, &RosRegistration::resetCB, this);
-    active_sub = nh.subscribe ("registration/toggle", 10, &RosRegistration::activeCB, this);
+    reset_sub = nh.subscribe ("registration_reset", 10, &RosRegistration::resetCB, this);
+    active_sub = nh.subscribe ("registration_toggle", 10, &RosRegistration::activeCB, this);
   }
 
   std::string cleanResourcePath(const std::string& path){
