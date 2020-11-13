@@ -9,20 +9,24 @@
 			return search result
 
  */
-#define NOMINMAX
 #include <limits>
-#include <kd_tree.h>
-#include <registration_tools.h>
-#include <compute_transformed_points.h>
+#include <iostream>
+#include "kd_tree.h"
 
-using namespace Eigen;
-using namespace std;
+SearchTree tree_from_point_cloud(const PointCloud& ptcld) {
+	SearchTree cloudTree = NULL;
+    int size = ptcld.cols();
+    // Construct the kdtree from ptcldFixed
+    for (int i = 0; i < size; i++) 
+        insert(ptcld.col(i), i, cloudTree);
+    return cloudTree;
+}
 
 /* find_distance:
  * 		Input: two points in Vector3ld type
  *      Return: distance between two points
  */
-long double find_distance(Vector3ld point1, Vector3ld point2) {
+double find_distance(const Eigen::Vector3f& point1, const Eigen::Vector3f& point2) {
 	return (point1 - point2).norm();
 }
 
@@ -31,25 +35,28 @@ long double find_distance(Vector3ld point1, Vector3ld point2) {
  			   level that the point should be sorted on
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert_helper(Vector3ld point, KDTree *T, int level) {
+void insert_helper(const Eigen::Vector3f& point, int index, SearchTree& T, int level) {
 	// Right now the tree only works for x, y, z point
-	if (level < 0 || level > 2) 
-		call_error("Invalid search level");
-	if (*T == NULL) {
-		*T = (KDTree)malloc(sizeof(struct KDNode));
-		if (*T == NULL)
-			call_error("Malloc failed in insert_helper");
-		(*T)->left = NULL;
-		(*T)->right = NULL;
-		((*T)->value)(0) = point(0);
-		((*T)->value)(1) = point(1);
-		((*T)->value)(2) = point(2);
+	if (level < 0 || level > 2){
+		std::cerr << "Invalid search level";
+		exit(1);
+	}
+
+	if (T == NULL)
+	{
+		T = new KDNode();
+		T->left = NULL;
+		T->right = NULL;
+		(T->value)(0) = point(0);
+		(T->value)(1) = point(1);
+		(T->value)(2) = point(2);
+		T->index = index;
 	}
 	else {
-		if (point(level) < (*T)->value(level)) 
-			insert_helper(point, &((*T)->left), (level+1) % 3);
+		if (point(level) < T->value(level)) 
+			insert_helper(point, index, T->left, (level+1) % 3);
 		else 
-			insert_helper(point, &((*T)->right), (level+1) % 3);
+			insert_helper(point, index, T->right, (level+1) % 3);
 	}
 }
 
@@ -57,66 +64,25 @@ void insert_helper(Vector3ld point, KDTree *T, int level) {
  * 		Input: point (to be inserted into the tree), kd-tree (can't be NULL), 
  		Return: None. Modify the tree in place by inserting the point into the tree
  */
-void insert(Vector3ld point, KDTree *T) {
-	if (T == NULL)
-		call_error("Invalid pointer for kd-tree in insert");
-	return insert_helper(point, T, 0);
-}
-
-/* insert_normal_helper: similar to insert_helper but insert additional information 
- * 		"index" into the tree to keep track of where the point was in original 
- *		pointcloud.
- */
-void insert_normal_helper(Vector3ld point, int index, KDNormalTree *T, int level) {
-	// Right now the tree only works for x, y, z point
-	if (level < 0 || level > 2) 
-		call_error("Invalid search level");
-
-	if (*T == NULL)
-	{
-		*T = (KDNormalTree)malloc(sizeof(struct KDNormalNode));
-		if (*T == NULL)
-			call_error("Malloc failed in insert_normal_helper");
-		(*T)->left = NULL;
-		(*T)->right = NULL;
-		((*T)->value)(0) = point(0);
-		((*T)->value)(1) = point(1);
-		((*T)->value)(2) = point(2);
-		(*T)->index = index;
-	}
-	else {
-		if (point(level) < (*T)->value(level)) 
-			insert_normal_helper(point, index, &((*T)->left), (level+1) % 3);
-		else 
-			insert_normal_helper(point, index, &((*T)->right), (level+1) % 3);
-	}
-}
-
-/* insert_normal: similar to insert but insert additional information 
- * 		"index" into the tree to keep track of where the point was in original 
- *		pointcloud.
- */
-void insert_normal(Vector3ld point, int index, KDNormalTree *T) {
-	if (T == NULL)
-		call_error("Invalid pointer for kd-tree in insert");
-	return insert_normal_helper(point, index, T, 0);
+void insert(const Eigen::Vector3f& point, int index, SearchTree& T) {
+	return insert_helper(point, index, T, 0);
 }
 
 /* find_nearest_helper:
  * 		Input: kd-tree, point (whose closest match needs to be searched in kd-tree), 
  			   the level to search, a storage for current best found, a storage for
  			   current distance
-		Requires TreeType to be KDTree or KDNormalTree
  		Return: None. Modify the found storages in place
  */
-template <class TreeType>
-void find_nearest_helper(TreeType T, Vector3ld target, int level, TreeType bestN, 
-						 long double *bestDistance) {
-	long double distance, diff;
+void find_nearest_helper(const SearchTree& T, const Eigen::Vector3f& target, int level, const SearchTree& bestN, 
+						 float *bestDistance) {
+
+	float distance, diff;
 	// If reaches the leaf of the tree, end search
 	if (T == NULL)
 		return;
-	
+
+
 	distance = find_distance(T->value, target);
 	diff = (T->value)(level) - target(level);
 	
@@ -142,187 +108,57 @@ void find_nearest_helper(TreeType T, Vector3ld target, int level, TreeType bestN
  * 		Input: point (whose closest match needs to be searched in kd-tree), kd-tree
  		Return: The sub-tree whose node is the best match
  */
-template <class NodeType>
-NodeType* find_nearest(Vector3ld target, NodeType *T) {
-	NodeType *bestN = (NodeType*)malloc(sizeof(NodeType));
-	
-	if (!bestN)
-		call_error("Malloc failed in find_nearest");
-	long double *distanceResult = (long double*)malloc(sizeof(long double));
-	*distanceResult = numeric_limits<long double>::max();
+Eigen::Vector3f find_nearest(const Eigen::Vector3f& target, KDNode *T) {
+	KDNode *bestN = new KDNode();
+	float *distanceResult = (float*)malloc(sizeof(float));
+	*distanceResult = std::numeric_limits<float>::max();
 
 	find_nearest_helper(T, target, 0, bestN, distanceResult);
-
-	//free(distanceResult);
-	return bestN;
+	Eigen::Vector3f point = bestN->value;
+	free(distanceResult);
+	free(bestN);
+	return point;
 }
 
-/*
- * kd_search:
- 		Input: target point cloud, kd-tree, inlier ratio, Xreg from last iteration
+/* tree_search:
+ 		Input: target point cloud, kd-tree, inlier ratio, regParams from last iteration
  			   to transform points 
 		Return: pc = set of all closest points
 				pr = set of all target points in corresponding order with pc
  				res = mean of the sum of all the distances calculated
  */
-struct KdResult* kd_search(PointCloud *targets_p, KDTree T, long double inlierRatio, VectorXld *Xreg) {
-	int numTargets = (*targets_p).cols();
-	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
-	PointCloud resultTargets = PointCloud(3, numTargets);
-	MatrixXld resultMatches = MatrixXld(4, numTargets);	// First 3 rows = point, 
-														// 4th row = distance 
-	PointCloud filtered_resultTargets = PointCloud(3, inlierSize);
-	MatrixXld filtered_resultMatches = MatrixXld(4, inlierSize);
-	long double totalDistance = 0;
-	PointCloud targetsNew = PointCloud(3, numTargets);
-
-	// Transform the target points before searching
-	targetsNew = compute_transformed_points(*targets_p, *Xreg);
-
-	if ((*targets_p).cols() != numTargets) {
-		ostringstream errorString;
-		errorString << "Pointcloud (" << (*targets_p).cols()<< ") doesn't match target size (" 
-					<< numTargets << ")\n";
-		call_error(errorString.str());
-	}
+SearchResult tree_search(const PointCloud& targetPoints, const SearchTree& Tree) {
+	int numTargets = targetPoints.cols();
+	PointCloud resultMatches = PointCloud(3, numTargets);	// First 3 rows = point, 
+															// 4th row = distance
 
 	// Find numTargets cloest points together with corresponding targets
 	for (int count = 0; count < numTargets; count++) {
-		KDTree nearestPoint = find_nearest(targetsNew.col(count), T);
-
-		(resultMatches.col(count))(0) = (nearestPoint->value)(0);
-		(resultMatches.col(count))(1) = (nearestPoint->value)(1);
-		(resultMatches.col(count))(2) = (nearestPoint->value)(2);
-		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, targetsNew.col(count));
-		resultTargets.col(count) = (*targets_p).col(count);	// We want to return the original targets
+		resultMatches.col(count) = find_nearest(targetPoints.col(count), Tree);
 	}
 
 	// Get distance row and turn into vector for sorting
-	VectorXld distances = resultMatches.row(3);
-	vector<long double> distancesVector;
-	distancesVector.resize(distances.size());
-	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
-
-	// Get indexes sorted by distance
-	vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
+	Eigen::VectorXf distances = (resultMatches - targetPoints).colwise().norm();
 	
-	for (int count = 0; count < inlierSize; count++) {
-		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		filtered_resultTargets.col(count) = resultTargets.col(sortIndex[count]);
-		totalDistance += filtered_resultMatches(3, count);
-	}
-	
-	struct KdResult *result = (struct KdResult*)calloc(1,sizeof(struct KdResult));
+	SearchResult result;
 	// When return, ignore the last column which stores individual distances
-	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result->pr = filtered_resultTargets;
-	result->res = totalDistance / inlierSize;
-
+	result.matches = resultMatches;
+	result.distances = distances;
 	return result;
 }
 
-/*
- * kd_search_normals:
- 		Input: target point cloud, kd-tree, inlier ratio, Xreg from last iteration
- 			   to transform points, normal moving, normal fixed
-		Return: pc = set of all closest points
-				pr = set of all target points in corresponding order with pc
-				normalr = set of the moving normals in corresponding order with searched result
-				normalc = set of the fixed normals in original order
- 				res1 = mean of the sum of all the point distances calculated
-				res2 = mean of the sum of all the normal distances calculated
- */
-struct KDNormalResult* kd_search_normals(PointCloud *targets, KDNormalTree T, 
-									long double inlierRatio, VectorXld *Xreg, 
-									PointCloud *normalMoving, PointCloud *normalFixed) {
-	int numTargets = (*targets).cols();
-	int inlierSize = trunc(numTargets * inlierRatio);	// Round down to int
-	MatrixXld resultMatches = MatrixXld(4, numTargets);	// First 3 rows = point, 
-														// 4th row = distance 
-	
-
-	MatrixXld normalMatches = MatrixXld(4, numTargets);	// The corrsponding normals in 
-														// normalFixed with results in resultMatches  
-
-	PointCloud filtered_resultTargets = PointCloud(3, inlierSize);
-	MatrixXld filtered_resultMatches = MatrixXld(4, inlierSize);
-	MatrixXld filtered_normalMatches = MatrixXld(4, inlierSize);
-	MatrixXld filtered_normalTargets = MatrixXld(3, inlierSize);
-
-	long double totalPointDistance = 0;
-	long double totalNormalDistance = 0;
-
-	PointCloud targetsNew = PointCloud(3, numTargets);
-	PointCloud normalrNew = PointCloud(3, numTargets);
-
-	
-	// Transform the target points before searching
-	targetsNew = compute_transformed_points(*targets, *Xreg);
-	VectorXld normalrNewTemp = VectorXld::Zero(6);
-
-	for (int i = 3; i < 6; i++) {
-		normalrNewTemp(i) = (*Xreg)(i);
+long count_leaves(const SearchTree& T) {
+	if(!T){
+		return 0;
 	}
-
-	normalrNew = compute_transformed_points(*normalMoving, normalrNewTemp);
-
-	if ((*targets).cols() != numTargets){
-		ostringstream errorString;
-		errorString << "Pointcloud (" << (*targets).cols()<< ") doesn't match target size (" 
-				    << numTargets << ")\n";
-		call_error(errorString.str());
-	}
-
-	// Find numTargets closet points together with corresponding targets
-	for (int count = 0; count < numTargets; count++) {
-		KDNormalTree nearestPoint = find_nearest(targetsNew.col(count), T);
-
-		(resultMatches.col(count))(0) = nearestPoint->value(0);
-		(resultMatches.col(count))(1) = nearestPoint->value(1);
-		(resultMatches.col(count))(2) = nearestPoint->value(2);
-		(resultMatches.col(count))(3) = find_distance(nearestPoint->value, 
-													  targetsNew.col(count));
-
-		normalMatches.col(count)(0) = (*normalFixed)(0, nearestPoint->index);
-		normalMatches.col(count)(1) = (*normalFixed)(1, nearestPoint->index);
-		normalMatches.col(count)(2) = (*normalFixed)(2, nearestPoint->index);
-		(normalMatches.col(count))(3) = find_distance((*normalFixed).col(nearestPoint->index), 
-														normalrNew.col(count));
-	}
-
-	// Get distance row and turn into vector for sorting
-	VectorXld distances = resultMatches.row(3);
-	vector<long double> distancesVector;
-	distancesVector.resize(distances.size());
-	VectorXld::Map(&distancesVector[0], distances.size()) = distances;
-	// Get indexes sorted by distance
-	vector<unsigned int> sortIndex = sort_indexes(distancesVector, true);
-	
-	
-	for (int count = 0; count < inlierSize; count++) {
-		filtered_resultMatches.col(count) = resultMatches.col(sortIndex[count]);
-		filtered_resultTargets.col(count) = (*targets).col(sortIndex[count]);
-		filtered_normalMatches.col(count) = normalMatches.col(sortIndex[count]);
-		filtered_normalTargets.col(count) = (*normalMoving).col(sortIndex[count]);
-		totalPointDistance += filtered_resultMatches(3, count);
-		totalNormalDistance += filtered_normalMatches(3, count);
-	}
-
-
-	struct KDNormalResult *result = (struct KDNormalResult*)calloc(1,sizeof(struct KDNormalResult));
-	// When return, ignore the last column which stores individual distances
-	result->pc = filtered_resultMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result->normalc = filtered_normalMatches.topLeftCorner(3,filtered_resultMatches.cols());
-	result->pr = filtered_resultTargets;
-	result->normalr = filtered_normalTargets;
-	result->res1 = totalPointDistance / inlierSize;
-	result->res2 = totalNormalDistance / inlierSize;
-
-	return result;
+	long count = 1;
+	count += count_leaves(T->left);
+	count += count_leaves(T->right);
+	return count;
 }
 
 // This function frees the tree
-void free_tree(KDTree T) {
+void free_tree(const SearchTree& T) {
 	if (T) {
 		free_tree(T->left);
 		free_tree(T->right);

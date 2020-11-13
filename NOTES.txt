@@ -1,0 +1,23 @@
+bingham_kf --> bingham filter 
+
+	Like a kalman filter but uses binghams instead of gaussians
+
+bingham_registration --> registration_est
+
+	estimates transformation between two point clouds
+
+	Kalman-filter-like "state" JUST for rotation
+
+	ZK = width of gaussian on a sphere
+	MK = peak of that distribution
+
+	Zk is a diagonal matrix with its first element as zero. The lambdas are set to tiny values because we assume we have no prior
+	They will increase as time goes on
+
+	MK = four column vector. the first is the most likely quaternion
+
+	First for loop is num iterations of this filter (Maybe we should make it loop such that it reuses windows if necessary)
+
+	Maybe do randomization on moving points IN filter
+
+BinghamReg namespace

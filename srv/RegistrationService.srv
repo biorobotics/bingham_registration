@@ -1,0 +1,9 @@
+bool Reset
+geometry_msgs/Pose StartPose
+sensor_msgs/PointCloud2 PtCldSensed
+sensor_msgs/PointCloud2 PtCldFixed
+string StlFile
+float64 Uncertainty
+---
+geometry_msgs/Pose FinalPose
+float64 Error

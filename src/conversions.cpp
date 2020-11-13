@@ -1,15 +1,15 @@
 /*
  * File Header for compute_transformed_points.cpp:
- * 		compute_transformed_points takes in sensed points and Xreg
+ * 		compute_transformed_points takes in sensed points and regParams
  * 		Return transformed sensed points 
  * 		
  */
-#include "compute_transformed_points.h"
+#include "conversions.h"
 /* eul2rotm:
  *		Input: euler angle in array (for the use of cos, sin function), in ZYX order
  		Output: quaternion after conversion 
  */
-Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
+Matrix4ld eul2rotm(const Array3ld& eul) { // ZYX order
 	Matrix4ld R = Matrix4ld::Identity(4, 4);	// Since n_slices is just 1, make 
 												// Matrix4ld instead
 	Array3ld ct = cos(eul);
@@ -34,11 +34,29 @@ Matrix4ld eul2rotm(Array3ld eul) { // ZYX order
 	return R;
 }
 
+/* eul2quat:
+ *		Input: euler angle in vector
+ 		Output: quaternion after conversion 
+ */
+Quaternionld eul2quat(const Vector3ld& eul) {
+	Array3ld eulHalf = eul.array() / 2;
+
+	Array3ld c = eulHalf.cos();
+	Array3ld s = eulHalf.sin();
+	
+	Quaternionld q;
+	q.w() = c(0) * c(1) * c(2) + s(0) * s(1) * s(2);
+	q.x() = c(0) * c(1) * s(2) - s(0) * s(1) * c(2);
+	q.y() = c(0) * s(1) * c(2) + s(0) * c(1) * s(2);
+	q.z() = s(0) * c(1) * c(2) - c(0) * s(1) * s(2);
+	return q.normalized();
+}
+
 /* reg_params_to_transformation_matrix:
  *		Input: registration parameters in array
  		Output: transformation matrix after conversion 
  */
-Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
+Matrix4ld reg_params_to_transformation_matrix(const ArrayXld& params) {
 	Matrix4ld R, U, V;
 	Matrix4ld T = Matrix4ld::Identity(4, 4);
 
@@ -63,22 +81,4 @@ Matrix4ld reg_params_to_transformation_matrix(ArrayXld params) {
 	}
 
 	return T;
-}
-
-/* compute_transformed_points:
- *		Input: ptcld moving, Xreg from previous iteration
- 		Output: ptcld moving after being transformed 
- */
-PointCloud compute_transformed_points(PointCloud ptcldMoving, ArrayXld Xreg) {
-	Vector3ld point;
-	Matrix4ld testimated = reg_params_to_transformation_matrix (Xreg.segment(0,6));
-	Affine3ld t;
-	t.matrix() = testimated;
-	int numPoints = ptcldMoving.cols();
-	PointCloud ptcldMovingTransformed(3,numPoints);
-	for (int r = 0; r < numPoints; r++) {
-		point = ptcldMoving.col(r);
-		ptcldMovingTransformed.col(r) = t*point;
-	}
-	return ptcldMovingTransformed;
 }

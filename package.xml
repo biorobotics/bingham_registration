@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>dual_quaternion_registration</name>
+  <name>bingham_registration</name>
   <version>0.0.0</version>
-  <description>The dual_quaternion_registration package</description>
+  <description>The bingham_registration package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/dual_quaternion_registration</url> -->
+  <!-- <url type="website">http://wiki.ros.org/bingham_registration</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -32,28 +32,21 @@
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->
   <!-- Use build_depend for packages you need at compile time: -->
- <build_depend>message_generation</build_depend>
   <!-- Use buildtool_depend for build tool packages: -->
   <!--   <buildtool_depend>catkin</buildtool_depend> -->
   <!-- Use run_depend for packages you need at runtime: -->
-  <run_depend>message_runtime</run_depend>
   <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
+  <test_depend>gtest</test_depend>
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>geometry_msgs</build_depend>
+
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>pcl_ros</build_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>tf2</build_depend>
-  <build_depend>tf2_ros</build_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>libpcl-all-dev</build_depend>
-  <run_depend>geometry_msgs</run_depend>
+  <build_depend>message_generation</build_depend>
+  <run_depend>pcl_conversions</run_depend>
+  <run_depend>pcl_ros</run_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>tf2</run_depend>
-  <run_depend>tf2_ros</run_depend>
-  <run_depend>cmake_modules</run_depend> 
-  <run_depend>libpcl-all</run_depend> 
+  <run_depend>message_runtime</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
